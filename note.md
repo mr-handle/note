@@ -3112,6 +3112,18 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
 
 # 元空间的最大大小，默认值为unlimited，只受系统内存的限制，一般不做改动
 -XX:MaxMetaspaceSize=2048m
+
+# 禁用类卸载
+-XX:+NoClassGC
+
+# 允许类卸载（默认开启），-XX:+NoClassGC优先级更高
+-XX:+ClassUnloading
+
+# 打印类加载信息
+-XX:+TraceClassLoading
+
+# 打印类卸载信息
+-XX:+TraceClassUnloading
 ```
 
 ##### 指定垃圾收集器
