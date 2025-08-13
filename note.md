@@ -3209,7 +3209,7 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 -verbose:gc
 
 # 开启TLAB空间（TLAB在Eden空间中，每个线程有自己的TLAB空间）
--XX:UseTLAB
+-XX:+UseTLAB
 
 # 设置TLAB空间占Eden空间的百分比，默认TLAB仅占整个Eden空间的1%
 # 一旦对象在TLAB空间分配内存失败，JVM就会使用加锁机制，在Eden空间分配内存
@@ -3220,6 +3220,10 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 
 # 查看所有参数的最终值（可能存在修改，不再是初始值）
 -XX:+PrintFlagsFinal
+
+# 设置可使用的最大直接内存，默认与堆空间最大值（-Xmx参数值）一致
+# java进程使用的内存可以简单看成等于java堆+直接内存
+-XX:MaxDirectMemorySize=1g
 ```
 
 #### 垃圾收集
