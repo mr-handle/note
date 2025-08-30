@@ -14671,6 +14671,35 @@ public class ExceptionTest {
 }
 ```
 
+#### String的intern方法相关面试题
+
+```java
+// 在堆中创建"hello"对象，s1指向堆中它
+// new String("hello")的参数"hello"作为字面量，被加入到字符串常量池（字符串常量池创建对象"hello"）
+String s1 = new String("hello");
+// 字符串常量池已经有"hello"了，intern()不会再把它加入池中
+s1.intern();
+// s2指向字符串常量池中的"hello"
+String s2 = "hello";
+// 由于s1指向堆中的对象，s2指向字符串常量池中的对象，所以它们不相等，结果是false
+System.out.println(s1 == s2);
+
+// 1. 在堆中创建StringBuilder对象
+// 2. 在堆中创建"a"对象
+// 3. 字符串常量池中创建对象"a"
+// 4. 在堆中创建"b"对象
+// 5. 字符串常量池中创建对象"b"
+// 6. 在堆中创建"ab"对象（StringBuilder的toString()方法，会调用new String()，但是由于new String()的参数不是字面量，所以字符串常量池不会创建"ab"对象）
+// 7. s3指向堆中的"ab"对象
+String s3 = new String("a") + new String("b");
+// 检查常量池是否已有 "helloworld"对象，发现没有，于是把s3的引用加入到字符串常量池中
+s3.intern();
+// s4指向字符串常量池中的"ab"对象
+String s4 = "ab";
+// 由于s3指向堆中的对象，和s4指向字符串常量池中的对象，它们指向的是同一个地址，所以结果是true
+System.out.println(s3 == s4);
+```
+
 ## 参考文献
 
 - java 8实战
