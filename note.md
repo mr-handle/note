@@ -440,6 +440,12 @@ try (InputStream inputStream = Application.class.getClassLoader().getResourceAsS
 
 #### String
 
+##### 字符串常量池
+
+- 保证字符串变量s指向的是字符串常量池中的数据的两种方式
+    - 1.字面量定义的方式：String s = "hello";
+    - 2.调用intern方法：String s = xxxString.intern();
+
 ##### intern方法
 
 - jdk1.7起，方法的功能是：尝试将这个字符串对象放入字符串常量池
@@ -3231,6 +3237,9 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 # 字符串常量池是一个哈希表
 # 设置字符串常量池大小（jdk21默认65536，最小128）
 -XX:StringTableSize=65536
+
+# 打印字符串常量池统计信息
+-XX:+PrintStringTableStatistics
 
 # 设置栈内存大小
 -Xss1024K
