@@ -3047,7 +3047,7 @@ public class Applistener implements ServletContextListener {
         - 中间代码生成器
         - 代码优化器
         - 目标代码生成器
-    - 垃圾回收器
+    - 垃圾收集器
 - 本地方法接口
 - 本地方法库
 
@@ -3059,7 +3059,7 @@ public class Applistener implements ServletContextListener {
 
 - 默认情况下，堆的初始内存大小为电脑的内存大小/64，堆的最大内存大小为电脑的内存大小/4
 
-- 通常将堆的初始内存大小和堆的最大内存大小设置为相同的值，其目的是垃圾回收清理后不需要重新分隔机算堆区的大小，从而提高性能
+- 通常将堆的初始内存大小和堆的最大内存大小设置为相同的值，其目的是垃圾收集清理后不需要重新分隔机算堆区的大小，从而提高性能
 
 - 获取默认堆内存大小，并计算电脑内存大小
 
@@ -3165,22 +3165,6 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
 
 # 打印类卸载信息
 -XX:+TraceClassUnloading
-```
-
-##### 指定垃圾收集器
-
-```properties
-# 串行垃圾收集器
--XX:+UseSerialGC
-
-# 并行垃圾收集器
--XX:+UseParallelGC
-
-# CMS垃圾收集器
--XX:+UseParNewGC
-
-# G1垃圾收集器
--XX:+UseG1GC
 ```
 
 ##### 记录GC活动
@@ -3347,7 +3331,7 @@ weakHashMap.put(new String("k1"), "v1");
 System.out.println(weakHashMap);
 
 // 虚引用必须和引用队列一起使用
-// 当垃圾回收器准备回收一个对象时，如果发现它还有虚引用
+// 当垃圾收集器准备回收一个对象时，如果发现它还有虚引用
 // 就会在回收对象后，将这个虚引用加入到引用队列中，以通知应用程序对象的回收情况
 // 由于虚引用可以跟踪对象的回收时间，因此可以将一些资源释放的操作放置在虚引用中执行和记录
 ReferenceQueue<UserVo> phantomQueue = new ReferenceQueue<>();
@@ -3387,6 +3371,59 @@ System.out.println(phantomReference.get());
 - 增量收集算法：垃圾收集线程每次只收集一部分，与用户线程交替执行
 
 - 分区算法（G1）：将整个堆空间划分成连续的不同小区间，每个小区间都独立使用和独立回收，每次回收若干个小区间
+
+##### 垃圾收集器
+
+- 串行收集器：Serial、Serial Old
+
+- 并行收集器：ParNew、Parrallel Scavenge、Parrallel Old
+
+- 并发收集器：CMS（jdk14中已删除）、G1
+
+- 新生代收集器：Serial、ParNew、Parrallel Scavenge
+
+- 老年代收集器：Serial Old、Parrallel Old、CMS（jdk14中已删除）
+
+- 整堆收集器：G1
+
+- 垃圾收集器组合
+    - Serial和Serial Old
+    - Serial和CMS（jdk8中废弃，但是还能用，jdk9中开始不能用）
+    - ParNew和CMS
+    - ParNew和Serial Old（jdk8中废弃，但是还能用，jdk9中开始不能用）
+    - Parrallel Scavenge和Parrallel Old
+    - Parrallel Scavenge和Serial Old（jkd14中废弃，但是还能用）
+    - CMS和Serial Old：CMS失败时Serial Old接收垃圾收集
+    - 只用G1
+
+###### 查看默认的垃圾收集器
+
+```sh
+# 查看命令行相关参数
+-XX:+PrintCommandLineFlags
+
+# 查看具体垃圾收集器参数的值
+jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
+```
+
+###### 指定垃圾收集器
+
+```properties
+# 串行垃圾收集器
+-XX:+UseSerialGC
+
+# 并行垃圾收集器
+-XX:+UseParallelGC
+
+# CMS垃圾收集器
+-XX:+UseParNewGC
+
+# G1垃圾收集器
+-XX:+UseG1GC
+
+# 使用ZGC垃圾收集器，并启用分代ZGC功能
+-XX:+UseZGC -XX:+ZGenerational
+```
 
 #### 性能调优工具
 
@@ -6339,7 +6376,7 @@ public void test() {
     2）多例对象
         出生：使用对象时spring框架才开始创建
         活着：对象只要是在使用过程中就一直活着
-        死亡：当对象长时间不用，且没有别的对象引用时，由java的垃圾回收器回收
+        死亡：当对象长时间不用，且没有别的对象引用时，由java的垃圾收集器回收
 -->
 <bean id="accountService5" class="com.handle.learn.service.AccountServiceImpl" scope="singleton" init-method="init" destroy-method="destroy"></bean>
 ```
