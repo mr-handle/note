@@ -3305,7 +3305,56 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 - 混合收集（Mixed GC）：整个新生代以及部分老年代的垃圾收集
     - G1 GC就会混合收集
 - 整堆收集（Full GC）：整个Java堆和方法区的垃圾收集
-    - 手动调用`System.gc()`，系统会建议执行Full GC，但是不是必然执行
+
+- `System.gc()`(方法内部调用`Runtime.getRuntime().gc()`)，系统会建议执行`Full GC`，但是不是必然执行
+
+- 内存溢出（OOM）：没有空闲内存，并且垃圾收集也无法提供更多内存
+
+- 内存泄露（Memory Leak）：狭义上，对象不会再被程序用到，但是GC又不能将其回收的情况；广义上，不规范的对象声明和定义，导致其生命周期变得很长最终导致OOM的情况
+
+- 垃圾收集的并行：多个垃圾收集线程并行工作，但此时的用户线程处于等待状态
+
+- 垃圾收集的串行：单个垃圾收集线程进行工作，但此时的用户线程处于等待状态
+
+- 垃圾收集的并发：垃圾收集线程和用户线程同时执行（不一定是并行，可能交替执行），垃圾收集线程执行时不会停顿用户线程的执行
+
+|引用类型|GC是否回收|描述|
+|:-|:-|:-|
+|强引用|不回收|使用new操作符创建一个新的对象，并将其赋值给一个变量，这个变量就成为指向该对象的一个强引用|
+|软引用|内存不足才回收，回收后还是不够，就会抛出OOM|通常用来实现内存敏感的缓存|
+|弱引用|发现即回收，只能生存到下一次垃圾收集发生|和软引用一样，适合保存可有可无的缓存数据|
+|虚引用|如果一个对象只有虚引用，那么它和没有引用几乎一样，随时可能被回收，虚引用不能单独使用，无法通过虚引用来获取被引用的对象，试图通过调用get方法获得对象时，总是返回null|对象回收跟踪，比如能在这个对象被回收时收到一个系统通知|
+|终结器引用|jdk17之后可以忘了finalize()方法了，只做了解|在GC时，终结器引用入队。由Finalizer线程通过终结器引用找到对象并调用它的finalize()方法，第二次GC时才能回收被引用对象|
+
+- 强引用的对象只要是可达的，垃圾收集器就永远不会回收被引用的对象
+
+- 而软引用、弱引用和虚引用的可达的的对象，在一定条件下，也都是可以被回收的
+
+```java
+// 创建一个对象并建立软引用
+SoftReference<UserVo> softReference = new SoftReference<>(new UserVo("handle"));
+// 从软引用中获得对象
+System.out.println(softReference.get());
+
+// 创建一个对象，建立弱引用
+WeakReference<UserVo> weakReference = new WeakReference<>(new UserVo("handle"));
+// 从弱引用中获得对象
+System.out.println(weakReference.get());
+
+// WeakHashMap的键是弱引用
+WeakHashMap<String, String> weakHashMap = new WeakHashMap<>();
+weakHashMap.put(new String("k1"), "v1");
+System.out.println(weakHashMap);
+
+// 虚引用必须和引用队列一起使用
+// 当垃圾回收器准备回收一个对象时，如果发现它还有虚引用
+// 就会在回收对象后，将这个虚引用加入到引用队列中，以通知应用程序对象的回收情况
+// 由于虚引用可以跟踪对象的回收时间，因此可以将一些资源释放的操作放置在虚引用中执行和记录
+ReferenceQueue<UserVo> phantomQueue = new ReferenceQueue<>();
+PhantomReference<UserVo> phantomReference = new PhantomReference<>(new UserVo("handle"), phantomQueue);
+// 虚引用的get方法总是返回null，无法通过虚引用获取对象
+System.out.println(phantomReference.get());
+```
 
 ##### 垃圾收集算法
 
@@ -3328,7 +3377,18 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
                 - 系统类加载器
             - 反映虚拟机内部情况的JMXBean、JVMTI中注册的回调、本地代码缓存等
 
-#### 调优工具
+- 垃圾清除阶段
+    - 标记-清除算法（标记可达对象，在对象的Header中记录，然后遍历堆内存的对象，如果某个对象的Header中没有标记其为可达对象，则将其清除）
+    - 标记-复制算法
+    - 标记-压缩算法
+
+- 分代收集算法：新生代用标记-复制算法，老年代用标记-清除或标记-压缩算法
+
+- 增量收集算法：垃圾收集线程每次只收集一部分，与用户线程交替执行
+
+- 分区算法（G1）：将整个堆空间划分成连续的不同小区间，每个小区间都独立使用和独立回收，每次回收若干个小区间
+
+#### 性能调优工具
 
 - JDK命令行
 
@@ -3343,9 +3403,29 @@ jstat -gc 进程id
 jinfo -flag 参数名（比如NewRatio） 进程id
 ```
 
-- visualvm
+##### 获取dump文件
 
-- jconsole
+- 方式1: 使用jmap
+
+```sh
+# 通过jps查看进程id
+jps
+
+# 生成dump文件
+jmap -dump:format=b,live,file=dumpfile.bin 进程id
+```
+
+- 方式2: 使用visualvm导出
+
+##### visualvm
+
+- 可导出dump文件
+
+##### MemoryAnalyzer(MAT)
+
+- 可打开dump文件查看GC Roots
+
+##### jconsole
 
 #### 系统变量和环境变量
 
