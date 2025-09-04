@@ -3444,6 +3444,34 @@ System.out.println(phantomReference.get());
 
 - 在单核CPU的时候才有优势，对于交互较强的应用而言，这种收集器是不能接受的，一般在java web应用程序中也不会采用串行垃圾收集器
 
+```sh
+# Serial GC垃圾收集器，新生代用Serial GC，老年代用Serial Old GC
+-XX:+UseSerialGC
+```
+
+###### ParNew GC
+
+- Par是Parrallel的缩写，New表示收集新生代的垃圾
+
+- 可以看作是Serial收集器的多线程版本，采用标记-复制算法
+
+- 是很多JVM运行在Server模式下，新生代默认的收集器
+
+```sh
+# ParNew垃圾收集器，新生代使用ParNew GC，不影响老年代
+-XX:+UseParNewGC
+
+# 指定垃圾收集线程数量，默认和CPU相同的线程数
+-XX:ParrallelGCThreads=2
+```
+
+###### Parallel GC
+
+```sh
+# 并行垃圾收集器
+-XX:+UseParallelGC
+```
+
 ###### 查看默认的垃圾收集器
 
 ```sh
@@ -3457,14 +3485,10 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 ###### 指定垃圾收集器
 
 ```sh
-# 串行垃圾收集器，新生代用Serial GC，老年代用Serial Old GC
--XX:+UseSerialGC
-
-# 并行垃圾收集器
--XX:+UseParallelGC
-
 # CMS垃圾收集器
--XX:+UseParNewGC
+-XX:+UseConcMarkSweepGC
+
+
 
 # G1垃圾收集器
 -XX:+UseG1GC
