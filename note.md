@@ -3396,6 +3396,24 @@ System.out.println(phantomReference.get());
     - CMS和Serial Old：CMS失败时Serial Old接收垃圾收集
     - 只用G1
 
+###### Serial GC
+
+- Serial收集器是最基本，历史最悠久的垃圾收集器
+
+- Serial收集器还提供用于执行老年代垃圾收集的Serial Old
+
+- 他们是HotSpot中Client模式下默认的新生代和老年代垃圾收集器
+
+- Serial和Serial Old都采用串行回收（单CPU，单线程完成收集工作）和“Stop the World”机制
+
+- Serial采用标记-复制算法，Serial Old采用标记-压缩算法
+
+- Serial Old主要的两个用途
+    - 与新生代垃圾收集器Parrallel Scavenge配合使用
+    - 作为老年代垃圾收集器CMS的后备垃圾收集方案
+
+- 在单核CPU的时候才有优势，对于交互较强的应用而言，这种收集器是不能接受的，一般在java web应用程序中也不会采用串行垃圾收集器
+
 ###### 查看默认的垃圾收集器
 
 ```sh
@@ -3408,8 +3426,8 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 
 ###### 指定垃圾收集器
 
-```properties
-# 串行垃圾收集器
+```sh
+# 串行垃圾收集器，新生代用Serial GC，老年代用Serial Old GC
 -XX:+UseSerialGC
 
 # 并行垃圾收集器
