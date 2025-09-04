@@ -3370,6 +3370,12 @@ PhantomReference<UserVo> phantomReference = new PhantomReference<>(new UserVo("h
 System.out.println(phantomReference.get());
 ```
 
+###### GC的性能指标
+
+- 吞吐量（throughput）：CPU用于运行用户代码的时间与CPU总消耗时间的比值，即吞吐量=运行用户代码时间/（运行用户代码时间+垃圾收集时间）
+
+- 暂停时间（pause time）：一个时间段内应用程序暂停，让GC线程执行的时间
+
 ##### 垃圾收集算法
 
 - 垃圾标记阶段
@@ -3453,7 +3459,7 @@ System.out.println(phantomReference.get());
 
 - Par是Parrallel的缩写，New表示收集新生代的垃圾
 
-- 可以看作是Serial收集器的多线程版本，采用标记-复制算法
+- 可以看作是Serial收集器的多线程版本，采用标记-复制算法和STW机制
 
 - 是很多JVM运行在Server模式下，新生代默认的收集器
 
@@ -3467,9 +3473,40 @@ System.out.println(phantomReference.get());
 
 ###### Parallel GC
 
+- Parallel Scavenge和Parallel Old也是并行的垃圾回收器，也使用STW机制
+
+- Parallel Old是jdk1.6时提供的用于代替Serial Old的老年代垃圾收集器
+
+- Parallel Scavenge采用标记-复制算法，Parallel Old采用标记-压缩算法
+
+- 和ParNew不同的是，它是吞吐量优先的垃圾收集器，以及它有自适应调节策略（动态内存调整分配）
+
+- 高吞吐量可以高效率地利用CPU时间，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。因此，常见在服务器环境中使用，例如批处理、订单处理、工资支付、科学计算
+
+- jdk8中默认是此垃圾收集器
+
 ```sh
-# 并行垃圾收集器
+# 新生代用Parallel Scavenge，老年代用Parallel Old，与UseParallelOldGC互相激活
 -XX:+UseParallelGC
+
+# 新生代用Parallel Scavenge，老年代用Parallel Old，与UseParallelGC互相激活
+-XX:+UseParallelOldGC
+
+# 新生代垃圾收集器的线程数，一般最好与CPU相等
+# 默认情况下，当CPU数量小于8时，它等于CPU数量
+# 当CPU数量大于8时，它等于3+[5*CPU数量]/8
+-XX:ParallelGCThreads=8
+
+# 垃圾收集器最大停顿的毫秒时间（STW的时间），慎用
+-XX:MaxGCPauseMillis=20
+
+# 垃圾收集时间占总时间的比例=1/(n+1)，这里指的是这个n的值，取值范围(0,100)，默认99, 也就是垃圾收集时间不超过1%
+-XX:GCTimeRatio=99
+
+# 开启Parallel Scavenge的自适应调节策略
+# 新生代的大小、Eden和Survivor的比例、晋升老年代的年龄登参数会被自动调整，以达到在堆大小、吞吐量和停顿时间之间的平衡点
+# 在手动调优比较困难的场合，可以开启它，仅指定虚拟机的最大堆、目标吞吐量和停顿时间，让虚拟机自己完成调优工作
+-XX:+UseAdaptiveSizePolicy
 ```
 
 ###### 查看默认的垃圾收集器
