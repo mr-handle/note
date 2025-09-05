@@ -3076,11 +3076,12 @@ System.out.println("电脑内存大小: " + initialHeapSize * 64 / (1024 * 1024 
 System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 1024)  + " GB");
 ```
 
-```properties
-# 指定堆的初始/最小内存(单位：g、m、k)，下面两种写法都行
+```sh
+# 指定堆的最小内存和初始内存(单位：g、m、k)
 # memory start
 -Xms4g
 
+# 仅仅设置堆的初始内存(单位：g、m、k)，如果后面出现-Xms，则后者设置的堆初始内存生效
 -XX:InitialHeapSize=2g
 
 # 指定堆的最大内存(单位：g、m、k)，下面两种写法都行
@@ -3429,7 +3430,7 @@ System.out.println(phantomReference.get());
     - ParNew和Serial Old（jdk8中废弃，但是还能用，jdk9中开始不能用）
     - Parrallel Scavenge和Parrallel Old
     - Parrallel Scavenge和Serial Old（jkd14中废弃，但是还能用）
-    - CMS和Serial Old：CMS失败时Serial Old接收垃圾收集
+    - CMS和Serial Old：CMS失败时Serial Old接手垃圾收集
     - 只用G1
 
 ###### Serial GC
@@ -3479,7 +3480,7 @@ System.out.println(phantomReference.get());
 
 - Parallel Scavenge采用标记-复制算法，Parallel Old采用标记-压缩算法
 
-- 和ParNew不同的是，它是吞吐量优先的垃圾收集器，以及它有自适应调节策略（动态内存调整分配）
+- 和ParNew不同的是，它是`吞吐量优先`的垃圾收集器，以及它有自适应调节策略（动态内存调整分配）
 
 - 高吞吐量可以高效率地利用CPU时间，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。因此，常见在服务器环境中使用，例如批处理、订单处理、工资支付、科学计算
 
@@ -3492,7 +3493,7 @@ System.out.println(phantomReference.get());
 # 新生代用Parallel Scavenge，老年代用Parallel Old，与UseParallelGC互相激活
 -XX:+UseParallelOldGC
 
-# 新生代垃圾收集器的线程数，一般最好与CPU相等
+# 垃圾收集器的线程数，一般最好与CPU相等
 # 默认情况下，当CPU数量小于8时，它等于CPU数量
 # 当CPU数量大于8时，它等于3+[5*CPU数量]/8
 -XX:ParallelGCThreads=8
@@ -3504,7 +3505,7 @@ System.out.println(phantomReference.get());
 -XX:GCTimeRatio=99
 
 # 开启Parallel Scavenge的自适应调节策略
-# 新生代的大小、Eden和Survivor的比例、晋升老年代的年龄登参数会被自动调整，以达到在堆大小、吞吐量和停顿时间之间的平衡点
+# 新生代的大小、Eden和Survivor的比例、晋升老年代的年龄等参数会被自动调整，以达到在堆大小、吞吐量和停顿时间之间的平衡点
 # 在手动调优比较困难的场合，可以开启它，仅指定虚拟机的最大堆、目标吞吐量和停顿时间，让虚拟机自己完成调优工作
 -XX:+UseAdaptiveSizePolicy
 ```
@@ -3513,9 +3514,9 @@ System.out.println(phantomReference.get());
 
 - jdk1.5时推出的第一款真正意义上的并发收集器，第一次实现了垃圾收集线程和用户线程同时工作
 
-- CMS的关注点时尽可能缩短垃圾收集时用户线程的停顿时间（低延迟）
+- CMS的关注点时尽可能缩短垃圾收集时用户线程的`停顿时间（低延迟）`
 
-- CMS采用标记-清除算法和STW机制，对老年代垃圾进行收集
+- CMS采用标记-清除算法和STW机制，对`老年代`垃圾进行收集
 
 - 工作原理
     - 初始标记：用户线程短暂暂停，标记出GC Roots能直接关联到的对象，一旦标记完成就恢复用户线程。由于直接关联的对象比较少，所以这个阶段很快完成
@@ -3554,6 +3555,66 @@ System.out.println(phantomReference.get());
 -XX:ParallelCMSThreads=2
 ```
 
+###### G1（Garbage First） GC
+
+- G1是一个并行收集器，它把堆内存分割为很多不相关的且物理上不连续的区域（Region），使用不同的区域来表示Eden、S0、S1, 老年代，Humongous（G1新增的内存区域，存放超过1.5个region的大对象）
+
+- 设置Humongous的原因：对于堆中的大对象，默认直接分配到老年代，但是如果它是一个短期存在的大对象，就会堆垃圾收集器造成负面影响。为此G1划分出Humongous专门存放大对象。如果1个H区装不下一个大对象，G1会寻找连续的H区来存储。为了能找到连续的H区，有时候不得不启动Full GC。G1的大多数行为都把H区作为老年代的一部分来看待
+
+- G1有计划地避免在整个Java堆中进行全区域的垃圾收集。G1跟踪各个区域里面的垃圾堆积的价值大小（收集所获得的空间大小以及所需时间的经验值），在后台维护一个优先列表，每次根据允许的收集时间，优先收集价值最大的区域
+
+- G1是面向服务端应用的垃圾收集器，主要针对配备多核CPU及大容量内存的机器，以`极高概率满足GC停顿时间的同时，还兼具高吞吐量`的性能特征
+
+- HotSpot垃圾收集器里，除了G1外，其它的都使用内置的JVM线程执行GC的多线程操作，而G1可以采用应用线程承担后台运行的GC工作，即当JVM的GC线程处理速度慢时，系统会调用应用程序线程帮助加速垃圾回收过程
+
+- jdk1.7版本正式启用G1，jdk9为默认的垃圾收集器
+
+- 在下面的情况下，使用G1可能比CMS好：
+    - 超过50%的Java堆被活动数据占用
+    - 对象分配频率或年代提升频率变化很大
+    - GC停顿时间过长（长于0.5-1s）
+
+- G1特点
+    - 兼具并行与并发
+    - 分代型垃圾收集器，兼顾新生代和老年代
+    - 垃圾收集以区域为基本单位，区域之间是标记-复制算法，整体上可以看作是标记-压缩算法，都能避免内存碎片
+    - 每次根据允许的收集时间，优先收集价值最大的区域，保证在有限的时间内获取尽可能高的收集效率
+        - 相比CMS，G1未必能做到CMS在最好的情况下的停顿，但是比CMS最差情况下的停顿要好很多
+
+- G1提供了3种垃圾回收模式：YoungGC、Mixed GC和Full GC，在不同条件下触发
+
+- G1 GC垃圾收集过程主要包括如下三个环节
+    - 新生代GC，是一个并行的独占式收集器，当Eden区用尽时开始这个过程
+    - （新生代GC和）老年代并发标记过程（Concurrent Marking），当堆内存使用达到一定值（默认45%）时，开始这个过程
+    - 混合收集（Mixed GC），标记完成就马上开始这个过程，一次只需要回收一部分老年代的Region，它和新生代一起被回收
+    - Full GC（如果需要，单线程、独占式、高强度的Full GC还是继续存在的，它针对GC的评估失败提供了一种失败保护机制，即强力回收）
+
+- G1的设计原则就是简化JVM性能调优，只需要以下三步即可完成调优
+    - 开启G1垃圾收集器
+    - 设置堆的最大内存
+    - 设置最大的停顿时间
+
+```sh
+# G1垃圾收集器
+-XX:+UseG1GC
+
+# 设置每个Region的大小，值是2的幂，范围1MB-32MB之间，默认是堆内存的1/2000
+# 目标是根据最小的Java堆大小划分出约2048个区域
+-XX:G1HeapRegionSize=1m
+
+# 期望达到的最大GC停顿时间（JVM会尽力实现，但不保证达到），默认是200ms
+-XX:MaxGCPauseMillis=200
+
+# 并行（会STW）的垃圾收集线程数, 最多是8
+-XX:ParallelGCThreads=8
+
+# 并发的垃圾收集线程数，一般为ParallelGCThreads的1/4左右
+-XX:ConcGCThreads
+
+# 触发并发GC周期的Java堆占用率阈值，超过这个值就触发GC，默认45
+-XX:InitiatingHeapOccupancyPercent=45
+```
+
 ###### 查看默认的垃圾收集器
 
 ```sh
@@ -3567,13 +3628,6 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 ###### 指定垃圾收集器
 
 ```sh
-
-
-
-
-# G1垃圾收集器
--XX:+UseG1GC
-
 # 使用ZGC垃圾收集器，并启用分代ZGC功能
 -XX:+UseZGC -XX:+ZGenerational
 ```
