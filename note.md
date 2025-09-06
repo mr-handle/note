@@ -3218,7 +3218,7 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 
 ##### 其它jvm设置
 
-```properties
+```sh
 # 字符串常量池是一个哈希表
 # 设置字符串常量池大小（jdk21默认65536，最小128）
 -XX:StringTableSize=65536
@@ -3229,14 +3229,26 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 # 设置栈内存大小
 -Xss1024K
 
-# 打印GC详情
--XX:+PrintGCDetails
-
 # 打印GC简要信息1
 -XX:+PrintGC
 
 # 打印GC简要信息2
 -verbose:gc
+
+# 打印GC简要信息3
+-Xlog:gc
+
+# 打印GC详情1
+-XX:+PrintGCDetails
+
+# 打印GC详情2
+-Xlog:gc*
+
+# 输出GC信息到指定文件
+-Xlog:gc:文件名
+
+# 输出GC详情到控制台，并且包含时间信息
+-Xlog:gc*:stdout:time
 
 # 开启TLAB空间（TLAB在Eden空间中，每个线程有自己的TLAB空间）
 -XX:+UseTLAB
@@ -3615,6 +3627,15 @@ System.out.println(phantomReference.get());
 -XX:InitiatingHeapOccupancyPercent=45
 ```
 
+###### ZGC
+
+- ZGC采用标记-复制算法，不过 ZGC 对该算法做了重大改进
+
+```sh
+# 使用ZGC垃圾收集器，并启用分代ZGC功能
+-XX:+UseZGC -XX:+ZGenerational
+```
+
 ###### 查看默认的垃圾收集器
 
 ```sh
@@ -3623,13 +3644,6 @@ System.out.println(phantomReference.get());
 
 # 查看具体垃圾收集器参数的值
 jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
-```
-
-###### 指定垃圾收集器
-
-```sh
-# 使用ZGC垃圾收集器，并启用分代ZGC功能
--XX:+UseZGC -XX:+ZGenerational
 ```
 
 #### 性能调优工具
