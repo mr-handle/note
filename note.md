@@ -3138,9 +3138,15 @@ boolean类型用`Z`表示(B被byte类型占用了)
 
 ```c
 CONSTANT_Utf8_info {
-    u1 tag;// 标识
+    u1 tag;// 标识，值为1
     u2 length;// 字符串长度
     u1 bytes[length];// 字符串内容
+}
+
+CONSTANT_Methodref_info {
+    u1 tag;// 标识，值为10
+    u2 class_index;// 指向声明此方法的类的描述符，值为常量池的索引（可以理解成数组下标）
+    u2 name_and_type_index;// 指向此方法的名称及类型（形参类型及顺序、返回值类型）的描述符，值为常量池的索引（可以理解成数组下标）
 }
 ```
 
