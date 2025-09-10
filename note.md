@@ -3051,6 +3051,142 @@ public class Applistener implements ServletContextListener {
 - 本地方法接口
 - 本地方法库
 
+#### 字节码
+
+##### 字节码文件
+
+一个Java源文件(.java)经过编译器编译之后便会生成一个（或多个，如果一个源文件里面定义了多个类）字节码文件(.class)
+
+字节码文件是一种二进制的类文件，它的内容是JVM的指令
+
+###### 字节码文件的格式
+
+- 字节码文件格式采用一种类似于C语言结构体的方式进行数据存储，这种结构只有两种数据类型：无符号数和表
+    - 无符号数属于基本的数据类型，以u1、u2、u4、u8来分别代表1、2、4、8个字节的无符号数。无符号数可以用来描述数字、索引引用、数量值或按照UTF-8编码构成字符串值
+
+    - 表是由多个无符号数或其它表作为数据项构成的复合数据类型，所有表都习惯性地以“_info”结尾。表用于描述有层次关系的复合结构的数据，整个字节码文件本质上就是一张表。由于表没有固定长度，所以通常会在其前面加上个数说明
+
+```c
+ClassFile {
+    u4             magic;// 魔数，用于识别字节码文件格式（是否合法）
+    u2             minor_version;// 编译的小版本号
+    u2             major_version;// 编译的大版本号
+    u2             constant_pool_count;// 常量池计数器
+    cp_info        constant_pool[constant_pool_count-1]; // 常量池表
+    u2             access_flags;// 访问标识
+    u2             this_class;// 类索引
+    u2             super_class;// 父类索引
+    u2             interfaces_count;// 接口计数器
+    u2             interfaces[interfaces_count];// 接口表
+    u2             fields_count;// 字段计数器
+    field_info     fields[fields_count];// 字段表
+    u2             methods_count;// 方法计数器
+    method_info    methods[methods_count];// 方法表
+    u2             attributes_count;// 属性计数器
+    attribute_info attributes[attributes_count];// 属性表（如方法里面的行号表、局部变量表等属性）
+}
+```
+
+###### 全限定名
+
+`全类名`com.handle.test.Demo中的`.`替换成`/`，变成com/handle/test/Demo，就是`全限定名`，为了使连续的多个全限定名之间不产生混淆，在使用时最后一般加`;`，表示全限定名结束
+
+###### 简单名称
+
+没有类型和参数修饰的方法或字段名称
+
+```java
+public class UserVo {
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+}
+// 简单名称分别是name和getName
+```
+
+###### 描述符
+
+作用：描述字段的数据类型、方法的参数列表（包括数量、类型以及顺序）和返回值
+
+基本数据类型及void类型都用一个大写字符（单词的首字母）来表示
+
+对象类型用字符L加对象的全限定名来表示
+
+long类型用`J`表示(L被对象类型前缀占用了)
+
+boolean类型用`Z`表示(B被byte类型占用了)
+
+数组类型用`[`表示，一个`[`代表一维，如int[][]的描述符为`[[I`
+
+描述方法时，按照先参数列表，后返回值的顺序描述，参数列表按照方法的参数声明顺序放在`()`内，如`int sum(int x, int y)`的描述符为`(I[I) I`
+
+###### 常量池
+
+- 常量池计数器的计数是从1开始的，因此对应的常量池表的长度是[常量池计数器-1]
+
+- 这是为了满足后面某些指向常量池的索引值的数据在特定情况下需要表达“不引用任何一个常量池表的项的含义”，这种情况就可以用索引值0来表示
+
+- 常量池表中，主要存放各种`字面量（Literal）`和`符号引用（Symbolic Reference）`
+
+- 字面量包含文本字符串和声明为final的常量值
+
+- 符号引用包含类和接口的全限定名、字段的名称和描述符、方法的名称和描述符
+
+- 常量池表中每一项都具备相同的特征，第一个字节（tag byte）作为类型标记，用于确定该项的格式，如下表的标识列
+
+```c
+CONSTANT_Utf8_info {
+    u1 tag;// 标识
+    u2 length;// 字符串长度
+    u1 bytes[length];// 字符串内容
+}
+```
+
+|类型|标识|描述|
+|:-|:-|:-|
+|CONSTANT_Utf8|1|UTF-8编码的字符串|
+|CONSTANT_Integer|3|整型字面量|
+|CONSTANT_Float|4|浮点型字面量|
+|CONSTANT_Long|5|长整型字面量|
+|CONSTANT_Double|6|双精度浮点型字面量|
+|CONSTANT_Class|7|类或接口的符号引用|
+|CONSTANT_String|8|字符串类型字面量|
+|CONSTANT_Fieldref|9|字段的符号引用|
+|CONSTANT_Methodref|10|类中方法的符号引用|
+|CONSTANT_InterfaceMethodref|11|接口中方法的符号引用|
+|CONSTANT_NameAndType|12|字段或方法的符号引用|
+|CONSTANT_MethodHandle|15|方法句柄|
+|CONSTANT_MethodType|16|方法类型|
+|CONSTANT_Dynamic|17||
+|CONSTANT_InvokeDynamic|18||
+|CONSTANT_Module|19||
+|CONSTANT_Package|20||
+
+##### 字节码指令
+
+Java虚拟机的指令由一个字节长度对的、代表着某种特定操作含义的操作码（opcode），
+
+以及跟随其后的零个或多个代表此操作所需参数的操作数（operand）所构成
+
+即`操作码 [操作数]`
+
+##### 字节码解析工具
+
+- 直接用vscode的16进制编辑器打开看
+
+- jclasslib软件或idea的jclasslib插件
+
+- javap指令
+
+```sh
+javap -v 字节码文件名.class
+
+# 输出到txt文件
+javap -v 字节码文件名.class >somename.txt
+```
+
 #### jvm参数
 
 - `-X`表示JVM的运行参数（非标准参数）
@@ -7107,7 +7243,7 @@ public class SpringMvcConfiguration {
 
 #### @EnableWebMvc
 
-- 等同与xml配置中的<mvc:annotation-driven>
+- 等同于xml配置中的<mvc:annotation-driven>
 
 - 相当于添加了HandlerMapping、HandlerAdapter和json转换器
 
@@ -7231,7 +7367,7 @@ public class ApplicationController {
 ```java
 @GetMapping("/getAccount")
 @ResponseBody
-// url：localhost:8080/application/getAccount?name=Jack&age=18
+// url：localhost:8080/application/getAccount?name=handle&age=18
 public String getAccount(String name, int age) {
     return "name = " + name + ", age = " + age;
 }
