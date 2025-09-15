@@ -3051,15 +3051,13 @@ public class Applistener implements ServletContextListener {
 - 本地方法接口
 - 本地方法库
 
-#### 字节码
-
-##### 字节码文件
+#### 字节码文件
 
 一个Java源文件(.java)经过编译器编译之后便会生成一个（或多个，如果一个源文件里面定义了多个类）字节码文件(.class)
 
 字节码文件是一种二进制的类文件，它的内容是JVM的指令
 
-###### 字节码文件的格式
+##### 字节码文件的格式
 
 - 字节码文件格式采用一种类似于C语言结构体的方式进行数据存储，这种结构只有两种数据类型：无符号数和表
     - 无符号数属于基本的数据类型，以u1、u2、u4、u8来分别代表1、2、4、8个字节的无符号数。无符号数可以用来描述数字、索引引用、数量值或按照UTF-8编码构成字符串值
@@ -3074,10 +3072,10 @@ ClassFile {
     u2             constant_pool_count;// 常量池计数器
     cp_info        constant_pool[constant_pool_count-1]; // 常量池表
     u2             access_flags;// 访问标识
-    u2             this_class;// 类索引
-    u2             super_class;// 父类索引
+    u2             this_class;// 类索引，值为常量池的索引（可以理解成数组下标）
+    u2             super_class;// 父类索引，值为常量池的索引（可以理解成数组下标）
     u2             interfaces_count;// 接口计数器
-    u2             interfaces[interfaces_count];// 接口表
+    u2             interfaces[interfaces_count];// 接口集合
     u2             fields_count;// 字段计数器
     field_info     fields[fields_count];// 字段表
     u2             methods_count;// 方法计数器
@@ -3086,6 +3084,8 @@ ClassFile {
     attribute_info attributes[attributes_count];// 属性表（如方法里面的行号表、局部变量表等属性）
 }
 ```
+
+##### 常量池
 
 ###### 全限定名
 
@@ -3122,7 +3122,7 @@ boolean类型用`Z`表示(B被byte类型占用了)
 
 描述方法时，按照先参数列表，后返回值的顺序描述，参数列表按照方法的参数声明顺序放在`()`内，如`int sum(int x, int y)`的描述符为`(I[I) I`
 
-###### 常量池
+###### 常量池表
 
 - 常量池计数器的计数是从1开始的，因此对应的常量池表的长度是[常量池计数器-1]
 
@@ -3169,6 +3169,28 @@ CONSTANT_Methodref_info {
 |CONSTANT_InvokeDynamic|18||
 |CONSTANT_Module|19||
 |CONSTANT_Package|20||
+
+##### 访问标识
+
+|Flag Name|Value|Interpretation|
+|:-|:-|:-|
+|ACC_PUBLIC|0x0001|Declared public; may be accessed from outside its package.|
+|ACC_FINAL|0x0010|Declared final; no subclasses allowed.|
+|ACC_SUPER|0x0020|Treat superclass methods specially when invoked by the invokespecial instruction.|
+|ACC_INTERFACE|0x0200|Is an interface, not a class.|
+|ACC_ABSTRACT|0x0400|Declared abstract; must not be instantiated.|
+|ACC_SYNTHETIC|0x1000|Declared synthetic; not present in the source code.|
+|ACC_ANNOTATION|0x2000|Declared as an annotation interface.|
+|ACC_ENUM|0x4000|Declared as an enum class.|
+|ACC_MODULE|0x8000|Is a module, not a class or interface.|
+
+##### 接口集合
+
+每一个元素的值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Class_info结构的数据
+
+接口表长度为interfaces_count
+
+interfaces[i]的i的范围是`[0,interfaces_count)`，接口表各元素表示的接口顺序（索引从小到大）和对应源代码中实现的接口顺序一样（从左往右）
 
 ##### 字节码指令
 
