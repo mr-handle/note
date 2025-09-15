@@ -3188,9 +3188,77 @@ CONSTANT_Methodref_info {
 
 每一个元素的值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Class_info结构的数据
 
+```c
+CONSTANT_Class_info {
+    u1 tag;
+    u2 name_index;
+}
+```
+
 接口表长度为interfaces_count
 
 interfaces[i]的i的范围是`[0,interfaces_count)`，接口表各元素表示的接口顺序（索引从小到大）和对应源代码中实现的接口顺序一样（从左往右）
+
+##### 字段表
+
+描述接口或类中声明的字段（静态字段和实例字段）
+
+不包含从父类或者实现的接口中继承而来的字段
+
+有可能包含源代码中不存在的字段，如在内部类中为了保持对外部类的访问性，会自动添加指向外部类实例的字段
+
+字段表每个元素都是field_info结构的数据
+
+```c
+field_info {
+    u2             access_flags;// 访问标识
+    u2             name_index; // 字段名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u2             descriptor_index;// 字段描述符索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u2             attributes_count;// 字段属性计数器
+    attribute_info attributes[attributes_count];// 字段属性集合
+}
+```
+
+###### 字段访问标识
+
+|Flag Name|Value|Interpretation|
+|:-|:-|:-|
+|ACC_PUBLIC|0x0001|Declared public; may be accessed from outside its package.|
+|ACC_PRIVATE|0x0002|Declared private; accessible only within the defining class and other classes belonging to the same nest.|
+|ACC_PROTECTED|0x0004|Declared protected; may be accessed within subclasses.|
+|ACC_STATIC|0x0008|Declared static.|
+|ACC_FINAL|0x0010|Declared final; never directly assigned to after object construction.|
+|ACC_VOLATILE|0x0040|Declared volatile; cannot be cached.|
+|ACC_TRANSIENT|0x0080|Declared transient; not written or read by a persistent object manager.|
+|ACC_SYNTHETIC|0x1000|Declared synthetic; not present in the source code.|
+|ACC_ENUM|0x4000|Declared as an element of an enum class.|
+
+###### 字段描述符
+
+描述字段的数据类型
+
+|FieldType term|Type|Interpretation|
+|:-|:-|:-|
+|B|byte|signed byte|
+|C|char|Unicode character code point in the Basic Multilingual Plane, encoded with UTF-16|
+|D|double|double-precision floating-point value|
+|F|float|single-precision floating-point value|
+|I|int|integer|
+|J|long|long integer|
+|L`ClassName;`|reference|  an instance of class ClassName|
+|S|short|signed short|
+|Z|boolean|true or false|
+|`[`|reference|one array dimension|
+
+###### 字段属性
+
+```c
+attribute_info {
+    u2 attribute_name_index;// 属性名索引，，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u4 attribute_length;
+    u1 info[attribute_length];
+}
+```
 
 ##### 字节码指令
 
