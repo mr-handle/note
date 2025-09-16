@@ -3080,8 +3080,8 @@ ClassFile {
     field_info     fields[fields_count];// 字段表
     u2             methods_count;// 方法计数器
     method_info    methods[methods_count];// 方法表
-    u2             attributes_count;// 属性计数器
-    attribute_info attributes[attributes_count];// 属性表（如方法里面的行号表、局部变量表等属性）
+    u2             attributes_count;// （class文件）属性计数器
+    attribute_info attributes[attributes_count];// （class文件）属性表
 }
 ```
 
@@ -3211,11 +3211,11 @@ interfaces[i]的i的范围是`[0,interfaces_count)`，接口表各元素表示�
 
 ```c
 field_info {
-    u2             access_flags;// 访问标识
+    u2             access_flags;// 字段访问标识
     u2             name_index; // 字段名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
     u2             descriptor_index;// 字段描述符索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
     u2             attributes_count;// 字段属性计数器
-    attribute_info attributes[attributes_count];// 字段属性集合
+    attribute_info attributes[attributes_count];// 字段属性集合，具体参考属性表章节笔记
 }
 ```
 
@@ -3250,16 +3250,6 @@ field_info {
 |Z|boolean|true or false|
 |`[`|reference|one array dimension|
 
-###### 字段属性
-
-```c
-attribute_info {
-    u2 attribute_name_index;// 属性名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
-    u4 attribute_length;
-    u1 info[attribute_length];
-}
-```
-
 ##### 方法表
 
 - 只描述当前类或接口中声明的方法，不包括从父类或父接口继承的方法
@@ -3272,11 +3262,11 @@ attribute_info {
 
 ```c
 method_info {
-    u2             access_flags;// 访问标识
+    u2             access_flags;// 方法访问标识
     u2             name_index;// 方法名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
-    u2             descriptor_index;// 描述符索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u2             descriptor_index;// 方法描述符索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
     u2             attributes_count;// 方法属性计数器
-    attribute_info attributes[attributes_count];// 方法属性集合
+    attribute_info attributes[attributes_count];// 方法属性集合，具体参考属性表章节笔记
 }
 ```
 
@@ -3296,6 +3286,88 @@ method_info {
 |ACC_ABSTRACT|0x0400|Declared abstract; no implementation is provided.|
 |ACC_STRICT|0x0800|In a class file whose major version number is at least 46 and at most 60: Declared strictfp.|
 |ACC_SYNTHETIC|0x1000|Declared synthetic; not present in the source code.|
+
+##### 属性表
+
+- 字节码文件、字段表、方法表、方法表的Code属性都可以有自己的属性表
+
+- 字节码文件的属性信息通常被用于Java虚拟机的验证和运行，以及Java程序的调试
+
+- 属性表每个元素都是attribute_info结构的数据
+
+```c
+// 这是通用的属性结构，除了attribute_name_index和attribute_length是都有外
+// 属性表info部分，根据不同属性（名）对应着不同的项
+attribute_info {
+    u2 attribute_name_index;// 属性名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u4 attribute_length;// 属性长度（字节）
+    u1 info[attribute_length];// 属性表，不同属性（名）对应着不同的项
+}
+
+// 这是ConstantValue属性的结构
+ConstantValue_attribute {
+    u2 attribute_name_index;
+    u4 attribute_length;
+    u2 constantvalue_index;
+}
+
+// 这是StackMapTable的结构
+StackMapTable_attribute {
+    u2              attribute_name_index;
+    u4              attribute_length;
+    u2              number_of_entries;
+    stack_map_frame entries[number_of_entries];// 这里的stack_map_frame又是另一种结构
+}
+
+// 这是Code的结构
+Code_attribute {
+    u2 attribute_name_index;// 属性名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u4 attribute_length;// 属性长度（字节）
+    u2 max_stack;// 操作数栈深度最大值
+    u2 max_locals;// 局部变量表最大长度
+    u4 code_length;// 字节码指令长度
+    u1 code[code_length];// 字节码指令（操作码 [操作数]），操作码一般是一个字节，操作数为两个字节（如果有），操作数的值也是常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u2 exception_table_length;// 异常表长度
+    {   u2 start_pc;
+        u2 end_pc;
+        u2 handler_pc;
+        u2 catch_type;
+    } exception_table[exception_table_length];// 异常表
+    u2 attributes_count;// Code属性计数器
+    attribute_info attributes[attributes_count];// Code属性的属性表（集合）
+}
+```
+
+###### 属性（名）
+
+- java21有30种属性（名），每一种属性又对应着不同的属性表结构，如下表
+
+|Attribute|Location|
+|:-|:-|
+|SourceFile|ClassFile|
+|InnerClasses|ClassFile|
+|EnclosingMethod|ClassFile|
+|SourceDebugExtension|ClassFile|
+|BootstrapMethods|ClassFile|
+|Module, ModulePackages, ModuleMainClass|ClassFile|
+|NestHost, NestMembers|ClassFile|
+|Record|ClassFile|
+|PermittedSubclasses|ClassFile|
+|ConstantValue|field_info|
+|Code|method_info|
+|Exceptions|method_info|
+|RuntimeVisibleParameterAnnotations, RuntimeInvisibleParameterAnnotations|method_info|
+|AnnotationDefault|method_info|
+|MethodParameters|method_info|
+|Synthetic|ClassFile, field_info, method_info|
+|Deprecated|ClassFile, field_info, method_info|
+|Signature|ClassFile, field_info, method_info, record_component_info|
+|RuntimeVisibleAnnotations, RuntimeInvisibleAnnotations|ClassFile, field_info, method_info, record_component_info|
+|LineNumberTable|Code|
+|LocalVariableTable|Code|
+|LocalVariableTypeTable|Code|
+|StackMapTable|Code|
+|RuntimeVisibleTypeAnnotations, RuntimeInvisibleTypeAnnotations|ClassFile, field_info, method_info, Code, record_component_info|
 
 ##### 字节码指令
 
