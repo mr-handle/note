@@ -3000,6 +3000,37 @@ public class Applistener implements ServletContextListener {
     必要时将localhost:8080替换成服务器的ip地址
 - 7 关闭Tomcat：找到并运行tomcat根目录/bin/shutdown.bat
 
+### 部署
+
+#### 手动生成jre
+
+```sh
+# 1.打开cmd（权限不够时用管理员身份打开cmd）
+# 2.进入某个目录，生成的jre会在这个目录下
+cd 指定目录
+
+# 3.生成jre
+jlink.exe --module-path jmods --add-modules java.base --output jre
+```
+
+#### 普通springboot发布
+
+- 1.复制jre、可执行jar文档、run.bat（springboot项目看需求创建config文档夹，里面放application.properties配置文档），到同一目录下即可
+- 2.运行run.bat快速启动可执行jar文档
+
+#### 生成可执行文件graalvm
+
+`关闭360`
+
+```sh
+mvn -Pnative native:compile
+
+# 如果报Execution of ..\jdk-xxx\bin\native-image.cmd @target\tmp\native-image-xxxxxxxxxx.args returned non-zero result
+native-image @target\tmp\native-image-xxxxxxx.args
+```
+
+## Java高级
+
 ### JVM
 
 - 类加载器子系统
@@ -4077,38 +4108,11 @@ java -DmyVariable=myValue -jar myApp.jar
 java -Dsun.jnu.encoding=UTF-8 myApp.jar
 ```
 
-### 部署
+## 项目管理工具
 
-#### 手动生成jre
+### Maven
 
-```sh
-# 1.打开cmd（权限不够时用管理员身份打开cmd）
-# 2.进入某个目录，生成的jre会在这个目录下
-cd 指定目录
-
-# 3.生成jre
-jlink.exe --module-path jmods --add-modules java.base --output jre
-```
-
-#### 普通springboot发布
-
-- 1.复制jre、可执行jar文档、run.bat（springboot项目看需求创建config文档夹，里面放application.properties配置文档），到同一目录下即可
-- 2.运行run.bat快速启动可执行jar文档
-
-#### 生成可执行文件graalvm
-
-`关闭360`
-
-```sh
-mvn -Pnative native:compile
-
-# 如果报Execution of ..\jdk-xxx\bin\native-image.cmd @target\tmp\native-image-xxxxxxxxxx.args returned non-zero result
-native-image @target\tmp\native-image-xxxxxxx.args
-```
-
-## Maven
-
-### 安装Maven
+#### 安装Maven
 
 - 1.添加环境变量：MAVEN_HOME=`maven根目录`
 
@@ -4147,7 +4151,7 @@ native-image @target\tmp\native-image-xxxxxxx.args
 </profiles>
 ```
 
-### Idea配置Maven
+#### Idea配置Maven
 
 - File->Settings->Build,Execution,Deployment->Build Tools->Maven
     - Maven home path，指定Maven家目录
@@ -4156,7 +4160,7 @@ native-image @target\tmp\native-image-xxxxxxx.args
     - 点击Runner子选项，勾上Skip Tests
     - Importing，Automatically download，都不要勾选，如果需要看源码可以逐个手动下载
 
-### scope
+#### scope
 
 | 依赖范围 | 编译有效 | 测试有效 | 运行有效 | 打包有效 | 例子 |
 |:- |:- |:- |:- |:- |:- |
@@ -4166,7 +4170,7 @@ native-image @target\tmp\native-image-xxxxxxx.args
 | runtime | false | true | true | true | 数据库驱动 |
 | system | true | true | false | false | 本地maven仓库之外的类库，基本用不到 |
 
-### 依赖的传递性
+#### 依赖的传递性
 
 - maven依赖默认是有传递性的
 
@@ -4184,7 +4188,7 @@ native-image @target\tmp\native-image-xxxxxxx.args
 </dependencies>
 ```
 
-### Maven的profile
+#### Maven的profile
 
 Maven配置文件允许我们配置不同环境的构建设置，例如开发、测试和生产
 
@@ -4216,7 +4220,7 @@ Maven配置文件允许我们配置不同环境的构建设置，例如开发、
 mvn clean install -P production
 ```
 
-### maven生命周期
+#### maven生命周期
 
 maven的生命周期有三类：clean、default、site，它们相互独立
 
@@ -4228,7 +4232,7 @@ mvn 阶段 [阶段2...阶段n]
 mvn clean install
 ```
 
-#### clean生命周期
+##### clean生命周期
 
 共包含3个阶段：
 
@@ -4236,7 +4240,7 @@ mvn clean install
 - clean
 - post-clean
 
-#### default生命周期（也成为构建生命周期）
+##### default生命周期（也成为构建生命周期）
 
 default生命周期是在没有任何关联插件的情况下定义的，是Maven的主要生命周期，用于构建应用程序，共包含23个阶段，下面列出常见的几个阶段：
 
@@ -4248,7 +4252,7 @@ default生命周期是在没有任何关联插件的情况下定义的，是Mave
 - install，将package安装到maven的本地仓库
 - deploy，将package上传到远程仓库中
 
-#### site生命周期
+##### site生命周期
 
 site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段：
 
@@ -4257,7 +4261,7 @@ site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段
 - post-site，执行一些需要在生成站点文档之后完成的工作，并且为部署做准备
 - site-deploy，将生成的站点文档部署到特定的服务器上
 
-### maven插件
+#### maven插件
 
 - Maven本质上是⼀个插件框架，它的核⼼并不执⾏任何具体的构建任务，所有这些任务都交给插件来完成
 
@@ -4267,7 +4271,7 @@ site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段
 
 - 用户可以通过命令行直接运行指定插件的目标，也可以将插件目标挂载到构建生命周期，随着生命周期运行
 
-#### 调⽤Maven插件⽬标
+##### 调⽤Maven插件⽬标
 
 - 将插件⽬标与⽣命周期阶段（lifecycle phase）绑定
 
@@ -4291,7 +4295,7 @@ site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段
 mvn spring-boot:repackage
 ```
 
-### 创建Maven继承/聚合工程
+#### 创建Maven继承/聚合工程
 
 继承：在父工程中统一声明版本信息，是一种依赖管理的版本简化
 <br/>
@@ -4365,7 +4369,7 @@ mvn spring-boot:repackage
 </project>
 ```
 
-### 打包时跳过测试
+#### 打包时跳过测试
 
 - 1.命令方式
 
@@ -4391,7 +4395,7 @@ mvn clean package -Dmaven.test.skip=true
 </build>
 ```
 
-### 安装远程仓库（私服）
+#### 安装远程仓库（私服）
 
 - 解压安装包 `nexus-3.33.0-01-win64.zip`
 
@@ -4517,7 +4521,7 @@ mvn clean package -Dmaven.test.skip=true
 mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -DgroupId=com.microsoft.sqlserver -DartifactId=sqljdbc -Dversion=4.1.5605
 ```
 
-### pom.xml 文档设置
+#### pom.xml 文档设置
 
 - 设置基本信息
   
@@ -4596,15 +4600,15 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
   </plugin>
   ```
 
-### 依赖冲突解决
+#### 依赖冲突解决
 
 - 先定义先使用
 - 路径最近原则（直接声明使用）
 - 手动排除依赖
 
-### maven 常见问题及解决方案
+#### maven 常见问题及解决方案
 
-#### 1. maven 控制台日志乱码
+##### 1. maven 控制台日志乱码
 
 - 查看 maven 默认编码：`mvn -v`
 
@@ -4612,13 +4616,13 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
   
     ![设置maven默认编码](/images/设置maven默认编码.png "设置maven默认编码")
 
-## Maven Daemon
+### Maven Daemon
 
 - 官网：<https://github.com/apache/maven-mvnd>
 
 - 可以看作是maven的增强版，内嵌了maven，只需将maven的命令mvn改成mvnd即可
 
-### 安装Maven Daemon
+#### 安装Maven Daemon
 
 - 1.下载zip压缩包
 
@@ -4632,7 +4636,7 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
 
 - 6.测试`mvnd -v`
 
-### Idea配置Maven Daemon
+#### Idea配置Maven Daemon
 
 - IntelliJ IDEA 2024.3 (Community Edition)还没支持Maven Daemon，通过Maven Helper插件来使用
 
@@ -4642,11 +4646,11 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
 
 - 使用：右键项目名->Run Maven选择对应指令执行即可
 
-## Gradle
+### Gradle
 
 - 官网：<https://gradle.org/>
 
-### 安装Gradle
+#### 安装Gradle
 
 - 参考Spring Boot支持的Gradle版本
 
@@ -4696,7 +4700,7 @@ allprojects {
 
 - 测试：`gradle -v`
 
-### IDEA配置Gradle
+#### IDEA配置Gradle
 
 - Settings->Build,Execution,Deployment->Gradle
     - Gradle user home，指定一个路径作为gradle的本地仓，gradle和maven的结构不一样，不要设置为maven本地仓库的路径
@@ -4705,7 +4709,7 @@ allprojects {
     - Distribution，设置为Local installation，并选择本地安装的gradle家目录
     - Gradle JVM，设置为本地安装的JDK即可
 
-### Gradle项目目录结构
+#### Gradle项目目录结构
 
 - Gradle项目默认目录结构和Maven项目的一致，都是基于约定大于配置
 
@@ -4735,9 +4739,9 @@ allprojects {
     - build.gradle，构建脚本，类似maven的pom.xml
     - settings.gradle，配置文件，定义项目和子项目名称信息，一个项目只能有一个此文件（子项目是没有这个文件的）
 
-### Gradle依赖
+#### Gradle依赖
 
-#### Gradle依赖类型
+##### Gradle依赖类型
 
 - implementation不支持依赖传递，api支持依赖传递
 - 除了模块间依赖引用其它情况优先使用implementation
@@ -4754,7 +4758,7 @@ allprojects {
 |api|Java Library Plugin offers two additional configurations,for dependencies that are required for compiling both the module and any modules that depend on it，java-library插件提供，支持依赖传递，编译和运行期需要||
 |compileOnlyApi|Java Library Plugin offers two additional configurations,for dependencies that are required for compiling both the module and any modules that depend on it，java-library插件提供，被依赖模块和依赖模块，编译期需要，运行期不需要||
 
-#### Gradle依赖写法
+##### Gradle依赖写法
 
 - 直接依赖
 
@@ -4801,7 +4805,7 @@ dependencies {
 }
 ```
 
-### Gradle依赖冲突解决
+#### Gradle依赖冲突解决
 
 - 默认采用最新版本（官方默认的方式就够了）
 
@@ -4854,9 +4858,9 @@ configuration.all() {
 }
 ```
 
-### Gradle插件
+#### Gradle插件
 
-#### 脚本插件
+##### 脚本插件
 
 - 本质是一个脚本文件，它是模块化的基础，可以通过它来做依赖的版本管控
 
@@ -4866,7 +4870,7 @@ configuration.all() {
 apply from: "xxx.gradle"
 ```
 
-#### 内部插件
+##### 内部插件
 
 - 对象插件，就是实现了org.gradle.api.Plugin接口的插件，每个Java Gradle插件都有一个plugin id
 
@@ -4885,7 +4889,7 @@ apply {
 }
 ```
 
-#### 第三方插件
+##### 第三方插件
 
 ```groovy
 // 这种写法必须保证插件已经被托管了，否则要用传统方式
@@ -4911,7 +4915,7 @@ buildscript {
 apply plugin: "io.spring.dependency-management"
 ```
 
-#### 用户自定义插件
+##### 用户自定义插件
 
 - 创建buildSrc目录，它是Gradle默认的插件目录
     - 新建gradle模块，模块名为buildSrc
@@ -4929,7 +4933,7 @@ class MyPlugin implements Plugin<Project> {
 apply plugin: MyPlugin
 ```
 
-### Gradle常用指令
+#### Gradle常用指令
 
 - gradle指令要在含有build.gradle的目录执行
 
@@ -4941,9 +4945,9 @@ apply plugin: MyPlugin
 |gradle build|构建项目，默认会执行gradle classes、gradle test，以及打包|
 |gradle build -x test|跳过测试构建项目|
 
-### Gradle单项目
+#### Gradle单项目
 
-#### 创建Gradle项目
+##### 创建Gradle项目
 
 - Idea新建项目选择Gradle进行创建
 
@@ -4953,7 +4957,7 @@ apply plugin: MyPlugin
 gradle init
 ```
 
-#### settings.gradle
+##### settings.gradle
 
 - Settings file to define build name and subprojects
 
@@ -4961,7 +4965,7 @@ gradle init
 rootProject.name = 'hello-world'
 ```
 
-#### build.gradle
+##### build.gradle
 
 - Build script of the project
 
@@ -4985,7 +4989,7 @@ dependencies {
 }
 ```
 
-### Gradle聚合项目
+#### Gradle聚合项目
 
 - 新建gradle项目，删掉src目录
 
@@ -5050,7 +5054,7 @@ public class ApplicationTest {
 }
 ```
 
-### 发布Maven BOM
+#### 发布Maven BOM
 
 ```groovy
 plugins {
@@ -5083,7 +5087,7 @@ publishing {
 }
 ```
 
-### 使用Maven BOM
+#### 使用Maven BOM
 
 ```groovy
 plugins {
@@ -5109,11 +5113,11 @@ dependencies {
 }
 ```
 
-### 打包部署
+#### 打包部署
 
-#### 非模块打包
+##### 非模块打包
 
-##### 生成最小的jre
+###### 生成最小的jre
 
 ```groovy
 // 非模块打包，不能有module-info.java文件
@@ -5137,7 +5141,7 @@ runtime {
 }
 ```
 
-##### 打包成exe
+###### 打包成exe
 
 - 1.build.gradle
 
@@ -5162,7 +5166,7 @@ launch4j {
 
 - 3.build/launch4j目录下就是打包生成的依赖和exe文件
 
-##### jre和exe整合
+###### jre和exe整合
 
 ```groovy
 plugins {
@@ -5208,7 +5212,7 @@ tasks.copyJre.dependsOn('jre')
 tasks.createExe.dependsOn('copyJre')
 ```
 
-#### 模块打包
+##### 模块打包
 
 执行jlink任务，最终会在build/image/bin目录下生成项目名对应的文件和bat文件，双击该bat文件即可运行程序
 
@@ -5257,7 +5261,7 @@ jlink {
 }
 ```
 
-## Groovy
+#### Groovy
 
 - 官网：<https://groovy-lang.org/>
 
@@ -5281,7 +5285,7 @@ jlink {
 
 - Groovy基本类型也是对象，可以直接调用对象对应的方法
 
-### Groovy属性
+##### Groovy属性
 
 - 属性赋值
     - 对象.属性名=属性值
@@ -5293,14 +5297,14 @@ jlink {
     - 对象的getter方法
 - 对类的属性的操作本质还是通过getter、setter方法完成的
 
-### Groovy方法
+##### Groovy方法
 
 - 方法声明
     - 参数类型、返回值类型可以省略
     - return关键字可以省略，默认使用方法最后一句的返回值作为方法的返回值
 - 方法调用，在不导致二义性的时候，`()`可以省略
 
-### Groovy字符串
+##### Groovy字符串
 
 - 单引号，作为字符串常量使用，没有运算能力
 
@@ -14598,16 +14602,22 @@ java -jar lombok.jar
 |Ctrl + Alt + M|提取代码为作为方法|
 |Ctrl + Alt + C|修改变量作用域|
 
-## Yaml
+## 格式文件
 
-### 语法
+### Yaml
 
 - `key:空格value`，标识一对键值对
+
 - 键值对的属性和值都是大小写敏感的
+
 - 以缩进的空格数来控制层级关系
+
 - 只要是左对齐的一列数据，都是同一层级
+
 - 字符串默认不用添加双/单引号
+
     - 英文双引号不会转义字符串里面的特殊字符，
+
     - 英文单引号会转义字符串里面的特殊字符，会把特殊字符转义成普通的字符
 
 ```yaml
@@ -14618,7 +14628,7 @@ line: "first \n second"
 line: 'first \n second'
 ```
 
-## Markdown
+### Markdown
 
 ```md
 # 图片
@@ -15346,7 +15356,7 @@ vim就是vi的增强版
 
 - 查找，`/关键字`，按回车开始查找，按`n`查找下一个
 
-## Ubuntu
+### Ubuntu
 
 - 查看系统版本信息
 
