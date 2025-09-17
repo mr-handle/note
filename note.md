@@ -3326,7 +3326,7 @@ Code_attribute {
     u2 max_stack;// 操作数栈深度最大值
     u2 max_locals;// 局部变量表最大长度
     u4 code_length;// 字节码指令长度
-    u1 code[code_length];// 字节码指令（操作码 [操作数]），操作码一般是一个字节，操作数为两个字节（如果有），操作数的值也是常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u1 code[code_length];// 字节码指令（操作码 [操作数]）集合，操作码一般是一个字节，操作数为两个字节（如果有），操作数的值也是常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
     u2 exception_table_length;// 异常表长度
     {   u2 start_pc;
         u2 end_pc;
@@ -3334,7 +3334,36 @@ Code_attribute {
         u2 catch_type;
     } exception_table[exception_table_length];// 异常表
     u2 attributes_count;// Code属性计数器
-    attribute_info attributes[attributes_count];// Code属性的属性表（集合）
+    attribute_info attributes[attributes_count];// Code属性的属性表（集合），例如LineNumberTable、LocalVariableTable
+}
+// 行号表
+LineNumberTable_attribute {
+    u2 attribute_name_index;// 属性名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u4 attribute_length;// 属性长度（字节）
+    u2 line_number_table_length;// 行号表长度
+    {   u2 start_pc;// 字节码指令集合（code[code_length]）的开始索引，源文件一行代码对应多条字节码指令，每条指令占1到多个字节
+        u2 line_number; // 源文件代码行号
+    } line_number_table[line_number_table_length];// 行号表集合
+}
+
+// 局部变量表
+LocalVariableTable_attribute {
+    u2 attribute_name_index;// 属性名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u4 attribute_length;// 属性长度（字节）
+    u2 local_variable_table_length;// 局部变量表长度
+    {   u2 start_pc;// 变量的作用域在字节码指令集合（code[code_length]）的开始索引
+        u2 length;// 变量的作用域长度（字节），变量的作用域为code[start_pc]到code[start_pc + length -1]
+        u2 name_index; // 变量名，即源代码中定义的变量名
+        u2 descriptor_index;// 变量的描述符（指明变量的类型）索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+        u2 index;// 变量在局部变量表集合中的索引，通常从方法形参开始，按照变量的定义顺序索引从0依次递增（非静态方法索引0位置是this变量，其它变量索引从1开始）
+    } local_variable_table[local_variable_table_length]; // 局部变量表集合
+}
+
+// 源文件
+SourceFile_attribute {
+    u2 attribute_name_index;// 属性名索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
+    u4 attribute_length;// 属性长度，官方指定必须是2
+    u2 sourcefile_index;// 源文件名称索引，值为常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
 }
 ```
 
