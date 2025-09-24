@@ -3520,6 +3520,59 @@ Java虚拟机的指令由一个字节长度的、代表着某种特定操作含�
 |xcmpl|x=(f,d)，如果遇到NaN值，结果为-1|
 |xcmpg|x=(f,d)，如果遇到NaN值，结果为1|
 
+##### 类型转换指令
+
+###### 自动类型转换
+
+将两种不同的数值类型（基本数据类型）进行相互转换
+
+一般用于实现代码中的显式类型转换
+
+或者用来处理字节码指令集中数据类型相关指令无法与数据类型一一对应的问题（如byte转long）
+
+从byte、short、char到int实际上是没有相关的指令的，直接将它们看成是int了
+
+简化为：int->long->float->double
+
+|操作码助记符前缀|描述|
+|:-|:-|
+|i2l|int转为long|
+|i2f|int转为float，可能损失精度|
+|i2d|int转为double|
+|l2f|long转为float，可能损失精度|
+|l2d|long转为double，可能损失精度|
+|f2d|float转为double|
+
+###### 强制类型转换
+
+可能会发生上限溢出、下限溢出和精度丢失的问题
+
+当float转为byte时是没有相关指令的，生成f2i和i2b两条指令来完成，long转为byte同理也是生成两条指令
+
+- 当将一个浮点值转为整型（int或long）时
+    - 如果浮点值为NaN，则转换结果为0
+    - 如果浮点值不是无穷大，则向零舍入取整，获得整数v
+        - 如果v在int或long的范围内，则转换结果是v
+        - 如果v不在int或long的范围内，则根据v的符号转为int或long能表示的最大正负值
+    - 如果浮点值是无穷大，则根据其符号转为int或long能表示的最大正负值
+
+- 当将一个double转为float时
+    - 如果转换结果的绝对值太小无法用float表示，将返回float类型的正负零
+    - 如果转换结果的绝对值太大无法用float表示，将返回float类型的正负无穷大
+    - 如果是double类型的NaN，则转为float类型的NaN
+
+|操作码助记符前缀|描述|
+|:-|:-|
+|i2b|int转为byte|
+|i2s|int转为short|
+|i2c|int转为char|
+|l2i|long转为int|
+|f2i|float转为int|
+|f2l|float转为long|
+|d2i|double转为int|
+|d2l|double转为long|
+|d2f|double转为float|
+
 ##### 字节码解析工具
 
 - 直接用vscode的16进制编辑器打开看
