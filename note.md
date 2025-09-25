@@ -3622,6 +3622,23 @@ b表示byte和boolean
 |invokestatic|用于调用类静态方法，也是静态绑定的|
 |invokedynamic|用于调用动态绑定的方法，jdk1.7后新增的指令。在运行时解析调用点限定符所引用的方法，并执行该方法。前4调指令的分派逻辑固化在JVM内部，而此指令的分派逻辑由用户设定的引导方法决定|
 
+###### 方法返回指令
+
+将当前方法操作数栈栈顶元素弹出，并将这个元素压入调用者方法的操作数栈中
+
+如果当前方法是synchronized方法，还会执行一个隐含的monitorexit指令，推出临界区
+
+最后，会丢弃当前方法的整个栈帧，恢复调用者方法的栈帧，并将控制权转交给调用者方法
+
+|指令（助记符）|返回类型|
+|:-|:-|
+|return|void|
+|ireturn|int（byte,short,char,boolean）|
+|lreturn|long|
+|freturn|float|
+|dreturn|double|
+|areturn|reference|
+
 ##### 字节码解析工具
 
 - 直接用vscode的16进制编辑器打开看
