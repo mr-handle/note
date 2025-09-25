@@ -3593,6 +3593,16 @@ Java虚拟机的指令由一个字节长度的、代表着某种特定操作含�
 |getfield index|访问类实例字段，index为指向常量池的Fieldref索引，作用是获取Fieldref指定的对象或值，并压入操作数栈|
 |putfield index|访问类实例字段，index为指向常量池的Fieldref索引，作用是设置Fieldref指定的对象或值，并将类的引用和字段要设置的值弹出操作数栈|
 
+###### 数组操作指令
+
+b表示byte和boolean
+
+|操作码助记符前缀|描述|
+|:-|:-|
+|xaload|x=(b,s,i,l,f,d,c,a)，把栈顶数组索引arrayIndex和栈顶顺位第2个元素即数组引用arrayReference都出栈，将array[arrayIndex]入栈|
+|xastore|x=(b,s,i,l,f,d,c,a)，把栈顶的数值v，栈顶顺位第2个元素即数组索引arrayIndex和栈顶顺位第3个元素即数组引用arrayReference都出栈，并将v赋给array[arrayIndex]|
+|arraylength|把栈顶的数组引用出栈，获取数组长度并压入操作数栈|
+
 ##### 字节码解析工具
 
 - 直接用vscode的16进制编辑器打开看
