@@ -3610,6 +3610,18 @@ b表示byte和boolean
 |instanceof constant_pool_index|constant_pool_index为指向CONSTANT_Class结构的常量池索引，判断给定对象是否为某个类的实例，将判断结果压入操作数栈|
 |checkcast constant_pool_index|constant_pool_index为指向CONSTANT_Class结构的常量池索引，检查是否可以类型强转，如果可以，checkcast指令不改变操作数栈，如果不可以，抛出ClassCastException|
 
+##### 方法指令
+
+###### 方法调用指令
+
+|指令（助记符）|描述|
+|:-|:-|
+|invokeinterface|用于调用接口方法，在运行时搜索由特定对象所实现的这个接口方法，并找出适合的方法进行调用，如：IUserService userService = new UserServiceImpl(); userService.getUserById(userId);getUserById指向的是IUserService中的方法，就会用这个指令|
+|invokevirtual|用于调用对象的实例方法，根据对象的实际类型进行分派（虚方法分派），支持多态。如UserServiceImpl userService = new UserServiceImpl(); userService.getUserById(userId);getUserById指向的是UserServiceImpl中的方法，这个方法可能是被子类重写过的，就会用这个指令|
+|invokespecial|用于调用一些需要特殊处理的实例方法，包括构造器方法（<init>）、私有方法和父类方法，这些方法都是静态类型绑定的（这些方法不存在重写，具有确定性），不会在调用时动态派发|
+|invokestatic|用于调用类静态方法，也是静态绑定的|
+|invokedynamic|用于调用动态绑定的方法，jdk1.7后新增的指令。在运行时解析调用点限定符所引用的方法，并执行该方法。前4调指令的分派逻辑固化在JVM内部，而此指令的分派逻辑由用户设定的引导方法决定|
+
 ##### 字节码解析工具
 
 - 直接用vscode的16进制编辑器打开看
