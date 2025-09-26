@@ -3359,10 +3359,10 @@ Code_attribute {
     u4 code_length;// 字节码指令长度
     u1 code[code_length];// 字节码指令（操作码 [操作数]）集合，操作码一般是一个字节，操作数为两个字节（如果有），操作数的值也是常量池的索引（可以理解成数组下标），指向的是CONSTANT_Utf8_info结构的数据
     u2 exception_table_length;// 异常表长度
-    {   u2 start_pc;
-        u2 end_pc;
-        u2 handler_pc;
-        u2 catch_type;
+    {   u2 start_pc;// 字节码指令集合（code[code_length]）的开始索引（try块开始位置）
+        u2 end_pc;// 字节码指令集合（code[code_length]）的结束索引（try块结束位置）
+        u2 handler_pc;// 字节码指令集合（code[code_length]）的catch异常处理索引（catch块开始位置）
+        u2 catch_type;// catch的异常类型
     } exception_table[exception_table_length];// 异常表
     u2 attributes_count;// Code属性计数器
     attribute_info attributes[attributes_count];// Code属性的属性表（集合），例如LineNumberTable、LocalVariableTable
@@ -3730,6 +3730,32 @@ jsr、jsr_w和ret主要用于try-finally语句，由于try-finally已经用异�
 |jsr|接收2个字节的操作数，并将jsr下一条指令地址压入操作数栈|
 |jsr_w|接收4个字节的操作数，并将jsr下一条指令地址压入操作数栈|
 |ret|返回到指定的局部变量所给出的指令位置（一般与jsr、jsr_w联合使用）|
+
+##### 异常处理指令
+
+###### 抛出异常指令
+
+除了显式抛出异常外，JVM规范还规定了许多运行时异常会在其它指令检测到异常情况时自动抛出
+
+|指令（助记符）|描述|
+|:-|:-|
+|athrow|显式抛出异常|
+
+###### 异常处理与异常表
+
+在JVM中，处理异常（catch语句）不是由字节码指令来实现的（早期使用jsr、jsr_w、ret指令），而是用异常表来完成的
+
+如果一个方法定义了try-catch或try-finally的异常处理，就会创建一个异常表
+
+- 异常表保存了每个异常的处理信息，如
+    - 起始位置
+    - 结束位置
+    - 程序计数器记录的代码处理的偏移地址
+    - 被捕获的异常类在常量池中的索引
+
+当一个异常被抛出时，JVM会在当前的方法里找一个匹配的处理，如果没有找到，这个方法会强制结束并弹出当前栈帧，并且异常会重新抛给上层的调用者方法（将异常实例压入调用者方法的操作数栈上）。如果在所有栈帧弹出前仍然没有找到合适的异常处理，这个线程将终止。如果这个异常在最后一个非守护线程里抛出（比如main线程），将会导致JVM自己终止
+
+如果异常处理最终匹配了所有异常类型，代码就会继续执行。如果方法没有抛出异常，也会执行finally块，在return前，跳到finally块执行
 
 ##### 字节码解析工具
 
