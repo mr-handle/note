@@ -3082,11 +3082,130 @@ native-image @target\tmp\native-image-xxxxxxx.args
 - 本地方法接口
 - 本地方法库
 
+#### 类加载器
+
+类加载器是JVM执行类加载机制的前提
+
+类加载器的作用：类加载器是Java的核心组件，所有的类都是由类加载器进行加载的，类加载器负责通过各种方式将类的二进制数据流读入JVM，转为一个与目标类对应的Class实例，然后交给JVM进行链接、初始化等 操作。
+
+因此，类加载器在整个加载阶段，只能影响到类的加载，而无法改变类的链接和初始化行为。
+
+至于加载的类是否可以运行，则由执行引擎决定
+
+- 类加载的分类：
+    - 显式加载：
+        - 使用Class.forName("全限定类名")
+        - 使用xxx.getClassLoader().loadClass("全限定类名")
+        - 使用ClassLoader.getSystemClassLoader().loadClass("全限定类名")
+    - 隐式加载：不在代码中直接调用类加载器的方法加载类，而是通过JVM自动加载到内存中
+        - 在加载某个类的字节码文件时，该类的字节码文件引用了另外一个类的对象，此时额外引用的类将通过JVM自动加载到内存中
+
+- 类的唯一性：
+    - 对于任意一个类，都需要由加载它的类加载器和这个类本身一同确认其在JVM中的唯一性
+    - 每一个类加载器，都拥有一个独立的类名称空间：比较两个类是否相等，只有在这两个类是同一个类加载器加载的前提下才有意义。
+    - 即使这两个类源自同一个字节码文件，被同一个虚拟机加载，只要加载它们的类加载器不同，这两个类就必定不相等
+
+- 命名空间
+    - 每个类加载器都有自己的命名空间，命名空间有该加载器及所有的父加载器所加载的类组成
+    - 在同一个命名空间中，不会出现全限定类名相同的两个类
+    - 在不同的命名空间中，可能出现全限定类名相同的两个类
+    - 在大型应用中，往往借助这一特性来运行同一个类的不同版本
+
+- 类加载机制的三个基本特征
+    - 双亲委派机制。但不是所有类加载都遵循这个机制，有的时候，引导类加载器所加载的类型，是可能要加载用户代码的，如JDK内部的ServiceProvider/ServiceLoader机制，用户可以在标准API框架上，提供自己的实现，JDK也需要提供些默认的实现。例如，JNDI、JDBC、文件系统、Cipher等很多方面，都是利用的这种机制，这种情况就不会用双亲委派机制去加载，而是利用上下文加载器
+    - 可见性，子类加载器可以访问父类加载器加载的类型，但是反过来是不允许的。不然，因为缺少必要的隔离，我们就没办法利用类加载器去实现容器的逻辑
+    - 单一性，父加载器加载过的类型，就不会在子加载器中重复加载。但是，“兄弟”类加载器间，同一类型仍然可以被加载多次，因为互相并不可见
+
+##### 类加载器的分类
+
+分为引导类加载器和自定义类加载器两种
+
+JVM规范将所有派生于抽象类ClassLoader的类加载器都划分为自定义类加载器
+
+除了引导类加载器外，自定义类加载器都应该有自己的“父类”加载器（实际上并非继承关系，而是包含着“父类”加载器的引用）
+
+##### 引导类加载器
+
+这个类加载器是用C/C++实现的，嵌套在JVM内部，并不继承java.lang.ClassLoader，没有父加载器
+
+用来加载Java的核心库（rt.jar或sun.boot.class.path路径下的内容，如java、javax、sun等开头的类），提供JVM自身需要的类
+
+加载扩展类加载器和系统类加载器，并指定为它们的父加载器
+
+##### 扩展类加载器
+
+Java语言编写，是sun.misc.Launcher的内部类ExtClassLoader，间接继承于ClassLoader
+
+父类加载器为引导类加载器
+
+加载`java.ext.dirs`系统属性指定的目录中的类库，或者`JDK家目录/jre/lib/ext`中的类库。如果用户创建的jar放在此目录下，也会由扩展类加载器加载
+
+##### 系统类加载器
+
+Java语言编写，是sun.misc.Launcher的内部类AppClassLoader，间接继承于ClassLoader
+
+父类加载器为扩展类加载器
+
+加载环境变量classpath或系统属性`java.class.path`指定路径下的类库
+
+我们的应用程序的类加载器默认是系统类加载器
+
+是用户自定义的类加载器的默认父类加载器
+
+通过ClassLoader的getSystemClassLoader()方法可以获取到该类加载器
+
+##### 自定义类加载器
+
+在日常开发中，类的加载几乎是由上述三种类加载器想回配合执行的。必要时，还可以自定义类加载器
+
+自定义类加载器要继承ClassLoader
+
+自定义类加载器可以实现类库的动态加载，加载源可以是本地jar包，也可以是网络上的远程资源
+
+自定义类加载器还可以实现绝妙的插件机制，如OSGI组件框架，Eclipse的插件机制。其为应用程序提供了一种动态增加新功能的机制，这种机制无需重新打包发布应用程序就能实现
+
+同时，自定义类加载器能够实现应用隔离，如Tomcat、Spring等中间件和组件框架都在内部实现了自定义类加载器，并通过它们隔离不同的组件模块
+
+##### 获取类加载器的途径
+
+```java
+// 通过某个类的Class实例获取类加载器
+clazz.getClassLoader()
+
+// 获取当前线程上下文的类加载器，默认情况下它就是系统类加载器
+Thread.currentThread().getContextClassLoader()
+
+// 获取系统类加载器
+ClassLoader.getSystemClassLoader()
+
+// jdk21
+// jdk.internal.loader.ClassLoaders$AppClassLoader
+ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+// jdk.internal.loader.ClassLoaders$PlatformClassLoader
+ClassLoader extClassLoader = systemClassLoader.getParent();
+// null
+ClassLoader bootstrapClassLoader = extClassLoader.getParent();
+```
+
+数组类的Class对象，不是由类加载器创建的，而是在运行期间JVM根据需要自动创建的
+
+对于数组类的类加载器来说，是通过clazz.getClassLoader()返回的，与数组的元素类型的加载器是一样的
+
+如果数组当中的元素类型是基本数据类型，这个数组类是没有类加载器的
+
+```java
+UserVo[] arr = new UserVo[5];
+// class [Lcom.handle.demo.vo.UserVo;
+System.out.println(arr.getClass());
+// jdk.internal.loader.ClassLoaders$AppClassLoader
+System.out.println(arr.getClass().getClassLoader());
+```
+
 #### 类的生命周期
 
 在Java中的数据类型分为基本数据类型和引用数据类型
 
-基本数据类型有JVM预先定义，引用数据类型则需要进行类的加载
+基本数据类型由JVM预先定义，引用数据类型则需要进行类的加载
 
 类的生命周期包括如下7个阶段
 
@@ -3288,7 +3407,7 @@ public interface ClinitService {
 
 - 类的卸载
     - 引导类加载器加载的类型在整个运行期间是不可能被卸载的
-    - 被扩展类加载器和应用类加载器加载的类型在运行期间不太可能被卸载，因为扩展类加载器的实例或应用类加载器的实例基本上在整个运行期间总能直接或间接访问得到，它们不可达的可能性极小
+    - 被扩展类加载器和系统类加载器加载的类型在运行期间不太可能被卸载，因为扩展类加载器的实例或系统类加载器的实例基本上在整个运行期间总能直接或间接访问得到，它们不可达的可能性极小
     - 被开发人员自定义的类加载器的实例加载的类型只有在很简单的上下文环境中才能被卸载，而且一般还要借助于强制调用虚拟机的垃圾收集功能才可以做到
     - 可以预想，复杂点的应用场景中（比如开发人员自定义类加载器实例的时候采用缓存的策略以提高系统性能），被加载的类型在运行期间是几乎不可能被卸载的（至少卸载的时间是不确定的）
     - 综上，一个已经加载的类型被卸载的几率很小，至少被卸载的时间是不确定的。因此，开发人员在开发的时候，不应该在对虚拟机的类型卸载做任何假设的前提下，来实现系统中的特定功能
@@ -15993,6 +16112,43 @@ hosts文件里可建立许多常用域名与其对应IP的映射。当用户在�
 # SHA512可以换成别的hash方式，具体看校验的是什么码就用什么方式
 certutil -hashfile filename SHA512
 ```
+
+## 中州韵输入法
+
+### 扩展现有词汇
+
+- 1.新建文件`luna_pinyin_simp.custom.yaml`，加入如下内容
+
+```yaml
+patch:
+    translator/dictionary: luna_pinyin.extension
+```
+
+- 2.新建文件`luna_pinyin.extension.dict.yaml`，在文件末尾追加词条
+
+```yaml
+# Rime dictionary
+# encoding: utf-8
+
+# 表示yaml文件开始
+---
+name: luna_pinyin.extension
+version: "2025.09.29"
+sort: by_weight
+use_preset_vocabulary: true
+# 從 luna_pinyin.dict.yaml 導入包含單字的碼表
+import_tables:
+  - luna_pinyin
+# 表示yaml文件结束
+...
+
+# table begins
+# 在下面添加自定義的詞條
+垌 dong
+㘃 re
+```
+
+- 3.将这两个文件放到用户文件夹下，然后重新部署即可
 
 ## 算法篇
 
