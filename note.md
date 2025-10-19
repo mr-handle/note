@@ -16072,6 +16072,176 @@ vim就是vi的增强版
 lsb_release -a
 ```
 
+### Arch
+
+#### 安装教程
+
+- 终端键盘布局和字体
+
+```sh
+# 列出可选的键盘布局
+localectl list-keymaps
+
+# 设置键盘布局为美式键盘（默认）
+loadkeys us
+
+# 分辨率为1080p的屏幕，建议选择字体 ter-122b，分辨率更高的屏幕，可以在 ter-124b，ter-128b，ter-132b 中选择一个, 默认lat9w-16
+setfont lat9w-16
+```
+
+- 创建分区
+
+```sh
+# 列出设备和分区信息，记住要安装arc linux系统的设备，一般通过容量判断比较直观
+fdisk -l
+
+# 选择要分区的设备
+fdisk /dev/the_disk_to_be_partitioned
+
+# 首先输入g创建 GPT 分区表
+g 
+
+# 随后输入n创建新的分区
+n
+
+# 然后根据终端提示，输入分区编号，然后enter
+# 然后根据终端提示，输入第一扇区，这一步保持默认，直接enter
+# 然后根据终端提示，指定分区大小，+512M表示创建512M的分区
+# 然后输入t改变分区类型，根据提示输入类型名称或者代码
+t
+
+# 依次创建efi分区（512M），类型为EFI System；swap分区（和内存同样的大小），类型为linux swap；/分区（设备容量剩余多少就设置多少），类型为linux filesystem
+```
+
+- 格式化分区
+
+```sh
+# 格式化efi系统分区为fat32
+mkfs.fat -F 32 /dev/efi_system_partition
+
+# 格式化swap分区
+mkswap /dev/swap_partition
+
+# 格式化/分区为ext4
+mkfs.ext4 /dev/root_partition
+```
+
+- 挂载分区
+
+```sh
+# 要先挂载跟分区
+mount /dev/root_partition /mnt
+
+# 挂载efi系统分区，使用--mkdir创建/mnt/boot目录，并将efi分区挂载在/mnt/boot目录下
+mount --mkdir /dev/efi_system_partition /mnt/boot
+
+# 挂载swap分区
+swapon /dev/swap_partition
+```
+
+- 配置镜像源
+
+```sh
+# 编辑文件/etc/pacman.d/mirrorlist
+nano /etc/pacman.d/mirrorlist
+
+# 在文件中加上如下国内镜像源
+Server = https://mirrors.bfsu.edu.cn/archlinux/$repo/os/$arch
+Server = https://mirrors.sjtug.sjtu.edu.cn/archlinux/$repo/os/$arch
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
+Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
+```
+
+- 安装基础包
+
+```sh
+# base，linux，linux-firmware分别是基础包组，linux内核和驱动程序
+# Arch linux 官方提供了 linux，linux-lts，linux-zen，linux-hardened内核，但是对于初学者，只推荐使用linux内核
+# 如果使用的是2019年及以后生产的笔记本电脑，可能需要安装sof-firmware，否则可能没有声音
+pacstrap -K /mnt base linux linux-firmware
+```
+
+- 生成fstab系统文件
+
+```sh
+# 生成fstab系统文件，它决定了系统启动时如何自动挂载分区。没有fstab，系统将找不到根分区，从而无法启动
+#  -U：是以UUID的描述方式生成 fstab，>>：是将输出结果追加在后面的文件末尾
+genfstab -U /mnt >> /mnt/etc/fstab
+```
+
+```sh
+# 使用arch-chroot工具切换到新安装的系统，以后的操作就可以在新安装的系统中完成了，执行完成终端用户目录的~会变成/
+arch-chroot /mnt
+
+# 时区 /usr/share/zoneinfo/Region/City，可输入/usr/share/zoneinfo后按tab键查看可选时区
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+# 
+hwclock --systohc
+
+# 本地化
+
+# 需要先安装vim和terminus-font，terminus-font是终端字体，-S：sync
+pacman -S vim terminus-font
+
+# 编辑/etc/locale.gen，删除#en_US.UTF-8 UTF-8行和#zh_CN.UTF-8 UTF-8行的注释#并保存
+vim /etc/locale.gen
+
+# 生成locale
+locale-gen
+
+# 创建并编辑/etc/locale.conf，输入LANG=en_US.UTF-8并保存
+vim /etc/locale.conf
+
+# 创建并编辑/etc/vconsole.conf，设置KEYMAP=us,FONT=ter-132b，让前面设置的终端键盘布局和字体永久生效
+vim /etc/vconsole.conf
+
+# 设置主机名
+vim /etc/hostname
+
+# 安装网络管理器（不安装则需要手动配置网络）
+pacman -S networkmanager
+
+# 设置网络管理器开机启动
+systemctl enable NetworkManager.service
+
+# 设置root用户的密码，根据提示输入密码
+psswd
+```
+
+- 加载引导程序
+
+```sh
+# 查看cpu型号
+cat /proc/cpuinfo | grep "model name"
+
+# 如果是intel的cpu，安装 intel-ucode
+pacman -S intel-ucode
+
+# 如果是amd的cpu，安装 amd-ucode
+pacman -S amd-ucode
+
+# 安装grub
+pacman -S grub
+# 安装efibootmgr
+pacman -S efibootmgr
+
+# 安装grub到计算机
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+
+# 生成grub配置
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# 退出 chroot 环境
+exit
+
+# 取消挂载/mnt
+umount -R /mnt
+
+# 重启
+reboot
+```
+
 ## Windows篇
 
 ### cmd命令
