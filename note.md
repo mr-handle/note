@@ -16232,7 +16232,7 @@ grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 # 生成grub配置
 grub-mkconfig -o /boot/grub/grub.cfg
 
-# 退出 chroot 环境
+# 退出chroot环境，执行完成终端用户目录的/会变成~
 exit
 
 # 取消挂载/mnt
@@ -16240,6 +16240,71 @@ umount -R /mnt
 
 # 重启
 reboot
+```
+
+- 安装KDE Plasma
+
+```sh
+# 先更新系统
+sudo pacman -Syu
+
+# 安装xorg图形支持
+# xorg-server， X11 图形服务器，负责窗口显示和图形渲染
+# xorg-xinit，提供 startx 和 .xinitrc 启动机制
+sudo pacman -S xorg-server xorg-xinit 
+
+
+# 安装 KDE Plasma 核心组件
+# plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面
+# plasma-workspace，Plasma 会话管理器、启动器、设置中心
+# kwin，窗口管理器，负责窗口动画、特效、布局
+# konsole，终端模拟器，支持标签、透明、快捷键
+# dolphin，文件管理器，支持标签、网络挂载、批处理等
+sudo pacman -S plasma-desktop plasma-workspace kwin konsole dolphin
+
+# 创建非root用户，这里以handle为例
+useradd handle
+
+# 指定handle的登录密码
+passwd handle
+
+# 创建handle的家目录
+mkdir -p /home/handle
+
+# 将handle的家目录的权限赋给handle
+sudo chown -R handle:handle /home/handle
+
+# 切到handle用户
+su - handle
+
+# 创建.xinitrc文件（用普通用户如handle）
+echo "exec startplasma-x11" > ~/.xinitrc
+
+# 启动 KDE Plasma 桌面
+startx
+
+# 一下步骤根据需要执行
+# 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
+# NVIDIA（闭源）
+sudo pacman -S nvidia nvidia-utils nvidia-settings
+
+# AMD（开源）
+sudo pacman -S xf86-video-amdgpu mesa
+
+# Intel（开源）
+sudo pacman -S xf86-video-intel mesa
+
+# 安装音频支持（推荐 PipeWire）
+# pipewire，新一代音频/视频服务器，替代 PulseAudio
+# pipewire-pulse，提供 PulseAudio 兼容层
+# wireplumber，PipeWire 的会话管理器，控制音频路由和设备管理
+sudo pacman -S pipewire pipewire-pulse wireplumber
+
+# 安装字体（防止乱码）
+# ttf-dejavu，常用西文字体，兼容性好
+# noto-fonts，Google 出品，支持多语言字符集
+# ttf-liberation，替代 Windows 字体，适配文档排版
+sudo pacman -S ttf-dejavu noto-fonts ttf-liberation
 ```
 
 ## Windows篇
