@@ -16286,7 +16286,14 @@ reboot
 # 启动 KDE Plasma 桌面（注意，这里用su - 非root用户，然后执行是不可以的）
 startx
 
-# 一下步骤根据需要执行
+# 以下步骤根据需要执行
+
+# 登录后自动执行startx进入桌面
+# 创建文件~/.bash_profile然后填入：[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx
+# -z $DISPLAY：确保图形会话尚未启动
+# $XDG_VTNR -eq 1：仅在第一个 TTY（通常是 Ctrl+Alt+F1）执行，避免多次触发
+vim ~/.bash_profile
+
 # 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
 # NVIDIA（闭源）
 sudo pacman -S nvidia nvidia-utils nvidia-settings
