@@ -16280,7 +16280,10 @@ su - handle
 # 创建.xinitrc文件（用普通用户如handle）
 echo "exec startplasma-x11" > ~/.xinitrc
 
-# 启动 KDE Plasma 桌面
+# 重启，然后用非root用户登录
+reboot
+
+# 启动 KDE Plasma 桌面（注意，这里用su - 非root用户，然后执行是不可以的）
 startx
 
 # 一下步骤根据需要执行
