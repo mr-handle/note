@@ -16357,9 +16357,6 @@ sudo chown -R handle:handle /home/handle
 # 重启，然后用非root用户登录
 reboot
 
-# 启动 KDE Plasma 桌面（注意，这里用su - 非root用户，然后执行是不可以的）
-startx
-
 # 以下步骤根据需要执行
 
 # 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
