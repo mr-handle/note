@@ -16325,8 +16325,7 @@ sudo pacman -Syu
 
 # 安装xorg图形支持
 # xorg-server， X11 图形服务器，负责窗口显示和图形渲染
-# xorg-xinit，提供 startx 和 .xinitrc 启动机制
-sudo pacman -S xorg-server xorg-xinit 
+sudo pacman -S xorg-server
 
 
 # 安装 KDE Plasma 核心组件
@@ -16336,6 +16335,12 @@ sudo pacman -S xorg-server xorg-xinit
 # konsole，终端模拟器，支持标签、透明、快捷键
 # dolphin，文件管理器，支持标签、网络挂载、批处理等
 sudo pacman -S plasma-desktop plasma-workspace kwin konsole dolphin
+
+# 安装 SDDM（图形登录管理器）
+sudo pacman -S sddm
+
+# 启用 SDDM 开机启动
+sudo systemctl enable sddm
 
 # 创建非root用户，这里以handle为例
 useradd handle
@@ -16349,12 +16354,6 @@ mkdir -p /home/handle
 # 将handle的家目录的权限赋给handle
 sudo chown -R handle:handle /home/handle
 
-# 切到handle用户
-su - handle
-
-# 创建.xinitrc文件（用普通用户如handle）
-echo "exec startplasma-x11" > ~/.xinitrc
-
 # 重启，然后用非root用户登录
 reboot
 
@@ -16362,12 +16361,6 @@ reboot
 startx
 
 # 以下步骤根据需要执行
-
-# 设置登录后自动执行startx进入桌面
-# 非root用户（谁要登录后自动进入图形桌面就谁）创建文件~/.bash_profile然后填入：[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx
-# -z $DISPLAY：确保图形会话尚未启动
-# $XDG_VTNR -eq 1：仅在第一个 TTY（通常是 Ctrl+Alt+F1）执行，避免多次触发
-vim ~/.bash_profile
 
 # 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
 # NVIDIA（闭源）
