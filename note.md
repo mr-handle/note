@@ -16076,6 +16076,12 @@ lsb_release -a
 
 #### 安装教程
 
+- 下载Arch Linux系统镜像文件并校验：<https://archlinux.org/download/>
+
+- 下载Rufus（Portable版本，免安装）：<https://rufus.ie>，制作U盘启动
+
+- 关闭BIOS的安全启动模式，不然可能会提示安全引导违规
+
 - 终端键盘布局和字体
 
 ```sh
@@ -16085,8 +16091,57 @@ localectl list-keymaps
 # 设置键盘布局为美式键盘（默认）
 loadkeys us
 
-# 分辨率为1080p的屏幕，建议选择字体 ter-122b，分辨率更高的屏幕，可以在 ter-124b，ter-128b，ter-132b 中选择一个, 默认lat9w-16
+# 设置当前终端的字体，立马见效，觉得当前终端字体不合适可以自行修改
+# 分辨率为1080p的屏幕，建议选择 ter-122b
+# 分辨率更高的屏幕，可以在 ter-124b，ter-128b，ter-132b 中选择一个, 默认lat9w-16
 setfont lat9w-16
+```
+
+- 检查是否为UEFI启动，ArchLinux只支持UEFI模式启动，输出为64就行了
+
+```sh
+cat /sys/firmware/efi/fw_platform_size
+```
+
+- 连接网络，这里连接wifi为例
+
+```sh
+# 确认是否启用了网络接口
+ip link
+
+# 执行iwctl命令，进入wifi连接交互式命令行
+iwctl
+
+# 查看帮助
+help
+
+# 列出网卡设备，无限网卡一般为wlan0，后面以它为例
+device list
+
+# 让网卡扫描wifi设备
+station wlan0 scan
+
+# 列出可连接的wifi
+station wlan0 get-networks
+
+# 连接wifi，然后根据提示输入wifi密码
+station wlan0 connect 上一步获取的某个wifi名称
+
+# 退出wifi连接交互式命令iwctl
+exit
+
+# 测试网络是否连接成功
+ping www.baidu.com 
+```
+
+- 更新系统时间
+
+```sh
+# 更新系统时间是有必要的，因为下载软件是服务器会验证系统时间，如果时间不正确，可能出现下载失败的情况
+# 将系统时间与网络时间进行同步
+timedatectl set-ntp true 
+# 查看系统时间状态，检查是否成功 看到（System clock synchronized :yes）这一句就是成功了
+timedatectl status   
 ```
 
 - 创建分区
@@ -16111,6 +16166,12 @@ n
 t
 
 # 依次创建efi分区（512M），类型为EFI System；swap分区（和内存同样的大小），类型为linux swap；/分区（设备容量剩余多少就设置多少），类型为linux filesystem
+
+# 查看分区
+p
+
+# 保存并退出分区
+w
 ```
 
 - 格式化分区
@@ -16139,13 +16200,14 @@ mount --mkdir /dev/efi_system_partition /mnt/boot
 swapon /dev/swap_partition
 ```
 
-- 配置镜像源
+- 配置镜像源，不然安装会很慢
 
 ```sh
-# 编辑文件/etc/pacman.d/mirrorlist
+# 用vim或nano编辑文件/etc/pacman.d/mirrorlist
+vim /etc/pacman.d/mirrorlist
 nano /etc/pacman.d/mirrorlist
 
-# 在文件中加上如下国内镜像源
+# 在文件中加上如下国内镜像源，一般加一个就行了，加在文件中的Server行前面
 Server = https://mirrors.bfsu.edu.cn/archlinux/$repo/os/$arch
 Server = https://mirrors.sjtug.sjtu.edu.cn/archlinux/$repo/os/$arch
 Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
@@ -16176,7 +16238,7 @@ arch-chroot /mnt
 # 时区 /usr/share/zoneinfo/Region/City，可输入/usr/share/zoneinfo后按tab键查看可选时区
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-# 
+# 同步硬件时钟
 hwclock --systohc
 
 # 本地化
@@ -16206,10 +16268,10 @@ pacman -S networkmanager
 systemctl enable NetworkManager.service
 
 # 设置root用户的密码，根据提示输入密码
-psswd
+passwd
 ```
 
-- 加载引导程序
+- 安装引导程序
 
 ```sh
 # 查看cpu型号
@@ -16240,6 +16302,19 @@ umount -R /mnt
 
 # 重启
 reboot
+
+# 如果安装了NetworkManager，先连接网络，这里以wifi为例
+# 查看可用 Wi-Fi 网络
+nmcli device wifi list
+
+# 连接到指定 Wi-Fi 网络
+nmcli device wifi connect "上面列出的Wifi的SSID" password "wifi连接密码"
+
+# 查看连接状态
+nmcli connection show --active
+
+# 设置开机自动连接
+nmcli connection modify "上面列出的Wifi的SSID" connection.autoconnect yes
 ```
 
 - 安装KDE Plasma
@@ -16288,8 +16363,8 @@ startx
 
 # 以下步骤根据需要执行
 
-# 登录后自动执行startx进入桌面
-# 创建文件~/.bash_profile然后填入：[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx
+# 设置登录后自动执行startx进入桌面
+# 非root用户（谁要登录后自动进入图形桌面就谁）创建文件~/.bash_profile然后填入：[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && exec startx
 # -z $DISPLAY：确保图形会话尚未启动
 # $XDG_VTNR -eq 1：仅在第一个 TTY（通常是 Ctrl+Alt+F1）执行，避免多次触发
 vim ~/.bash_profile
