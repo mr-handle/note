@@ -16368,18 +16368,46 @@ sudo pacman -S xf86-video-amdgpu mesa
 
 # Intel（开源）
 sudo pacman -S xf86-video-intel mesa
+```
 
-# 安装音频支持（推荐 PipeWire）
-# pipewire，新一代音频/视频服务器，替代 PulseAudio
-# pipewire-pulse，提供 PulseAudio 兼容层
-# wireplumber，PipeWire 的会话管理器，控制音频路由和设备管理
-sudo pacman -S pipewire pipewire-pulse wireplumber
+- 安装音频支持（推荐 PipeWire），安装完后重启
 
-# 安装字体（防止乱码）
-# ttf-dejavu，常用西文字体，兼容性好
-# noto-fonts，Google 出品，支持多语言字符集
-# ttf-liberation，替代 Windows 字体，适配文档排版
-sudo pacman -S ttf-dejavu noto-fonts ttf-liberation
+```sh
+# pipewire 核心服务 音频/视频服务器，替代 PulseAudio 和 JACK，支持低延迟和多设备
+# pipewire-pulse 兼容层 提供 PulseAudio API 兼容性，让旧程序（如 Firefox、Steam）能正常输出声音
+# wireplumber 会话管理器 管理设备热插拔、权限、策略，替代旧的 pipewire-media-session
+# pipewire-audio 模块扩展 提供额外音频模块支持（如 PCM、蓝牙、JACK 桥接），增强兼容性
+# alsa-utils 调试工具 提供 aplay、alsamixer、speaker-test 等命令行工具，用于声卡识别与音量调试，声音正常后无需调试了可卸载
+# sof-firmware 驱动固件 Intel 声卡 DSP 所需固件，适用于 Tiger Lake、Ice Lake、Alder Lake 等平台（非 Intel 可跳过）
+sudo pacman -S pipewire pipewire-pulse wireplumber pipewire-audio alsa-utils sof-firmware
+
+# 其中3个设置为开机自动启动，并立即启动服务。其他组件无需启动，它们是工具或驱动，安装即可
+systemctl --user enable pipewire pipewire-pulse wireplumber --now
+
+# 图形音量控制器（托盘小喇叭）
+sudo pacman -S plasma-pa
+```
+
+- 安装火狐浏览器
+
+```sh
+sudo pacman -Syu
+
+sudo pacman -S firefox
+
+# 启动火狐浏览器
+firefox
+```
+
+- 安装中文字体支持，避免浏览器中文乱码，下面四种字体基本够用了
+
+```sh
+# noto-fonts-cjk：Google 出品，覆盖简体、繁体、日文、韩文，现代网页首选
+# wqy-zenhei：文泉驿正黑体，开源中文字体，兼容性好，适合旧网页和轻量界面
+# wqy-microhei：更紧凑的文泉驿字体，适合嵌入式或小屏幕
+# adobe-source-han-sans-otc-fonts：思源黑体，质量高但体积大，适合美化界面
+sudo pacman -S noto-fonts-cjk wqy-zenhei
+sudo pacman -S wqy-microhei adobe-source-han-sans-otc-fonts
 ```
 
 ## Windows篇
