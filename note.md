@@ -16243,7 +16243,7 @@ hwclock --systohc
 
 # 本地化
 
-# 需要先安装vim和terminus-font，terminus-font是终端字体，-S：sync
+# 需要先安装vim和terminus-font，terminus-font是终端字体，后面设置FONT=ter-122b需要依赖这个字体，-S：sync
 pacman -S vim terminus-font
 
 # 编辑/etc/locale.gen，删除#en_US.UTF-8 UTF-8行和#zh_CN.UTF-8 UTF-8行的注释#并保存
@@ -16255,7 +16255,7 @@ locale-gen
 # 创建并编辑/etc/locale.conf，输入LANG=en_US.UTF-8并保存
 vim /etc/locale.conf
 
-# 创建并编辑/etc/vconsole.conf，设置KEYMAP=us,FONT=ter-132b，让前面设置的终端键盘布局和字体永久生效
+# 创建并编辑/etc/vconsole.conf，设置KEYMAP=us,FONT=ter-122b，这样新系统启动时终端字体（大小）就变成设置的了
 vim /etc/vconsole.conf
 
 # 设置主机名
@@ -16317,12 +16317,32 @@ nmcli connection show --active
 nmcli connection modify "上面列出的Wifi的SSID" connection.autoconnect yes
 ```
 
-- 安装KDE Plasma
+- （root用户）安装 sudo
 
 ```sh
 # 先更新系统
-sudo pacman -Syu
+pacman -Syu
 
+# 安装 sudo
+pacman -S sudo
+
+# 配置 sudo 权限，让wheel组的用户（普通用户）都能用sudo
+# 临时指定使用 vim 编辑器来打开并编辑 sudoers 文件
+# visudo 会在保存前检查语法，防止你把 sudo 配坏
+# 如果你直接用 vim /etc/sudoers，一旦写错，可能导致系统无法使用 sudo，必须进 root 修复
+# 找到这行： # %wheel ALL=(ALL:ALL) ALL然后取消注释，保存退出
+EDITOR=vim visudo
+
+# 用户加入 wheel 组，然后重启，新的组权限才会生效
+# usermod 修改用户账户的命令
+# -a append，追加组（不移除已有组）
+# -G wheel 指定要加入的组是 wheel
+usermod -aG wheel 用户名
+```
+
+- 安装KDE Plasma
+
+```sh
 # 安装xorg图形支持
 # xorg-server， X11 图形服务器，负责窗口显示和图形渲染
 sudo pacman -S xorg-server
@@ -16356,18 +16376,6 @@ sudo chown -R handle:handle /home/handle
 
 # 重启，然后用非root用户登录
 reboot
-
-# 以下步骤根据需要执行
-
-# 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
-# NVIDIA（闭源）
-sudo pacman -S nvidia nvidia-utils nvidia-settings
-
-# AMD（开源）
-sudo pacman -S xf86-video-amdgpu mesa
-
-# Intel（开源）
-sudo pacman -S xf86-video-intel mesa
 ```
 
 - 安装音频支持（推荐 PipeWire），安装完后重启
@@ -16386,6 +16394,56 @@ systemctl --user enable pipewire pipewire-pulse wireplumber --now
 
 # 图形音量控制器（托盘小喇叭）
 sudo pacman -S plasma-pa
+```
+
+- 启用 multilib 仓库，它是Arch官方提供的32位兼容库仓库，Steam、Wine、某些游戏需要它
+
+```sh
+# 编辑/etc/pacman.conf配置文件
+sudo vim /etc/pacman.conf
+
+# 找到这两行，取消注释，保存退出
+#[multilib]
+#Include = /etc/pacman.d/mirrorlist
+```
+
+- 安装显卡驱动（根据需要安装）
+
+```sh
+# 这一步可能还要摸索，笔者装了英特尔和英伟达的后，重启黑屏了，然后切换tty又装了optimus-manager，然后重启又正常了
+
+# 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
+# NVIDIA（闭源）
+# nvidia NVIDIA 官方驱动模块
+# nvidia-utils 包含 nvidia-smi、OpenGL/Vulkan 支持
+# nvidia-settings 图形化控制面板（可选）
+sudo pacman -S nvidia nvidia-utils nvidia-settings
+
+# AMD（开源）
+sudo pacman -S xf86-video-amdgpu mesa
+
+# Intel（开源）
+# mesa OpenGL 支持
+# libva-intel-driver 视频加速（VA-API）
+# vulkan-intel Vulkan 支持（如游戏、图形加速）
+sudo pacman -S mesa libva-intel-driver vulkan-intel
+
+# 最后我好像还安装了
+sudo pacman -S lib32-nvidia-utils
+```
+
+- 安装切换显卡工具
+
+```sh
+# 安装完重启
+yay -S optimus-manager
+
+# 命令行切换显卡
+# 切换到 Nvidia GPU
+optimus-manager MODE --switch nvidia   
+
+# 切换到集成 GPU 并关闭 Nvidia GPU
+optimus-manager --switch integrated  
 ```
 
 - 安装火狐浏览器
@@ -16408,6 +16466,40 @@ firefox
 # adobe-source-han-sans-otc-fonts：思源黑体，质量高但体积大，适合美化界面
 sudo pacman -S noto-fonts-cjk wqy-zenhei
 sudo pacman -S wqy-microhei adobe-source-han-sans-otc-fonts
+```
+
+- 安装 AUR（yay）
+
+```sh
+sudo pacman -Syu
+
+# 先安装base-devel 和 git
+sudo pacman -S --needed base-devel git
+
+# 检查有没有安装go包（编译器）
+go version
+
+# 如果没有安装则安装
+sudo pacman -S go
+
+# 以下用指令非root用户执行
+cd ~
+git clone https://aur.archlinux.org/yay.git
+cd yay
+
+# 有可能因为网络原因导致安装失败，因此先修改PKGBUILD文件
+vim PKGBUILD
+# 找到 build() 函数，在多条 export 语句后追加保存退出
+export GO111MODULE=on
+export GOPROXY=https://goproxy.cn
+
+# makepkg 使用当前目录下的 PKGBUILD 构建一个 Arch 包
+# -s 自动安装构建所需的依赖（resolve dependencies）
+# -i 构建完成后自动安装生成的 .pkg.tar.zst 包
+makepkg -si
+
+# 测试 yay 是否安装成功
+yay --version
 ```
 
 ## Windows篇
