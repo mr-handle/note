@@ -16502,6 +16502,15 @@ makepkg -si
 yay --version
 ```
 
+- 安装v2rayN
+
+```sh
+# 下载.appimage格式的v2rayN
+# 通过终端启动，可以看到报错缺少fuse
+# 安装fuse2，本人是安装fuse3了然后还是报错，就继续装fuse2, 然后发现fuse3卸载不了了
+sudo pacman -S fuse2
+```
+
 ## Windows篇
 
 ### cmd命令
