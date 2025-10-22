@@ -16511,6 +16511,19 @@ yay --version
 sudo pacman -S fuse2
 ```
 
+- 安装输入法ibus-rime
+
+```sh
+# 安装
+pacman -S ibus-rime
+
+# 然后配置输入法
+ibus-setup
+
+# 然后在input method添加：Chinese-Rime
+# 然后在系统设置KeyBoard，找到virtual keyboard，选择IBus Wayland，然后应用就可以了
+```
+
 ## Windows篇
 
 ### cmd命令
