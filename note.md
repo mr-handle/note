@@ -16524,6 +16524,23 @@ ibus-setup
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择IBus Wayland，然后应用就可以了
 ```
 
+#### 创建菜单/桌面快捷方式
+
+- 如果只想创建桌面快捷方式，则在`~/Desktop`目录下创建`应用名.desktop`文件
+
+- 如果想要在菜单也显示该应用，则在`~/.local/share/applications`目录下创建`应用名.desktop`文件，然后在菜单找到对应的应用名称，鼠标右键-添加到桌面
+
+- 以微信为例，内容如下:
+
+```content
+[Desktop Entry]
+Type=Application
+Name=WeChat
+Exec=/home/handle/Applications/WeChat.AppImage
+Icon=/home/handle/Applications/WeChat.png
+Terminal=false
+```
+
 ## Windows篇
 
 ### cmd命令
