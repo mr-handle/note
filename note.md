@@ -49,13 +49,18 @@ tar -zxvf xxx.tar.gz -C 指定目录
 - 2.设置环境变量（解压后bin文件夹所在目录为jdk根目录，假设为`/usr/local/jdk/xxx`）
 
 ```sh
-# 1.先备份profile文件
+# /etc/profile 是系统级的 shell 启动配置文件，但它作用于所有用户的登录hell
+# 启动一个非登录shell，这时会读取 ~/.bashrc
+# 当通过SSH登录远程服务器，或在图形界面登录后启动一个shell，会读取~/.bash_profile，目前笔者用的是这个
+# 下面以/etc/profile为例，其它两个文件类似
+
+# 1.先备份/etc/profile（或~/.bashrc或~/.bash_profile）
 cp /etc/profile /etc/profile.bk
 
 # 2.编辑profile文件
 vi /etc/profile
 
-# 3.在profile文件（或~/.bashrc或~/.bash_profile 文件）末尾添加
+# 3.在profile文件末尾添加
 export JAVA_HOME=/usr/local/jdk/xxx
 export PATH=$PATH:${JAVA_HOME}/bin
 ```
