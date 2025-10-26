@@ -12834,16 +12834,16 @@ cd yourpath/elasticsearch-8.15.3/bin
 ### 安装
 
 ```sh
-# 查看git配置
-git config --global --list
-
-# 生成ssh key
- ssh-keygen -t rsa -C "这里填你的邮箱"
-
 # 安装完成后，还需要最后一步设置，因为Git是分布式版本控制系统，所以，每个机器都必须自报家门：你的名字和Email地址
 # global参数，表示你这台机器上所有的Git仓库都会使用这个配置，当然也可以对某个仓库指定不同的用户名和Email地址
 git config --global user.name "Your Name"
 git config --global user.email "email@example.com"
+
+# 然后查看git配置，看看刚刚的设置正确没有
+git config --global --list
+
+# 生成ssh key，-t ed25519表示指定密钥类型为Ed25519，rsa不再是首选了
+ ssh-keygen -t ed25519 -C "这里填你的邮箱"
 ```
 
 ### 创建版本库
