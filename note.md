@@ -16515,6 +16515,7 @@ yay --version
 # 安装fuse2，本人是安装fuse3了然后还是报错，就继续装fuse2, 然后发现fuse3卸载不了了
 sudo pacman -S fuse2
 ```
+
 - 安装输入法fcitx5
 
 ```sh
@@ -16522,7 +16523,7 @@ sudo pacman -S fuse2
 # fcitx5-gtk fcitx5-qt，UI开发工具包的输入法模块，如果装有vscode，则必须安装mr，否则输入法会抽风
 # fcitx5-configtool，GUI配置程序
 # fcitx5-rime,一种可自定义的输入法引擎，但默认情况下其默认配置为拼音。
-pacman -S fcitx5 fcitx5-qt fcitx5-configtool，fcitx5-rime
+sudo pacman -S fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool，fcitx5-rime
 
 # 配置环境变量（官方建议的，其实一开始笔者没配置也没啥问题发生），在~/.bash_profile中添加如下内容，SDDM+KDE+Wayland的桌面环境只用添加这一行就可以了
 export XMODIFIERS=@im=fcitx
