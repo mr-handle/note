@@ -16519,7 +16519,7 @@ sudo pacman -S fuse2
 
 ```sh
 # fcitx5,主程序
-# fcitx5-qt，UI开发工具包的输入法模块
+# fcitx5-gtk fcitx5-qt，UI开发工具包的输入法模块，如果装有vscode，则必须安装fcitx5-gtk，否则输入法会抽风
 # fcitx5-configtool，GUI配置程序
 # fcitx5-rime,一种可自定义的输入法引擎，但默认情况下其默认配置为拼音。
 pacman -S fcitx5 fcitx5-qt fcitx5-configtool，fcitx5-rime
