@@ -16510,8 +16510,27 @@ yay --version
 # 安装fuse2，本人是安装fuse3了然后还是报错，就继续装fuse2, 然后发现fuse3卸载不了了
 sudo pacman -S fuse2
 ```
+- 安装输入法fcitx5
 
-- 安装输入法ibus-rime
+```sh
+# fcitx5,主程序
+# fcitx5-qt，UI开发工具包的输入法模块
+# fcitx5-configtool，GUI配置程序
+# fcitx5-rime,一种可自定义的输入法引擎，但默认情况下其默认配置为拼音。
+pacman -S fcitx5 fcitx5-qt fcitx5-configtool，fcitx5-rime
+
+# 配置环境变量（官方建议的，其实一开始笔者没配置也没啥问题发生），在~/.bash_profile中添加如下内容，SDDM+KDE+Wayland的桌面环境只用添加这一行就可以了
+export XMODIFIERS=@im=fcitx
+
+# 然后配置输入法
+fcitx5-configtool
+
+# 然后在input method添加：Rime
+# 然后在input method，下方的configure addons，选择Classic User Interface,然后配置字体大小，然后应用直接见效，不然候选字真的太小了
+# 然后在系统设置KeyBoard，找到virtual keyboard，选择Fcitx 5，然后应用就可以了
+```
+
+- 安装输入法ibus-rime,(在vscode下会抽风，所以建议换成fcitx5)
 
 ```sh
 # 安装
