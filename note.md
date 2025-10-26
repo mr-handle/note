@@ -49,7 +49,7 @@ tar -zxvf xxx.tar.gz -C 指定目录
 - 2.设置环境变量（解压后bin文件夹所在目录为jdk根目录，假设为`/usr/local/jdk/xxx`）
 
 ```sh
-# /etc/profile 是系统级的 shell 启动配置文件，但它作用于所有用户的登录hell
+# /etc/profile 是系统级的shell启动配置文件，它作用于所有用户的登录shell
 # 启动一个非登录shell，这时会读取 ~/.bashrc
 # 当通过SSH登录远程服务器，或在图形界面登录后启动一个shell，会读取~/.bash_profile，目前笔者用的是这个
 # 下面以/etc/profile为例，其它两个文件类似
