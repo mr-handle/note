@@ -16507,6 +16507,28 @@ makepkg -si
 yay --version
 ```
 
+- 安装Watt Tookit
+
+```sh
+# 去官网的github地址下载.tgz版本的软件包
+# 解压软件包（同tar.gz)
+# 打开软件，找到Settings-General，找到AppData data并跳转到该目录
+# 找到该目录的子目录下的文件Plugins/Accelerator/SteamTools.Certificate.cer，一般该位置在~/.local/share/Steam++/Plugins/Accelerator/SteamTools.Certificate.cer
+# 将这个cer文件复制到一个另一个目录，不然文件选择弹窗可能找不到上面的默认的位置
+
+# 1.将证书导入到系统
+sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路径
+
+# 2.将证书导入到火狐浏览器
+# 打开火狐浏览器，进入设置 - 隐私与安全 - 安全 - 证书 - 查看证书 ，选择 证书颁发机构( Authorities )，然后导入上面位置的证书
+# 只勾选 信任由此证书颁发机构来标识网站，然后确定导入
+
+
+# 3.将证书导入到Steam，这个暂时用不到，先不做笔记了
+
+# 最后导入完成后这个复制的cer文件可以删除掉
+```
+
 - 安装v2rayN
 
 ```sh
