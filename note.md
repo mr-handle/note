@@ -16526,6 +16526,10 @@ sudo pacman -S fuse2
 sudo pacman -S fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool，fcitx5-rime
 
 # 配置环境变量（官方建议的，其实一开始笔者没配置也没啥问题发生），在~/.bash_profile中添加如下内容，SDDM+KDE+Wayland的桌面环境只用添加这一行就可以了
+# v2rayN和微信输入法需要设置GTK_IM_MODULE、QT_IM_MODULE和SDL_IM_MODULE，虽然官方和电脑提示不需要设置，不要听
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export SDL_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 
 # 然后配置输入法
