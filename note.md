@@ -16443,12 +16443,9 @@ sudo pacman -S lib32-nvidia-utils
 # 安装完重启
 yay -S optimus-manager
 
-# 命令行切换显卡
+# 命令行切换显卡，nvidia, integrated, hybrid，分别为独显、集显和混合模式
 # 切换到 Nvidia GPU
-optimus-manager MODE --switch nvidia   
-
-# 切换到集成 GPU 并关闭 Nvidia GPU
-optimus-manager --switch integrated  
+optimus-manager --switch nvidia
 ```
 
 - 安装火狐浏览器
