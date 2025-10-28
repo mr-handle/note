@@ -11319,6 +11319,8 @@ docker的基本组成：镜像、容器、仓库
 
 ### 安装docker
 
+- Red Hat系列Linux
+
 ```sh
 # 如果安装过docker，先卸载旧版本的docker
 sudo yum remove docker \
@@ -12738,6 +12740,7 @@ rabbitmqctl start_app
 - 安装haproxy
 
 ```sh
+# Red Hat系列Linux
 yum install -y haproxy
 # 查看版本
 haproxy -v
@@ -14997,6 +15000,8 @@ grep 'administrator' /data/powerjob/powerjob-server/logs/powerjob-server-applica
 
 ### 安装nginx
 
+- Red Hat系列Linux
+
 ```sh
 # 解压
 tar zxvf nginx-1.21.6.tar.gz
@@ -15499,25 +15504,6 @@ make uninstall
 rm -rf 安装目标路径
 ```
 
-#### yum工具安装
-
-```sh
-# 搜索软件
-yum search 软件名
-
-# 安装软件
-yum install 软件名
-
-# 卸载软件
-yum remove 软件名
-
-# 升级软件
-yum update 软件名
-
-# 升级操作系统所有软件及内核
-yum upgrade 
-```
-
 ### Linux常用命令
 
 #### Linux帮助命令
@@ -15949,9 +15935,6 @@ uname -a
 # 查看linux系统版本，适用于Redhat的Linux
 cat /etc/redhat-release
 
-# 升级软件包及内核
-sudo yum update
-
 # 总体内存占用，-m 用Mb单位来显示
 free -m
 ```
@@ -16021,12 +16004,6 @@ netstat -tunlp|grep 应用名
 ### 其它命令
 
 ```sh
-# 查询可用jdk
-yum search java|grep jdk
-
-# 从查询结果中选择jdk安装
-yum install java-1.8.0-openjdk-devel.x86_64
-
 # 当前日历信息
 cal
 ```
@@ -16068,6 +16045,36 @@ vim就是vi的增强版
 - 隐藏行号，`:set nonu`
 
 - 查找，`/关键字`，按回车开始查找，按`n`查找下一个
+
+### Red Hat系列Linux
+
+#### yum工具
+
+```sh
+# 搜索软件
+yum search 软件名
+
+# 安装软件
+yum install 软件名
+
+# 卸载软件
+yum remove 软件名
+
+# 升级软件
+yum update 软件名
+
+# 升级操作系统所有软件及内核，更新所有已安装包到最新版本，但会移除已废弃或替代的依赖包，可能影响系统稳定性
+yum upgrade 
+
+# 升级操作系统所有软件及内核，更新所有已安装包到最新版本，但保留旧的依赖包，避免潜在破坏系统
+sudo yum update
+
+# 查询可用jdk
+yum search java|grep jdk
+
+# 从查询结果中选择jdk安装
+yum install java-1.8.0-openjdk-devel.x86_64
+```
 
 ### Ubuntu
 
