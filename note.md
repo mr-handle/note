@@ -16657,6 +16657,15 @@ ibus-setup
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择IBus Wayland，然后应用就可以了
 ```
 
+- 安装kwallet
+
+```sh
+# kwalletmanager：管理工具
+# kwallet-pam：让 KWallet 在登录时自动解锁
+# 可以管理vscode里面的的账号密码，vscode启动的时候就会提示了
+# 安装完成后打开系统设置启动服务，并且设置开机自动启动
+sudo pacman -S kwalletmanager kwallet-pam
+```
 #### 创建菜单/桌面快捷方式
 
 - 如果只想创建桌面快捷方式，则在`~/Desktop`目录下创建`应用名.desktop`文件
