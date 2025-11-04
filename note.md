@@ -16682,7 +16682,17 @@ Exec=/home/handle/Applications/WeChat.AppImage
 Icon=/home/handle/Applications/WeChat.png
 Terminal=false
 ```
+#### GRUB设置
 
+
+```sh
+# 打开文件
+sudo vim /etc/default/grub
+
+# 找到并设置如下两个属性，就可以默认快速开机不用等待了，需要的时候按ESC弹出菜单选项
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE=hidden
+```
 ## Windows篇
 
 ### cmd命令
