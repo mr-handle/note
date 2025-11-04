@@ -16444,7 +16444,8 @@ sudo pacman -S xorg-server
 # konsole，终端模拟器，支持标签、透明、快捷键
 # dolphin，文件管理器，支持标签、网络挂载、批处理等
 # kscreen,显示设置，支持设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
-sudo pacman -S plasma-desktop plasma-workspace kwin konsole dolphin kscreen
+# plasma-nm，网络的托盘图标和系统设置
+sudo pacman -S plasma-desktop plasma-workspace kwin konsole dolphin kscreen plasma-nm
 
 # 安装 SDDM（图形登录管理器）
 sudo pacman -S sddm
