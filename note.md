@@ -16662,10 +16662,19 @@ ibus-setup
 
 ```sh
 # kwalletmanager：管理工具
-# kwallet-pam：让 KWallet 在登录时自动解锁
+# kwallet-pam：让 KWallet 在登录时自动解锁( 只针对Blowfish模式，gpg不可以)
 # 可以管理vscode里面的的账号密码，vscode启动的时候就会提示了
-# 安装完成后打开系统设置启动服务，并且设置开机自动启动
+# 安装完成后打开系统设置启动钱包服务，设置Blowfish密码和开机密码一样
+# gpg模式还没有官方的登录解锁工具，开机每次都要输入一次密码，麻烦就先不用了
 sudo pacman -S kwalletmanager kwallet-pam
+
+# 然后查看文件
+cat /etc/pam.d/sddm
+
+# 看看有没有登录解锁，一般kde+sddm都自动配置了
+# 这样下次登录时，Blowfish 钱包会随登录密码自动解锁，不再弹窗
+-auth       optional    pam_kwallet5.so
+-session    optional    pam_kwallet5.so         auto_start
 ```
 #### 创建菜单/桌面快捷方式
 
