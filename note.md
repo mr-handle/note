@@ -16689,22 +16689,15 @@ cat /etc/pam.d/sddm
 -session    optional    pam_kwallet5.so         auto_start
 ```
 
- 安装wine
-
-```sh
-# 需要启用multilib仓库来兼容32位的软件运行
-sudo pacman -S wine
-
-# 安装/运行exe
-wine exe文件绝对路径
-
-# 卸载windows程序
-wine uninstaller
-```
-
 #### pacman
 
 ```sh
+# -S：同步
+# y： 从服务器下载最新的软件包数据库（相当于更新索引）
+# u： 升级所有已安装的软件包到最新版本
+# 安装软件前先执行这一命令
+sudo pacman -Syu
+
 # 从远程仓库拉取软件安装
 sudo pacman -S 软件名
 
@@ -16726,6 +16719,35 @@ pacman -Qs 软件关键字
 # 查看已安装的所有软件
 pacman -Q
 ```
+#### 安装音乐/视频播放器
+
+```sh
+sudo pacman -S strawberry
+
+sudo pacman -S vlc
+```
+
+#### 安装wine
+
+```sh
+# 需要启用multilib仓库来兼容32位的软件运行
+sudo pacman -S wine
+
+# 安装/运行exe
+wine exe文件绝对路径
+
+# 卸载windows程序
+wine uninstaller
+
+# 配置
+winecfg
+```
+
+#### 压缩/解压软件ark
+
+```sh
+sudo pacman -S ark
+```
 
 #### 创建菜单/桌面快捷方式
 
@@ -16743,6 +16765,12 @@ Exec=/home/handle/Applications/WeChat.AppImage
 Icon=/home/handle/Applications/WeChat.png
 Terminal=false
 ```
+
+- 如果是wine，则Exec键值对需要做变动
+
+```sh
+Exec=wine /path/to/App.exe
+```
 #### GRUB设置
 
 
@@ -16756,6 +16784,12 @@ GRUB_TIMEOUT_STYLE=hidden
 
 # 然后更新GRUB配置
 grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+#### 获取下载文件的哈希码
+
+```sh
+sha256sum 下载文件的绝对路径
 ```
 ## Windows篇
 
