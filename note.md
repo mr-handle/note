@@ -16449,7 +16449,11 @@ usermod -aG wheel 用户名
 sudo pacman -S xorg-server
 
 
-# 安装 KDE Plasma 核心组件
+# 安装完整的Plasma桌面环境,不然火狐浏览器最小最大化按钮可能不见，鬼知道到底哪里出问题了
+# 安装完整的KDE软件，先用着，找到更好的就卸载
+sudo pacman -S plasma kde-applications
+
+# 只安装如下指定的组件，笔者的火狐浏览器最大最小化按钮不显示，motrix下载器无法接管火狐浏览器下载，后面完整安装了就没问题了
 # plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面
 # plasma-workspace，Plasma 会话管理器、启动器、设置中心
 # kwin，窗口管理器，负责窗口动画、特效、布局
@@ -16459,7 +16463,7 @@ sudo pacman -S xorg-server
 # plasma-nm，网络的托盘图标和系统设置
 sudo pacman -S plasma-desktop plasma-workspace kwin konsole dolphin kscreen plasma-nm
 
-# 安装 SDDM（图形登录管理器）
+# 安装 SDDM（图形登录管理器），一般完整的plasma包含了sddm，只要设置开机启动就行了
 sudo pacman -S sddm
 
 # 启用 SDDM 开机启动
