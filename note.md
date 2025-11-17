@@ -16676,6 +16676,29 @@ cat /etc/pam.d/sddm
 -auth       optional    pam_kwallet5.so
 -session    optional    pam_kwallet5.so         auto_start
 ```
+
+#### pacman
+
+```sh
+# 安装本地.pkg.tar.zst安装包
+sudo pacman -U pkg.tar.zst安装包的绝对路径
+
+# 卸载软件
+# R：删除指定包
+# s：删除不需要的依赖（仅限于没有其他包需要的依赖）
+# n：删除配置文件
+sudo pacman -Rns package_name
+
+# 搜索远程仓库的某个软件
+pacman -Ss 软件关键字
+
+# 搜索已安装的某个软件
+pacman -Qs 软件关键字
+
+# 查看已安装的所有软件
+pacman -Q
+```
+
 #### 创建菜单/桌面快捷方式
 
 - 如果只想创建桌面快捷方式，则在`~/Desktop`目录下创建`应用名.desktop`文件
