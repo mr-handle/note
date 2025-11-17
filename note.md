@@ -16702,7 +16702,7 @@ sudo pacman -Syu
 sudo pacman -S 软件名
 
 # 安装本地.pkg.tar.zst安装包
-sudo pacman -U pkg.tar.zst安装包的绝对路径
+sudo pacman -U path/to/pkg.tar.zst安装包
 
 # 卸载软件
 # R：删除指定包
@@ -16734,7 +16734,7 @@ sudo pacman -S vlc
 sudo pacman -S wine
 
 # 安装/运行exe
-wine exe文件绝对路径
+wine path/to/exe文件
 
 # 卸载windows程序
 wine uninstaller
@@ -16789,8 +16789,26 @@ grub-mkconfig -o /boot/grub/grub.cfg
 #### 获取下载文件的哈希码
 
 ```sh
-sha256sum 下载文件的绝对路径
+sha256sum path/to/下载文件
 ```
+
+#### .run软件包
+
+.run软件包的卸载不好说，根据具体软件具体分析，下面的例子使用的是virtualbox
+
+十分不推荐自己安装.run的软件包
+
+```sh
+# 给.run软件包执行权限
+chmod +x path/to/软件包
+
+# 执行安装，可能需要root权限
+sudo path/to/软件包
+
+# 卸载
+sudo path/to/软件包 uninstall
+```
+
 ## Windows篇
 
 ### cmd命令
