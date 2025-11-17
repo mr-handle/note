@@ -16749,6 +16749,17 @@ winecfg
 sudo pacman -S ark
 ```
 
+#### 安装VirtualBox
+
+十分不推荐自己安装.run的软件包
+
+```sh
+# 然后根据提示选择virtualbox-host-modules-arch
+# 这个包是专门为Arch官方的默认内核linux编译好的VirtualBox内核模块
+# 安装它后无需自己编译，也不需要额外安装linux-headers
+sudo pacman -S virtualbox
+```
+
 #### 创建菜单/桌面快捷方式
 
 - 如果只想创建桌面快捷方式，则在`~/Desktop`目录下创建`应用名.desktop`文件
