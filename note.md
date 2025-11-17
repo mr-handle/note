@@ -16758,6 +16758,9 @@ sudo pacman -S ark
 # 这个包是专门为Arch官方的默认内核linux编译好的VirtualBox内核模块
 # 安装它后无需自己编译，也不需要额外安装linux-headers
 sudo pacman -S virtualbox
+
+# 如果还需要虚拟机增强功能（共享剪贴板、共享文件夹等），可以安装
+sudo pacman -S virtualbox-guest-utils
 ```
 
 #### 创建菜单/桌面快捷方式
