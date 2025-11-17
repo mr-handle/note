@@ -15948,6 +15948,8 @@ cat /var/log/messages | grep nginx
 
 #### 压缩/解压文件
 
+##### tar.gz文件
+
 ```sh
 # 将目标文件夹压缩
 tar -zcvf tar.gz文件名 目标文件夹
@@ -15957,6 +15959,16 @@ tar -zxvf tar.gz文件名
 
 # tar.gz文件解压到目标路径
 tar -zxvf tar.gz文件名 -C 目标路径
+```
+
+##### zip文件
+
+```sh
+# 解压到当前目录
+unzip file.zip
+
+# 解压到指定目录
+unzip file.zip -d /path/to/directory
 ```
 
 - 查看端口有没有被某个进程占用
@@ -16677,9 +16689,25 @@ cat /etc/pam.d/sddm
 -session    optional    pam_kwallet5.so         auto_start
 ```
 
+ 安装wine
+
+```sh
+# 需要启用multilib仓库来兼容32位的软件运行
+sudo pacman -S wine
+
+# 安装/运行exe
+wine exe文件绝对路径
+
+# 卸载windows程序
+wine uninstaller
+```
+
 #### pacman
 
 ```sh
+# 从远程仓库拉取软件安装
+sudo pacman -S 软件名
+
 # 安装本地.pkg.tar.zst安装包
 sudo pacman -U pkg.tar.zst安装包的绝对路径
 
