@@ -16465,15 +16465,6 @@ KDE由桌面环境Plasma、KDE Frameworks、KDE Applications三部分组成
 
 但是安装时只用安装Plasma和KDE Applications，会自动安装依赖库KDE Frameworks
 
-###### 安装xorg
-
-```sh
-# 应该是不用单独安装的，笔者想要卸载的时候提示sddm依赖到它,安装sddm的时候应该会将其自动安装
-# 安装xorg图形支持
-# xorg-server， X11 图形服务器，负责窗口显示和图形渲染
-sudo pacman -S xorg-server
-```
-
 ###### 安装plasma和kde-applications
 
 只安装了plasma-desktop plasma-workspace plasma-nm plasma-pa kwin kscreen konsole dolphin ，笔者的火狐浏览器最大最小化按钮不显示，motrix下载器无法接管火狐浏览器下载，后面完整安装了就没问题了
@@ -16491,7 +16482,7 @@ sudo pacman -S plasma kde-applications
 - 只安装plasma的部分应用
 
 ```sh
-# plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面
+# plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面，它是最小的plasma安装
 # plasma-workspace，Plasma 会话管理器、启动器、设置中心
 # plasma-nm，网络的托盘图标和系统设置
 # plasma-pa，图形音量控制器（托盘小喇叭）
@@ -16510,7 +16501,9 @@ sudo pacman -S konsole dolphin
 
 ###### 安装SDDM（图形登录管理器）
 
-完整的plasma包含了sddm-kcm（sddm的kde桌面配置工具），还需要自行安装SDDM
+完整的plasma只包含了sddm-kcm（sddm的kde桌面配置工具），还需要自行安装SDDM
+
+不用单独安装xorg，安装sddm的时候会将其作为依赖自动安装
 
 ```sh
 sudo pacman -S sddm
