@@ -16175,6 +16175,43 @@ lsb_release -a
 
 ### Arch
 
+#### pacman
+
+```sh
+# -S：同步
+# y： 从服务器下载最新的软件包数据库（相当于更新索引）
+# u： 升级所有已安装的软件包到最新版本
+# 安装软件前先执行这一命令
+sudo pacman -Syu
+
+# 从远程仓库拉取软件安装
+sudo pacman -S 软件名
+
+# 安装本地.pkg.tar.zst安装包
+sudo pacman -U path/to/pkg.tar.zst安装包
+
+# 卸载软件
+# R：删除指定包
+# s：删除不需要的依赖（仅限于没有其他包需要的依赖）
+# n：删除配置文件
+sudo pacman -Rns package_name
+
+# 搜索远程仓库的某个软件
+pacman -Ss 软件关键字
+
+# 搜索已安装的某个软件
+pacman -Qs 软件关键字
+
+# 查看已安装的所有软件
+pacman -Q
+
+# 列出包组的所有应用
+sudo pacman -Sg kde-applications
+
+# 选择安装包组里面的应用，默认全部安装，可以根据交互选择应用对应的数字，如果安装多个用空格隔开，来自定义安装
+sudo pacman -S kde-applications
+```
+
 #### 安装教程
 
 - 下载Arch Linux系统镜像文件并校验：<https://archlinux.org/download/>
@@ -16441,7 +16478,7 @@ EDITOR=vim visudo
 usermod -aG wheel 用户名
 ```
 
-- 安装KDE Plasma
+##### 安装KDE桌面环境
 
 ```sh
 # 安装xorg图形支持
@@ -16693,36 +16730,7 @@ cat /etc/pam.d/sddm
 -session    optional    pam_kwallet5.so         auto_start
 ```
 
-#### pacman
 
-```sh
-# -S：同步
-# y： 从服务器下载最新的软件包数据库（相当于更新索引）
-# u： 升级所有已安装的软件包到最新版本
-# 安装软件前先执行这一命令
-sudo pacman -Syu
-
-# 从远程仓库拉取软件安装
-sudo pacman -S 软件名
-
-# 安装本地.pkg.tar.zst安装包
-sudo pacman -U path/to/pkg.tar.zst安装包
-
-# 卸载软件
-# R：删除指定包
-# s：删除不需要的依赖（仅限于没有其他包需要的依赖）
-# n：删除配置文件
-sudo pacman -Rns package_name
-
-# 搜索远程仓库的某个软件
-pacman -Ss 软件关键字
-
-# 搜索已安装的某个软件
-pacman -Qs 软件关键字
-
-# 查看已安装的所有软件
-pacman -Q
-```
 #### 安装音乐/视频播放器
 
 ```sh
