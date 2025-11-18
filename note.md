@@ -16700,6 +16700,8 @@ sudo pacman -S wqy-microhei adobe-source-han-sans-otc-fonts
 
 ###### 安装Watt Tookit
 
+证书配置向导页面：<https://steampp.net/liunxSetupCer>
+
 ```sh
 # 去官网的github地址下载.tgz版本的软件包
 # 解压软件包（同tar.gz)
@@ -16716,7 +16718,7 @@ sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路�
 
 
 # 3.将证书导入到Steam，这个暂时用不到，先不做笔记了
-
+# steam依赖chrome内核的证书，笔者用的是火狐，懒得装其它浏览器了，直接放弃设置
 # 最后导入完成后这个复制的cer文件可以删除掉
 ```
 
@@ -16732,11 +16734,12 @@ sudo pacman -S fuse2
 ###### 安装输入法fcitx5
 
 ```sh
-# fcitx5,主程序
+# fcitx5-im是一个元包，包含了fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool
+# fcitx5，主程序
 # fcitx5-gtk fcitx5-qt，UI开发工具包的输入法模块，如果装有vscode，则必须安装mr，否则输入法会抽风
 # fcitx5-configtool，GUI配置程序
 # fcitx5-rime,一种可自定义的输入法引擎，但默认情况下其默认配置为拼音。
-sudo pacman -S fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool，fcitx5-rime
+sudo pacman -S fcitx5-im fcitx5-rime
 
 # 配置环境变量（官方建议的，其实一开始笔者没配置也没啥问题发生），在~/.bash_profile中添加如下内容，SDDM+KDE+Wayland的桌面环境只用添加这一行就可以了
 # v2rayN和微信输入法需要设置GTK_IM_MODULE、QT_IM_MODULE和SDL_IM_MODULE，虽然官方和电脑提示不需要设置，不要听
@@ -16799,6 +16802,15 @@ sudo pacman -S strawberry
 
 # vlc音乐/视频播放器
 sudo pacman -S vlc
+```
+
+##### 安装steam
+
+```sh
+sudo pacman -S steam
+
+# 安装完后首次用命令启动，不然可能弹不出界面，都不知道什么问题
+steam
 ```
 
 ##### 安装wine
