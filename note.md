@@ -16471,6 +16471,8 @@ KDE由桌面环境Plasma、KDE Frameworks、KDE Applications三部分组成
 
 后面安装了完整gnome，切到了gnome桌面，然后又安装了完整的plasma，然后切回kde桌面，然后设置了window decorations，缩放设置回100%，这两个问题就好了，莫名其妙
 
+在virtualbox测试完整安装plasma后，火狐浏览器的最大化和最小化按钮成功显示出来了，所以plasma应该完整安装，而kde-applications则是根据需要安装就行了
+
 - 一次性安装plasma和kde-applications
 
 ```sh
