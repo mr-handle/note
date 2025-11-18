@@ -16459,57 +16459,71 @@ nmcli connection show --active
 nmcli connection modify "上面列出的Wifi的SSID" connection.autoconnect yes
 ```
 
-- （root用户）安装 sudo
-
-```sh
-# 先更新系统
-pacman -Syu
-
-# 安装 sudo
-pacman -S sudo
-
-# 配置 sudo 权限，让wheel组的用户（普通用户）都能用sudo
-# 临时指定使用 vim 编辑器来打开并编辑 sudoers 文件
-# visudo 会在保存前检查语法，防止你把 sudo 配坏
-# 如果你直接用 vim /etc/sudoers，一旦写错，可能导致系统无法使用 sudo，必须进 root 修复
-# 找到这行： # %wheel ALL=(ALL:ALL) ALL然后取消注释，保存退出
-EDITOR=vim visudo
-
-# 用户加入 wheel 组，然后重启，新的组权限才会生效
-# usermod 修改用户账户的命令
-# -a append，追加组（不移除已有组）
-# -G wheel 指定要加入的组是 wheel
-usermod -aG wheel 用户名
-```
-
 ##### 安装KDE桌面环境
 
+KDE由桌面环境Plasma、KDE Frameworks、KDE Applications三部分组成
+
+但是安装时只用安装Plasma和KDE Applications，会自动安装依赖库KDE Frameworks
+
+###### 安装xorg
+
 ```sh
+# 应该是不用单独安装的，笔者想要卸载的时候提示sddm依赖到它,安装sddm的时候应该会将其自动安装
 # 安装xorg图形支持
 # xorg-server， X11 图形服务器，负责窗口显示和图形渲染
 sudo pacman -S xorg-server
+```
 
+###### 安装plasma和kde-applications
 
-# 安装完整的Plasma桌面环境,不然火狐浏览器最小最大化按钮可能不见，鬼知道到底哪里出问题了
+只安装了plasma-desktop plasma-workspace plasma-nm plasma-pa kwin kscreen konsole dolphin ，笔者的火狐浏览器最大最小化按钮不显示，motrix下载器无法接管火狐浏览器下载，后面完整安装了就没问题了
+
+后面安装了完整gnome，切到了gnome桌面，然后又安装了完整的plasma，然后切回kde桌面，然后设置了window decorations，缩放设置回100%，这两个问题就好了，莫名其妙
+
+- 一次性安装plasma和kde-applications
+
+```sh
 # 安装完整的KDE软件，先用着，找到更好的就卸载
+# 其实可以安装完整的plasma，kde-applications可以指定安装某一些就行了
 sudo pacman -S plasma kde-applications
+```
 
-# 只安装如下指定的组件，笔者的火狐浏览器最大最小化按钮不显示，motrix下载器无法接管火狐浏览器下载，后面完整安装了就没问题了
+- 只安装plasma的部分应用
+
+```sh
 # plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面
 # plasma-workspace，Plasma 会话管理器、启动器、设置中心
+# plasma-nm，网络的托盘图标和系统设置
+# plasma-pa，图形音量控制器（托盘小喇叭）
 # kwin，窗口管理器，负责窗口动画、特效、布局
+# kscreen,显示设置，支持设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
+sudo pacman -S plasma-desktop plasma-workspace plasma-nm plasma-pa kwin kscreen
+```
+
+- 只安装kde-applications的部分应用
+
+```sh
 # konsole，终端模拟器，支持标签、透明、快捷键
 # dolphin，文件管理器，支持标签、网络挂载、批处理等
-# kscreen,显示设置，支持设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
-# plasma-nm，网络的托盘图标和系统设置
-sudo pacman -S plasma-desktop plasma-workspace kwin konsole dolphin kscreen plasma-nm
+sudo pacman -S konsole dolphin 
+```
 
-# 安装 SDDM（图形登录管理器），一般完整的plasma包含了sddm，只要设置开机启动就行了
+###### 安装SDDM（图形登录管理器）
+
+完整的plasma包含了sddm-kcm（sddm的kde桌面配置工具），还需要自行安装SDDM
+
+```sh
 sudo pacman -S sddm
 
-# 启用 SDDM 开机启动
+# 启用SDDM开机启动
 sudo systemctl enable sddm
+```
 
+###### 创建非root用户
+
+sddm登录界面只默认显示一个非root用户给你输入密码，然后登录进入桌面，因此这里要先创建一个非root用户
+
+```sh
 # 创建非root用户，这里以handle为例
 useradd handle
 
@@ -16520,13 +16534,52 @@ passwd handle
 mkdir -p /home/handle
 
 # 将handle的家目录的权限赋给handle
-sudo chown -R handle:handle /home/handle
+chown -R handle:handle /home/handle
 
-# 重启，然后用非root用户登录
-reboot
+# 或者一步创建用户和家目录，然后指定密码就行了
+useradd -m 用户名
 ```
 
-- 安装音频支持（推荐 PipeWire），安装完后重启
+###### （root用户）安装sudo
+
+sudo在整个系统的使用过程中，使用频率是非常高的，不装只能通过`su - root`切换超级用户进行操作，非常麻烦
+
+```sh
+# 安装 sudo
+pacman -S sudo
+```
+
+- 配置 sudo 权限，让wheel组的用户（普通用户）都能用sudo
+
+```sh
+# 如果直接用 vim /etc/sudoers，一旦写错，可能导致系统无法使用 sudo，必须进 root 修复
+# 因此这里临时指定使用 vim 编辑器来打开并编辑 sudoers 文件
+# visudo 会在保存前检查语法，防止你把 sudo 配坏
+# 找到这行： # %wheel ALL=(ALL:ALL) ALL然后取消注释，保存退出
+EDITOR=vim visudo
+
+# 用户加入 wheel 组，然后重启，新的组权限才会生效，这里以上面创建的handle为例
+# usermod 修改用户账户的命令
+# -a append，追加组（不移除已有组）
+# -G wheel 指定要加入的组是 wheel
+usermod -aG wheel handle
+```
+
+###### GRUB设置(也可以在任意时间设置)
+
+```sh
+# 打开文件
+sudo vim /etc/default/grub
+
+# 找到并设置如下两个属性，就可以默认快速开机不用等待了，需要的时候按ESC弹出菜单选项
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE=hidden
+
+# 然后更新GRUB配置
+grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+###### 安装音频支持（推荐 PipeWire），安装完后重启
 
 ```sh
 # pipewire 核心服务 音频/视频服务器，替代 PulseAudio 和 JACK，支持低延迟和多设备
@@ -16537,14 +16590,14 @@ reboot
 # sof-firmware 驱动固件 Intel 声卡 DSP 所需固件，适用于 Tiger Lake、Ice Lake、Alder Lake 等平台（非 Intel 可跳过）
 sudo pacman -S pipewire pipewire-pulse wireplumber pipewire-audio alsa-utils sof-firmware
 
-# 其中3个设置为开机自动启动，并立即启动服务。其他组件无需启动，它们是工具或驱动，安装即可
+# 其中3个设置为开机自动启动，并立即启动服务
+# 其他组件无需启动，它们是工具或驱动，安装即可
 systemctl --user enable pipewire pipewire-pulse wireplumber --now
-
-# 图形音量控制器（托盘小喇叭）
-sudo pacman -S plasma-pa
 ```
 
-- 启用 multilib 仓库，它是Arch官方提供的32位兼容库仓库，Steam、Wine、某些游戏需要它
+###### 安装显卡驱动
+
+- 先启用 multilib 仓库，它是Arch官方提供的32位兼容库仓库，Steam、Wine、某些游戏需要它
 
 ```sh
 # 编辑/etc/pacman.conf配置文件
@@ -16555,7 +16608,7 @@ sudo vim /etc/pacman.conf
 #Include = /etc/pacman.d/mirrorlist
 ```
 
-- 安装显卡驱动（根据需要安装）
+- 根据显卡类型安装显卡驱动
 
 ```sh
 # 这一步可能还要摸索，笔者装了英特尔和英伟达的后，重启黑屏了，然后切换tty又装了optimus-manager，然后重启又正常了
@@ -16578,39 +16631,6 @@ sudo pacman -S mesa libva-intel-driver vulkan-intel
 
 # 最后我好像还安装了
 sudo pacman -S lib32-nvidia-utils
-```
-
-- 安装切换显卡工具
-
-```sh
-# 安装完重启
-yay -S optimus-manager
-
-# 命令行切换显卡，nvidia, integrated, hybrid，分别为独显、集显和混合模式
-# 切换到 Nvidia GPU
-optimus-manager --switch nvidia
-```
-
-- 安装火狐浏览器
-
-```sh
-sudo pacman -Syu
-
-sudo pacman -S firefox
-
-# 启动火狐浏览器
-firefox
-```
-
-- 安装中文字体支持，避免浏览器中文乱码，下面四种字体基本够用了
-
-```sh
-# noto-fonts-cjk：Google 出品，覆盖简体、繁体、日文、韩文，现代网页首选
-# wqy-zenhei：文泉驿正黑体，开源中文字体，兼容性好，适合旧网页和轻量界面
-# wqy-microhei：更紧凑的文泉驿字体，适合嵌入式或小屏幕
-# adobe-source-han-sans-otc-fonts：思源黑体，质量高但体积大，适合美化界面
-sudo pacman -S noto-fonts-cjk wqy-zenhei
-sudo pacman -S wqy-microhei adobe-source-han-sans-otc-fonts
 ```
 
 - 安装 AUR（yay）
@@ -16647,7 +16667,38 @@ makepkg -si
 yay --version
 ```
 
-- 安装Watt Tookit
+- 安装切换显卡工具
+
+```sh
+# 安装完重启
+yay -S optimus-manager
+
+# 命令行切换显卡，nvidia, integrated, hybrid，分别为独显、集显和混合模式
+# 切换到 Nvidia GPU
+optimus-manager --switch nvidia
+```
+
+###### 安装火狐浏览器
+
+```sh
+sudo pacman -S firefox
+
+# 启动火狐浏览器
+firefox
+```
+
+- 安装中文字体支持，避免浏览器中文乱码，下面四种字体基本够用了
+
+```sh
+# noto-fonts-cjk：Google 出品，覆盖简体、繁体、日文、韩文，现代网页首选
+# wqy-zenhei：文泉驿正黑体，开源中文字体，兼容性好，适合旧网页和轻量界面
+# wqy-microhei：更紧凑的文泉驿字体，适合嵌入式或小屏幕
+# adobe-source-han-sans-otc-fonts：思源黑体，质量高但体积大，适合美化界面
+sudo pacman -S noto-fonts-cjk wqy-zenhei
+sudo pacman -S wqy-microhei adobe-source-han-sans-otc-fonts
+```
+
+###### 安装Watt Tookit
 
 ```sh
 # 去官网的github地址下载.tgz版本的软件包
@@ -16669,7 +16720,7 @@ sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路�
 # 最后导入完成后这个复制的cer文件可以删除掉
 ```
 
-- 安装v2rayN
+###### 安装v2rayN
 
 ```sh
 # 下载.appimage格式的v2rayN
@@ -16678,7 +16729,7 @@ sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路�
 sudo pacman -S fuse2
 ```
 
-- 安装输入法fcitx5
+###### 安装输入法fcitx5
 
 ```sh
 # fcitx5,主程序
@@ -16702,7 +16753,7 @@ fcitx5-configtool
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择Fcitx 5，然后应用就可以了
 ```
 
-- 安装输入法ibus-rime,(在vscode下会抽风，所以建议换成fcitx5)
+###### 安装输入法ibus-rime,(在vscode下会抽风，所以建议换成fcitx5)
 
 ```sh
 # 安装
@@ -16715,7 +16766,7 @@ ibus-setup
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择IBus Wayland，然后应用就可以了
 ```
 
-- 安装kwallet
+###### 安装kwallet
 
 ```sh
 # kwalletmanager：管理工具
@@ -16734,16 +16785,20 @@ cat /etc/pam.d/sddm
 -session    optional    pam_kwallet5.so         auto_start
 ```
 
-
-#### 安装音乐/视频播放器
+#### 安装其它常用软件
 
 ```sh
+# 压缩/解压软件ark
+sudo pacman -S ark
+
+# 草莓音乐播放器
 sudo pacman -S strawberry
 
+# vlc音乐/视频播放器
 sudo pacman -S vlc
 ```
 
-#### 安装wine
+##### 安装wine
 
 ```sh
 # 需要启用multilib仓库来兼容32位的软件运行
@@ -16759,13 +16814,7 @@ wine uninstaller
 winecfg
 ```
 
-#### 压缩/解压软件ark
-
-```sh
-sudo pacman -S ark
-```
-
-#### 安装VirtualBox
+##### 安装VirtualBox
 
 十分不推荐自己安装.run的软件包
 
@@ -16800,20 +16849,6 @@ Terminal=false
 
 ```sh
 Exec=wine /path/to/App.exe
-```
-#### GRUB设置
-
-
-```sh
-# 打开文件
-sudo vim /etc/default/grub
-
-# 找到并设置如下两个属性，就可以默认快速开机不用等待了，需要的时候按ESC弹出菜单选项
-GRUB_TIMEOUT=0
-GRUB_TIMEOUT_STYLE=hidden
-
-# 然后更新GRUB配置
-grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 #### 获取下载文件的哈希码
