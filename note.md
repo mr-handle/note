@@ -16191,8 +16191,8 @@ sudo pacman -Syu
 # 从远程仓库拉取软件安装
 sudo pacman -S 软件名
 
-# 安装本地.pkg.tar.zst安装包
-sudo pacman -U path/to/pkg.tar.zst安装包
+# 安装本地.pkg.tar.zst安装包或.pacman安装包
+sudo pacman -U path/to/pkg.tar.zst安装包或.pacman安装包
 
 # 卸载软件
 # R：删除指定包
