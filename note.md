@@ -16791,6 +16791,9 @@ cat /etc/pam.d/sddm
 # 压缩/解压软件ark
 sudo pacman -S ark
 
+# 截图工具，安装好后到系统设置里面设置截图的快捷方式
+sudo pacman -S flameshot
+
 # 草莓音乐播放器
 sudo pacman -S strawberry
 
