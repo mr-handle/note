@@ -16177,7 +16177,9 @@ yum install java-1.8.0-openjdk-devel.x86_64
 lsb_release -a
 ```
 
-### Arch
+### Arch Linux
+
+官网：<https://archlinux.org/>
 
 #### pacman
 
@@ -16216,7 +16218,9 @@ sudo pacman -Sg kde-applications
 sudo pacman -S kde-applications
 ```
 
-#### 安装教程
+#### 安装系统教程
+
+可参考官方教程：<https://wiki.archlinux.org/title/Installation_guide>
 
 - 下载Arch Linux系统镜像文件并校验：<https://archlinux.org/download/>
 
@@ -16224,7 +16228,7 @@ sudo pacman -S kde-applications
 
 - 关闭BIOS的安全启动模式，不然可能会提示安全引导违规
 
-- 终端键盘布局和字体
+##### 设置终端键盘布局和字体（可选）
 
 ```sh
 # 列出可选的键盘布局
@@ -16236,16 +16240,17 @@ loadkeys us
 # 设置当前终端的字体，立马见效，觉得当前终端字体不合适可以自行修改
 # 分辨率为1080p的屏幕，建议选择 ter-122b
 # 分辨率更高的屏幕，可以在 ter-124b，ter-128b，ter-132b 中选择一个, 默认lat9w-16
-setfont lat9w-16
+setfont ter-122b
 ```
 
-- 检查是否为UEFI启动，ArchLinux只支持UEFI模式启动，输出为64就行了
+##### 检查是否为UEFI启动
 
 ```sh
+# Arch Linux只支持UEFI模式启动，输出为64就行了
 cat /sys/firmware/efi/fw_platform_size
 ```
 
-- 连接网络，这里连接wifi为例
+##### 连接网络，这里连接wifi为例
 
 ```sh
 # 确认是否启用了网络接口
@@ -16276,17 +16281,23 @@ exit
 ping www.baidu.com 
 ```
 
-- 更新系统时间
+##### 更新系统时钟
 
 ```sh
-# 更新系统时间是有必要的，因为下载软件是服务器会验证系统时间，如果时间不正确，可能出现下载失败的情况
+# 更新系统时钟是有必要的，因为下载软件是服务器会验证系统时间，如果时间不正确，可能出现下载失败的情况
 # 将系统时间与网络时间进行同步
 timedatectl set-ntp true 
 # 查看系统时间状态，检查是否成功 看到（System clock synchronized :yes）这一句就是成功了
 timedatectl status   
 ```
 
-- 创建分区
+##### 磁盘分区
+
+###### 1. 创建分区
+
+只有EFI分区和`/`分区是必须的
+
+如果内存有16或者32G（已经足够大了），可以不创建swap分区
 
 ```sh
 # 列出设备和分区信息，记住要安装arc linux系统的设备，一般通过容量判断比较直观
@@ -16307,7 +16318,9 @@ n
 # 然后输入t改变分区类型，根据提示输入类型名称或者代码
 t
 
-# 依次创建efi分区（512M），类型为EFI System；swap分区（和内存同样的大小），类型为linux swap；/分区（设备容量剩余多少就设置多少），类型为linux filesystem
+# 依次创建efi分区（512M），类型为EFI System
+# swap分区（和内存同样的大小），类型为linux swap
+# /分区（设备容量剩余多少就设置多少），类型为linux filesystem
 
 # 查看分区
 p
@@ -16316,7 +16329,7 @@ p
 w
 ```
 
-- 格式化分区
+###### 2. 格式化分区
 
 ```sh
 # 格式化efi系统分区为fat32
@@ -16329,7 +16342,7 @@ mkswap /dev/swap_partition
 mkfs.ext4 /dev/root_partition
 ```
 
-- 挂载分区
+###### 3. 挂载分区
 
 ```sh
 # 要先挂载跟分区
@@ -16342,7 +16355,11 @@ mount --mkdir /dev/efi_system_partition /mnt/boot
 swapon /dev/swap_partition
 ```
 
-- 配置镜像源，不然安装会很慢
+##### 安装基础系统包
+
+###### 配置pacman镜像源(可选)
+
+非常建议配置，不然安装会很慢
 
 ```sh
 # 用vim或nano编辑文件/etc/pacman.d/mirrorlist
@@ -16356,50 +16373,82 @@ Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
 Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
 ```
 
-- 安装基础包
+###### 用pacstrap安装基础系统包
+
+pacstrap是Arch Linux安装环境提供的一个脚本，用来在目标挂载点（通常是新系统的根目录，比如 /mnt）安装基础系统包
+
+pacstrap通常只用来安装基础系统包，安装完之后，可以用genfstab和arch-chroot进入新系统对其进行配置
 
 ```sh
 # base，linux，linux-firmware分别是基础包组，linux内核和驱动程序
 # Arch linux 官方提供了 linux，linux-lts，linux-zen，linux-hardened内核，但是对于初学者，只推荐使用linux内核
-# 如果使用的是2019年及以后生产的笔记本电脑，可能需要安装sof-firmware，否则可能没有声音
 pacstrap -K /mnt base linux linux-firmware
 ```
 
-- 生成fstab系统文件
+##### 配置系统
+
+###### Fstab
+
+为了在启动时挂载所需的文件系统（如用于引导目录/boot的文件系统），需要生成一个fstab文件
 
 ```sh
-# 生成fstab系统文件，它决定了系统启动时如何自动挂载分区。没有fstab，系统将找不到根分区，从而无法启动
-#  -U：是以UUID的描述方式生成 fstab，>>：是将输出结果追加在后面的文件末尾
+# -U：是以UUID的描述方式生成 fstab，>>：是将输出结果追加在后面的文件末尾
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
 
-```sh
-# 使用arch-chroot工具切换到新安装的系统，以后的操作就可以在新安装的系统中完成了，执行完成终端用户目录的~会变成/
-arch-chroot /mnt
+###### Chroot
 
+为了在接下来的步骤中，直接跟新系统的环境、工具和配置交互，就像真的进入了新系统一样，需要通过arch-chroot切换到新系统
+
+```sh
+# 使用arch-chroot工具切换到新安装的系统，之后的操作就可以在新系统中完成了
+# 比如用pacman安装的软件都将是安装到新系统中
+# 执行完成终端用户目录的~会变成/
+arch-chroot /mnt
+```
+
+###### 时间/时区设置
+
+```sh
 # 时区 /usr/share/zoneinfo/Region/City，可输入/usr/share/zoneinfo后按tab键查看可选时区
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-# 同步硬件时钟
+# 同步硬件时钟（当前系统时间写入硬件时钟，即主板上的独立时钟芯片）
+# 系统启动时，内核会从硬件时钟读取初始时间
+# 系统运行后，时间由内核维护（通常更精确，可以通过 NTP 校准）
+# 执行hwclock --systohc后，系统会把当前内核时间写回硬件时钟，保证下次启动时不会“跑偏”
+# 会创建并写入到/etc/adjtime文件中
 hwclock --systohc
+```
 
-# 本地化
+###### 本地化
 
-# 需要先安装vim和terminus-font，terminus-font是终端字体，后面设置FONT=ter-122b需要依赖这个字体，-S：sync
+```sh
+# 需要先安装vim和terminus-font
+# terminus-font是终端字体，后面设置FONT=ter-122b需要依赖这个字体
 pacman -S vim terminus-font
 
-# 编辑/etc/locale.gen，删除#en_US.UTF-8 UTF-8行和#zh_CN.UTF-8 UTF-8行的注释#并保存
+# 编辑/etc/locale.gen
+# 删除#en_US.UTF-8 UTF-8行和#zh_CN.UTF-8 UTF-8行的注释#并保存
 vim /etc/locale.gen
 
 # 生成locale
+# 根据/etc/locale.gen的配置生成对应的locale数据文件
+# 比如/usr/lib/locale/en_US.UTF-8和/usr/lib/locale/zh_CN.UTF-8
 locale-gen
 
-# 创建并编辑/etc/locale.conf，输入LANG=en_US.UTF-8并保存
+# 创建并编辑/etc/locale.conf
+# 输入LANG=en_US.UTF-8并保存
 vim /etc/locale.conf
 
-# 创建并编辑/etc/vconsole.conf，设置KEYMAP=us,FONT=ter-122b，这样新系统启动时终端字体（大小）就变成设置的了
+# 创建并编辑/etc/vconsole.conf
+# 设置KEYMAP=us,FONT=ter-122b，这样新系统启动时终端字体（大小）就变成设置的了
 vim /etc/vconsole.conf
+```
 
+###### 网络配置
+
+```sh
 # 设置主机名
 vim /etc/hostname
 
@@ -16413,18 +16462,42 @@ systemctl enable NetworkManager.service
 passwd
 ```
 
-- 安装引导程序
+###### Initramfs（了解）
+
+- 前面用pacstrap安装基础系统包的时候安装了linux包，这一步不用再配置了
+
+- Initramfs（Initial RAM Filesystem）是一个在系统启动时加载到内存里的临时根文件系统。
+
+- 它包含了一些必要的工具和驱动，用来帮助内核完成启动过程，直到真正的根文件系统（比如你磁盘上的 / 分区）可以挂载。
+
+- 启动流程中的角色
+    - 1.BIOS/UEFI → 加载引导程序（GRUB）。
+    - 2.GRUB → 加载 Linux 内核和 Initramfs 到内存。
+    - 3.内核启动 → 挂载 Initramfs 作为临时根文件系统。
+    - 4.Initramfs 脚本运行 → 加载驱动、解密磁盘、挂载真正的根文件系统。
+    - 5.切换根目录 → 从 Initramfs 切换到真正的 /，继续启动用户空间程序（systemd 等）。
+
+- 在Arch Linux里，initramfs是由mkinitcpio生成的
 
 ```sh
-# 查看cpu型号
-cat /proc/cpuinfo | grep "model name"
+# 根据配置文件里的所有preset来生成initramfs
+mkinitcpio -P
+```
 
-# 如果是intel的cpu，安装 intel-ucode
-pacman -S intel-ucode
+###### 设置root用户的密码
 
-# 如果是amd的cpu，安装 amd-ucode
-pacman -S amd-ucode
+```sh
+# 设置root用户的密码，根据提示输入密码
+passwd
+```
 
+###### 安装引导程序
+
+GRUP：<https://wiki.archlinux.org/title/GRUB>
+
+ESP = EFI System Partition（EFI 系统分区）
+
+```sh
 # 安装grub
 pacman -S grub
 # 安装efibootmgr
@@ -16435,7 +16508,26 @@ grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 
 # 生成grub配置
 grub-mkconfig -o /boot/grub/grub.cfg
+```
 
+###### 安装微码更新（可选）
+
+它是内核在启动时加载的一段数据，用来修复CPU的硬件bug和安全漏洞
+
+```sh
+# 查看cpu型号
+cat /proc/cpuinfo | grep "model name"
+
+# 如果是intel的cpu，安装 intel-ucode
+pacman -S intel-ucode
+
+# 如果是amd的cpu，安装 amd-ucode
+pacman -S amd-ucode
+```
+
+###### 重启
+
+```sh
 # 退出chroot环境，执行完成终端用户目录的/会变成~
 exit
 
@@ -16444,7 +16536,11 @@ umount -R /mnt
 
 # 重启
 reboot
+```
 
+##### 连接网络
+
+```sh
 # 如果安装了NetworkManager，先连接网络，这里以wifi为例
 # 查看可用 Wi-Fi 网络
 nmcli device wifi list
@@ -16583,6 +16679,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 # pipewire-audio 模块扩展 提供额外音频模块支持（如 PCM、蓝牙、JACK 桥接），增强兼容性
 # alsa-utils 调试工具 提供 aplay、alsamixer、speaker-test 等命令行工具，用于声卡识别与音量调试，声音正常后无需调试了可卸载
 # sof-firmware 驱动固件 Intel 声卡 DSP 所需固件，适用于 Tiger Lake、Ice Lake、Alder Lake 等平台（非 Intel 可跳过）
+# 如果使用的是2019年及以后生产的笔记本电脑，可能需要安装sof-firmware，否则可能没有声音
 sudo pacman -S pipewire pipewire-pulse wireplumber pipewire-audio alsa-utils sof-firmware
 
 # 其中3个设置为开机自动启动，并立即启动服务
