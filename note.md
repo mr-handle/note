@@ -16491,22 +16491,30 @@ mkinitcpio -P
 passwd
 ```
 
-###### 安装引导程序
+###### 安装引导程序（GRUB）
 
-GRUP：<https://wiki.archlinux.org/title/GRUB>
+GRUB：<https://wiki.archlinux.org/title/GRUB>
 
 ESP = EFI System Partition（EFI 系统分区）
 
 ```sh
 # 安装grub
 pacman -S grub
+
 # 安装efibootmgr
 pacman -S efibootmgr
 
 # 安装grub到计算机
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 
-# 生成grub配置
+# 打开文件
+sudo vim /etc/default/grub
+
+# 找到并设置如下两个属性，就可以默认快速开机不用等待了，需要的时候按ESC弹出菜单选项
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE=hidden
+
+# 生成grub配置，如果后期又编辑了/etc/default/grub，需要再次执行次命令更新GRUB配置
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
@@ -16581,12 +16589,12 @@ sudo pacman -S plasma kde-applications
 
 ```sh
 # plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面，它是最小的plasma安装
-# plasma-workspace，Plasma 会话管理器、启动器、设置中心
+# plasma-workspace，会话管理器、启动器、设置中心,安装plasma-desktop会将其作为依赖自动安装
 # plasma-nm，网络的托盘图标和系统设置
 # plasma-pa，图形音量控制器（托盘小喇叭）
 # kwin，窗口管理器，负责窗口动画、特效、布局
 # kscreen,显示设置，支持设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
-sudo pacman -S plasma-desktop plasma-workspace plasma-nm plasma-pa kwin kscreen
+sudo pacman -S plasma-desktop plasma-nm plasma-pa kwin kscreen
 ```
 
 - 只安装kde-applications的部分应用
@@ -16654,20 +16662,6 @@ EDITOR=vim visudo
 # -a append，追加组（不移除已有组）
 # -G wheel 指定要加入的组是 wheel
 usermod -aG wheel handle
-```
-
-###### GRUB设置(也可以在任意时间设置)
-
-```sh
-# 打开文件
-sudo vim /etc/default/grub
-
-# 找到并设置如下两个属性，就可以默认快速开机不用等待了，需要的时候按ESC弹出菜单选项
-GRUB_TIMEOUT=0
-GRUB_TIMEOUT_STYLE=hidden
-
-# 然后更新GRUB配置
-grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ###### 安装音频支持（推荐 PipeWire），安装完后重启
