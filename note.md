@@ -16531,6 +16531,9 @@ pacman -S intel-ucode
 
 # 如果是amd的cpu，安装 amd-ucode
 pacman -S amd-ucode
+
+# 如果卸载了微码更新，需要更新GRUB配置
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ###### 重启
@@ -16563,7 +16566,9 @@ nmcli connection show --active
 nmcli connection modify "上面列出的Wifi的SSID" connection.autoconnect yes
 ```
 
-##### 安装KDE桌面环境
+##### 安装桌面环境（KDE）
+
+KDE：<https://wiki.archlinux.org/title/KDE>
 
 KDE由桌面环境Plasma、KDE Frameworks、KDE Applications三部分组成
 
@@ -16571,17 +16576,14 @@ KDE由桌面环境Plasma、KDE Frameworks、KDE Applications三部分组成
 
 ###### 安装plasma和kde-applications
 
-只安装了plasma-desktop plasma-workspace plasma-nm plasma-pa kwin kscreen konsole dolphin ，笔者的火狐浏览器最大最小化按钮不显示，motrix下载器无法接管火狐浏览器下载，后面完整安装了就没问题了
+motrix下载器无法接管火狐浏览器下载，可能是因为桌面放大的原因，设置好分辨率，保持原来的比例不要设置缩放
 
-后面安装了完整gnome，切到了gnome桌面，然后又安装了完整的plasma，然后切回kde桌面，然后设置了window decorations，缩放设置回100%，这两个问题就好了，莫名其妙
+所以plasma应该完整安装，而kde-applications则是根据需要安装就行了
 
-在virtualbox测试完整安装plasma后，火狐浏览器的最大化和最小化按钮成功显示出来了，所以plasma应该完整安装，而kde-applications则是根据需要安装就行了
-
-- 一次性安装plasma和kde-applications
+- 安装plasma和kde-applications的全部应用
 
 ```sh
-# 安装完整的KDE软件，先用着，找到更好的就卸载
-# 其实可以安装完整的plasma，kde-applications可以指定安装某一些就行了
+# 最好不要这么做，其实可以安装完整的plasma，而kde-applications可以指定安装某一些就行了
 sudo pacman -S plasma kde-applications
 ```
 
@@ -16589,12 +16591,18 @@ sudo pacman -S plasma kde-applications
 
 ```sh
 # plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面，它是最小的plasma安装
-# plasma-workspace，会话管理器、启动器、设置中心,安装plasma-desktop会将其作为依赖自动安装
+# plasma-workspace，会话管理器、启动器、设置中心，安装plasma-desktop会将其作为依赖自动安装
+sudo pacman -S plasma-desktop
+
+# kde-gtk-config，官方的描述是同步KDE设置到GTK应用，人话就是让GTK应用（如Firefox）在KDE（基于QT）下的外观和行为更接近QT应用
+# 必须安装kde-gtk-config，否则火狐浏览器的最大化和最小化按钮是不显示的
+sudo pacman -S kde-gtk-config
+
 # plasma-nm，网络的托盘图标和系统设置
 # plasma-pa，图形音量控制器（托盘小喇叭）
 # kwin，窗口管理器，负责窗口动画、特效、布局
 # kscreen,显示设置，支持设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
-sudo pacman -S plasma-desktop plasma-nm plasma-pa kwin kscreen
+sudo pacman -S plasma-nm plasma-pa kwin kscreen
 ```
 
 - 只安装kde-applications的部分应用
