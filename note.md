@@ -16631,20 +16631,11 @@ sudo systemctl enable sddm
 sddm登录界面只默认显示一个非root用户给你输入密码，然后登录进入桌面，因此这里要先创建一个非root用户
 
 ```sh
-# 创建非root用户，这里以handle为例
-useradd handle
+# 创建非root用户和家目录，这里以handle为例
+useradd -m handle
 
 # 指定handle的登录密码
 passwd handle
-
-# 创建handle的家目录
-mkdir -p /home/handle
-
-# 将handle的家目录的权限赋给handle
-chown -R handle:handle /home/handle
-
-# 或者一步创建用户和家目录，然后指定密码就行了
-useradd -m 用户名
 ```
 
 ###### （root用户）安装sudo
@@ -16781,15 +16772,12 @@ sudo pacman -S firefox
 firefox
 ```
 
-- 安装中文字体支持，避免浏览器中文乱码，下面四种字体基本够用了
+- 安装中文字体支持，避免浏览器中文乱码
 
 ```sh
-# noto-fonts-cjk：Google 出品，覆盖简体、繁体、日文、韩文，现代网页首选
-# wqy-zenhei：文泉驿正黑体，开源中文字体，兼容性好，适合旧网页和轻量界面
-# wqy-microhei：更紧凑的文泉驿字体，适合嵌入式或小屏幕
-# adobe-source-han-sans-otc-fonts：思源黑体，质量高但体积大，适合美化界面
-sudo pacman -S noto-fonts-cjk wqy-zenhei
-sudo pacman -S wqy-microhei adobe-source-han-sans-otc-fonts
+# noto-fonts-cjk：谷歌版的思源黑体，覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
+# 装一个够了，不够用再找别的字体
+sudo pacman -S noto-fonts-cjk
 ```
 
 ###### 安装Watt Tookit
