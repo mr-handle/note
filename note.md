@@ -16818,7 +16818,7 @@ sudo pacman -S fuse2
 ```sh
 # fcitx5-im是一个元包，包含了fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool
 # fcitx5，主程序
-# fcitx5-gtk fcitx5-qt，UI开发工具包的输入法模块，如果装有vscode，则必须安装mr，否则输入法会抽风
+# fcitx5-gtk fcitx5-qt，UI开发工具包的输入法模块，如果装有vscode，则必须安装，否则输入法会抽风
 # fcitx5-configtool，GUI配置程序
 # fcitx5-rime,一种可自定义的输入法引擎，但默认情况下其默认配置为拼音。
 sudo pacman -S fcitx5-im fcitx5-rime
@@ -16851,15 +16851,16 @@ ibus-setup
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择IBus Wayland，然后应用就可以了
 ```
 
-###### 安装kwallet
+###### KWallet
+
+- kwallet-pam
 
 ```sh
-# kwalletmanager：管理工具
-# kwallet-pam：让 KWallet 在登录时自动解锁( 只针对Blowfish模式，gpg不可以)
+# kwallet-pam：让KWallet在登录时自动解锁( 只针对Blowfish模式，gpg不可以)
 # 可以管理vscode里面的的账号密码，vscode启动的时候就会提示了
 # 安装完成后打开系统设置启动钱包服务，设置Blowfish密码和开机密码一样
 # gpg模式还没有官方的登录解锁工具，开机每次都要输入一次密码，麻烦就先不用了
-sudo pacman -S kwalletmanager kwallet-pam
+sudo pacman -S kwallet-pam
 
 # 然后查看文件
 cat /etc/pam.d/sddm
@@ -16868,6 +16869,13 @@ cat /etc/pam.d/sddm
 # 这样下次登录时，Blowfish 钱包会随登录密码自动解锁，不再弹窗
 -auth       optional    pam_kwallet5.so
 -session    optional    pam_kwallet5.so         auto_start
+```
+
+- kwalletmanager
+
+```sh
+# kwalletmanager：管理工具，如果不安装则在系统设置没有kwallet的管理项，根据需要决定是否安装
+sudo pacman -S kwalletmanager
 ```
 
 #### 安装其它常用软件
