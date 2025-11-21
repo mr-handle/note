@@ -15950,29 +15950,56 @@ free -m
 cat /var/log/messages | grep nginx
 ```
 
-#### 压缩/解压文件
+#### 压缩/解压命令
 
 ##### tar.gz文件
 
+|选项|描述|
+|:-|:-|
+|-c|产生.tar打包文件|
+|-v|显示详细信息|
+|-f|指定压缩后的文件名|
+|-z|打包同时压缩|
+|-x|解包.tar文件|
+
 ```sh
-# 将目标文件夹压缩
-tar -zcvf tar.gz文件名 目标文件夹
+# 压缩多个文件
+tar -zcvf xxx.tar.gz 被压缩文件1 被压缩文件2
 
-# tar.gz文件解压到当前目录
-tar -zxvf tar.gz文件名
+# 压缩文件夹
+tar -zcvf xxx.tar.gz 被压缩文件夹
 
-# tar.gz文件解压到目标路径
-tar -zxvf tar.gz文件名 -C 目标路径
+# 解压到当前目录
+tar -zxvf xxx.tar.gz
+
+# 解压到指定目录
+tar -zxvf xxx.tar.gz -C path/to/directory
+```
+
+##### gz文件
+
+```sh
+# 将文件（不能压缩目录）压缩为*.gz文件
+gzip 被压缩文件
+
+# 解压
+gunzip xxx.gz
 ```
 
 ##### zip文件
 
 ```sh
+# 压缩文件
+zip xxx.zip 被压缩文件
+
+# 压缩目录
+zip -r xxx.zip 被压缩目录
+
 # 解压到当前目录
-unzip file.zip
+unzip xxx.zip
 
 # 解压到指定目录
-unzip file.zip -d /path/to/directory
+unzip -d path/to/directory xxx.zip
 ```
 
 - 查看端口有没有被某个进程占用
