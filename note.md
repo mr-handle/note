@@ -15432,6 +15432,24 @@ line: 'first \n second'
 
 - 生产环境还需设置开启kdump
 
+### 组
+
+- 在linux中，每个用户都必须属于一个组
+
+- 在linux中，每个文件都有所有者、所在组、其它组
+    - 创建文件的用户就是该文件的所有者（当然创建文件后，所有者是可以改的）
+    - 创建文件的用户所属组就是该文件的所在组
+    - 对于该文件来说，该文件的所在组之外的组，就是其它组
+
+### 所有者
+
+```sh
+# 修改文件所有者(change owner)
+# 可以先用ls命令查看文件的所有者信息
+# 用户名必须是已经存在的
+chown 用户名 文件名
+```
+
 ### Linux软件安装
 
 #### 安装`*.src.rpm`形式的源代码软件包
@@ -15716,8 +15734,9 @@ pwd
 
 ```sh
 # -a，展示当前目录下所有的文件和目录，包括隐藏的
+# -h，human readable
 # -l，以列表的方式显示信息
-ls [-a|-l] 文件/目录
+ls -ahl 文件/目录
 ```
 
 - 切换到指定目录
@@ -16372,7 +16391,7 @@ mkfs.ext4 /dev/root_partition
 ###### 3. 挂载分区
 
 ```sh
-# 要先挂载跟分区
+# 要先挂载根分区
 mount /dev/root_partition /mnt
 
 # 挂载efi系统分区，使用--mkdir创建/mnt/boot目录，并将efi分区挂载在/mnt/boot目录下
@@ -16524,14 +16543,32 @@ GRUB：<https://wiki.archlinux.org/title/GRUB>
 
 ESP = EFI System Partition（EFI 系统分区）
 
+NVRAM（非易失性随机访问存储器）：是一种断电后仍能保持数据的非易失性RAM，用于存储系统设置和配置数据，包括BIOS设置、启动选项和硬件信息。
+
+这些信息在系统开机时会自动加载到RAM中，可以被操作系统读取和修改
+
 ```sh
 # 安装grub
+# GRUB是引导加载程序
 pacman -S grub
 
 # 安装efibootmgr
+# GRUB安装脚本使用efibootmgr将引导项写入NVRAM
 pacman -S efibootmgr
 
 # 安装grub到计算机
+# --efi-directory：挂载的EFI系统分区（用实际的路径表示，而不是用挂载的路径）
+# 前面根分区挂载到了/mnt，EFI系统分区挂载到了/mnt/boot，因而这里填/boot就行了
+
+# --bootloader-id：引导加载器的标识符，这里命名为GRUB
+# 将会在esp/EFI/中创建该标识符的目录，用来存储EFI二进制文件，并且该标识符将会出现在UEFI启动菜单中，以标识GRUB启动项
+
+# 前面检查是否为UEFI模式启动时，输出为64（表示64位模式的UEFI，不要混淆噢不是指64位的CPU指令集，如果是32位请看官网教程），因此安装grubx64.efi
+# 安装GRUB EFI应用程序grubx64.efi到esp/EFI/GRUB/，并且将其模块安装到/boot/grub/x86_64-efi/
+# grub-install命令尝试在固件引导管理器创建一个引导选项（这里命名为GRUB了）
+# 如果引导选项满了或者系统阻止操作引导顺序，将会失败
+# 比如Thinkpad的BIOSs有一个设置项为"Boot Order Lock"，需要禁用它才能让efibootmgr进行添加或删除引导选项的操作
+# 可以用efibootmgr删除不需要的引导选项
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 
 # 打开文件
@@ -16541,7 +16578,9 @@ sudo vim /etc/default/grub
 GRUB_TIMEOUT=0
 GRUB_TIMEOUT_STYLE=hidden
 
-# 生成grub配置，如果后期又编辑了/etc/default/grub，需要再次执行次命令更新GRUB配置
+# 生成grub主配置文件/boot/grub/grub.cfg
+# 默认情况下，生成脚本自动将所有已安装的Arch Linux内核的菜单项，添加到生成的grub主配置文件中
+# 只要改动了/etc/default/grub或/etc/grub.d/，或者添加/删除了内核，都需要再次执行此命令重新生成grub主配置文件
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
