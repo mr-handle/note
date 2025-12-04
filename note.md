@@ -16200,7 +16200,7 @@ cat /home/handle/hello.txt | grep "handle"
     - 通过`+`（增加权限）、`-`（撤回权限）、`=`（赋予权限）
     - `u`：所有者；`g`：所在组；`o`：其它组；`a`：所有人
 - 第二种方式：通过数字变更权限
-      - r=4,w=2,x=1,赋予了什么权限就将其权限值相加，
+      - r=4,w=2,x=1,赋予了什么权限就将其权限值相加
 
 ```sh
 # 相当于 chmod 751 文件/目录
@@ -16827,23 +16827,30 @@ sudo vim /etc/pacman.conf
 # 这一步可能还要摸索，笔者装了英特尔和英伟达的后，重启黑屏了，然后切换tty又装了optimus-manager，然后重启又正常了
 
 # 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
+
+# 根据执行结果去网站找到对应的显卡代码：https://nouveau.freedesktop.org/CodeNames.html
+# 到安装教程官网，根据显卡代码安装对应的显卡驱动：https://wiki.archlinux.org/title/NVIDIA
+lspci -k -d ::03xx
+
 # NVIDIA（闭源）
 # nvidia NVIDIA 官方驱动模块
 # nvidia-utils 包含 nvidia-smi、OpenGL/Vulkan 支持
 # nvidia-settings 图形化控制面板（可选）
 sudo pacman -S nvidia nvidia-utils nvidia-settings
 
+# 最后我好像还安装了
+sudo pacman -S lib32-nvidia-utils
+
 # AMD（开源）
+# 官网教程：https://wiki.archlinux.org/title/Xorg#AMD
 sudo pacman -S xf86-video-amdgpu mesa
 
 # Intel（开源）
+# 官网教程：https://wiki.archlinux.org/title/Intel_graphics
 # mesa OpenGL 支持
 # libva-intel-driver 视频加速（VA-API）
 # vulkan-intel Vulkan 支持（如游戏、图形加速）
 sudo pacman -S mesa libva-intel-driver vulkan-intel
-
-# 最后我好像还安装了
-sudo pacman -S lib32-nvidia-utils
 ```
 
 - 安装 AUR（yay）
