@@ -12841,6 +12841,17 @@ cd yourpath/elasticsearch-8.15.3/bin
 
 ### 安装
 
+#### Arch Linux
+
+```sh
+sudo pacman -S git
+
+# 需要安装openssh才能使用ssh-keygen命令生成ssh密钥
+sudo pacman -S openssh
+```
+
+### 配置git
+
 ```sh
 # 安装完成后，还需要最后一步设置，因为Git是分布式版本控制系统，所以，每个机器都必须自报家门：你的名字和Email地址
 # global参数，表示你这台机器上所有的Git仓库都会使用这个配置，当然也可以对某个仓库指定不同的用户名和Email地址
@@ -12848,10 +12859,23 @@ git config --global user.name "Your Name"
 git config --global user.email "email@example.com"
 
 # 然后查看git配置，看看刚刚的设置正确没有
+# Windows
 git config --global --list
 
-# 生成ssh key，-t ed25519表示指定密钥类型为Ed25519，rsa不再是首选了
- ssh-keygen -t ed25519 -C "这里填你的邮箱"
+# Arch Linux
+cat ~/.gitconfig
+```
+
+### 生成SSH公/密钥
+
+```sh
+# 生成ssh key
+# -t：ed25519表示指定密钥类型为Ed25519，rsa不再是首选了
+# -C：注释
+ssh-keygen -t ed25519 -C "这里填你的邮箱"
+
+# 复制公钥
+cat path/to/id_ed25519.pub
 ```
 
 ### 创建版本库
