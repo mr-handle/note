@@ -16350,6 +16350,59 @@ sudo pacman -Sg kde-applications
 sudo pacman -S kde-applications
 ```
 
+#### AppImage
+
+下载.AppImage格式的软件包时，第一次先通过终端启动
+
+如果运行异常，根据终端提示安装相应的依赖就可以了
+
+```sh
+# 比如有些AppImage软件包是需要fuse2的
+sudo pacman -S fuse2
+```
+
+#### 从git源码编译安装
+
+每一套源码一般要安装各种语言和依赖
+
+可能语言和依赖下载下来都好几G了，但是编译出来的软件包可能才几M到几百M
+
+这是针对没有官方编译版本的情况的无奈操作，平时自己别这么搞，完全费力不讨好
+
+以yay为例，步骤如下
+
+```sh
+sudo pacman -Syu
+
+# 先安装base-devel 和 git
+sudo pacman -S --needed base-devel git
+
+# 检查有没有安装go包（编译器）
+go version
+
+# 如果没有安装则安装
+sudo pacman -S go
+
+# 以下用指令非root用户执行
+cd ~
+git clone https://aur.archlinux.org/yay.git
+cd yay
+
+# 有可能因为网络原因导致安装失败，因此先修改PKGBUILD文件
+vim PKGBUILD
+# 找到 build() 函数，在多条 export 语句后追加保存退出
+export GO111MODULE=on
+export GOPROXY=https://goproxy.cn
+
+# makepkg 使用当前目录下的 PKGBUILD 构建一个 Arch 包
+# -s 自动安装构建所需的依赖（resolve dependencies）
+# -i 构建完成后自动安装生成的 .pkg.tar.zst 包
+makepkg -si
+
+# 测试 yay 是否安装成功
+yay --version
+```
+
 #### 安装系统教程
 
 可参考官方教程：<https://wiki.archlinux.org/title/Installation_guide>
@@ -16821,7 +16874,7 @@ ALSA(Advanced Linux Sound Architecture)驱动作为linux内核的一部分，已
 
 ###### 安装显卡驱动
 
-- 先启用 multilib 仓库，它是Arch官方提供的32位兼容库仓库，Steam、Wine、某些游戏需要它
+- 先启用 multilib 仓库，它是Arch官方提供的32位兼容库仓库，Steam、Wine、某些游戏需要它,Steam的软件包也在这个仓库里面
 
 ```sh
 # 编辑/etc/pacman.conf配置文件
@@ -16847,10 +16900,9 @@ lspci -k -d ::03xx
 # nvidia NVIDIA 官方驱动模块
 # nvidia-utils 包含 nvidia-smi、OpenGL/Vulkan 支持
 # nvidia-settings 图形化控制面板（可选）
-sudo pacman -S nvidia nvidia-utils nvidia-settings
+sudo pacman -S nvidia nvidia-utils lib32-nvidia-utils nvidia-settings
 
-# 最后我好像还安装了
-sudo pacman -S lib32-nvidia-utils
+# 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
 
 # AMD（开源）
 # 官网教程：https://wiki.archlinux.org/title/Xorg#AMD
@@ -16864,37 +16916,22 @@ sudo pacman -S xf86-video-amdgpu mesa
 sudo pacman -S mesa libva-intel-driver vulkan-intel
 ```
 
-- 安装 AUR（yay）
+###### 安装yay
+
+官网：<https://github.com/Jguer/yay>
+
+- 1.下载官方编译版本.tar.gz,解压
+
+- 2.`.bash_profile`文件中设置环境变量
 
 ```sh
-sudo pacman -Syu
+export YAY_HOME=/home/handle/Applications/yay_x86_64
+export PATH=$PATH:${YAY_HOME}
+```
 
-# 先安装base-devel 和 git
-sudo pacman -S --needed base-devel git
+- 3.测试yay是否安装成功
 
-# 检查有没有安装go包（编译器）
-go version
-
-# 如果没有安装则安装
-sudo pacman -S go
-
-# 以下用指令非root用户执行
-cd ~
-git clone https://aur.archlinux.org/yay.git
-cd yay
-
-# 有可能因为网络原因导致安装失败，因此先修改PKGBUILD文件
-vim PKGBUILD
-# 找到 build() 函数，在多条 export 语句后追加保存退出
-export GO111MODULE=on
-export GOPROXY=https://goproxy.cn
-
-# makepkg 使用当前目录下的 PKGBUILD 构建一个 Arch 包
-# -s 自动安装构建所需的依赖（resolve dependencies）
-# -i 构建完成后自动安装生成的 .pkg.tar.zst 包
-makepkg -si
-
-# 测试 yay 是否安装成功
+```sh
 yay --version
 ```
 
@@ -16948,15 +16985,6 @@ sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路�
 # 3.将证书导入到Steam，这个暂时用不到，先不做笔记了
 # steam依赖chrome内核的证书，笔者用的是火狐，懒得装其它浏览器了，直接放弃设置
 # 最后导入完成后这个复制的cer文件可以删除掉
-```
-
-###### 安装v2rayN
-
-```sh
-# 下载.appimage格式的v2rayN
-# 通过终端启动，可以看到报错缺少fuse
-# 安装fuse2，本人是安装fuse3了然后还是报错，就继续装fuse2, 然后发现fuse3卸载不了了
-sudo pacman -S fuse2
 ```
 
 ###### 安装输入法fcitx5
