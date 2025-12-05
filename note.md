@@ -16897,12 +16897,18 @@ sudo vim /etc/pacman.conf
 lspci -k -d ::03xx
 
 # NVIDIA（闭源）
-# nvidia NVIDIA 官方驱动模块
-# nvidia-utils 包含 nvidia-smi、OpenGL/Vulkan 支持
-# nvidia-settings 图形化控制面板（可选）
-sudo pacman -S nvidia nvidia-utils lib32-nvidia-utils nvidia-settings
+# nvidia：NVIDIA内核模块
+# nvidia-utils：NVIDIA驱动工具，安装nvidia时会将nvidia-utils作为依赖进行安装
+# lib32-nvidia-utils：NVIDIA驱动工具（32位）（可选）,Steam需要用到，笔者建议安装具体的软件的时候再根据交互提示选择安装
+# nvidia-settings：NVIDIA图形驱动程序配置工具（可选）
+sudo pacman -S nvidia lib32-nvidia-utils nvidia-settings
 
 # 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
+# 从nvidia-utils 560.35.03-5起,默认已经启用DRM
+# 对于老版本的驱动，设置modeset=1
+# 先确认，输出应该为Y
+# 但是笔者安装玩驱动后执行此命令提示没有这个文件或目录，重启也正常显示
+cat /sys/module/nvidia_drm/parameters/modeset
 
 # AMD（开源）
 # 官网教程：https://wiki.archlinux.org/title/Xorg#AMD
@@ -16935,7 +16941,11 @@ export PATH=$PATH:${YAY_HOME}
 yay --version
 ```
 
-- 安装切换显卡工具
+###### 安装切换显卡工具
+
+对于笔记本，安装完对应的显卡驱动后，还要安装切换显卡工具
+
+笔者建议就是直接切换用独显或核显
 
 ```sh
 # 安装完重启
@@ -17071,6 +17081,7 @@ sudo pacman -S vlc
 ##### 安装steam
 
 ```sh
+# 需要启用multilib仓库
 sudo pacman -S steam
 
 # 安装完后首次用命令启动，不然可能弹不出界面，都不知道什么问题
