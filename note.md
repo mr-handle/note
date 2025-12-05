@@ -16313,7 +16313,7 @@ lsb_release -a
 
 官网：<https://archlinux.org/>
 
-#### pacman
+#### pacman包管理器
 
 ```sh
 # -S：同步
@@ -16350,7 +16350,7 @@ sudo pacman -Sg kde-applications
 sudo pacman -S kde-applications
 ```
 
-#### AppImage
+#### .AppImage软件包
 
 下载.AppImage格式的软件包时，第一次先通过终端启动
 
@@ -16359,6 +16359,23 @@ sudo pacman -S kde-applications
 ```sh
 # 比如有些AppImage软件包是需要fuse2的
 sudo pacman -S fuse2
+```
+
+#### .run软件包
+
+.run软件包的卸载不好说，根据具体软件具体分析，下面的例子使用的是virtualbox
+
+十分不推荐自己安装.run的软件包
+
+```sh
+# 给.run软件包执行权限
+chmod +x path/to/软件包
+
+# 执行安装，可能需要root权限
+sudo path/to/软件包
+
+# 卸载
+sudo path/to/软件包 uninstall
 ```
 
 #### 从git源码编译安装
@@ -17071,6 +17088,9 @@ sudo pacman -S ark
 # 截图工具，安装好后到系统设置里面设置截图的快捷方式
 sudo pacman -S flameshot
 
+# 图片查看器 
+sudo pacman -S gwenview
+
 # 草莓音乐播放器
 sudo pacman -S strawberry
 
@@ -17145,23 +17165,6 @@ Exec=wine /path/to/App.exe
 
 ```sh
 sha256sum path/to/下载文件
-```
-
-#### .run软件包
-
-.run软件包的卸载不好说，根据具体软件具体分析，下面的例子使用的是virtualbox
-
-十分不推荐自己安装.run的软件包
-
-```sh
-# 给.run软件包执行权限
-chmod +x path/to/软件包
-
-# 执行安装，可能需要root权限
-sudo path/to/软件包
-
-# 卸载
-sudo path/to/软件包 uninstall
 ```
 
 ## Windows篇
