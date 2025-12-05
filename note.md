@@ -16589,9 +16589,6 @@ pacman -S networkmanager
 
 # 设置网络管理器开机启动
 systemctl enable NetworkManager.service
-
-# 设置root用户的密码，根据提示输入密码
-passwd
 ```
 
 ###### Initramfs（了解）
@@ -16621,6 +16618,24 @@ mkinitcpio -P
 ```sh
 # 设置root用户的密码，根据提示输入密码
 passwd
+```
+
+###### 安装微码更新（可选）
+
+它是内核在启动时加载的一段数据，用来修复CPU的硬件bug和安全漏洞
+
+```sh
+# 查看cpu型号
+cat /proc/cpuinfo | grep "model name"
+
+# 如果是intel的cpu，安装 intel-ucode
+pacman -S intel-ucode
+
+# 如果是amd的cpu，安装 amd-ucode
+pacman -S amd-ucode
+
+# 如果卸载了微码更新，需要更新GRUB配置
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ###### 安装引导程序（GRUB）
@@ -16668,24 +16683,6 @@ GRUB_TIMEOUT_STYLE=hidden
 # 默认情况下，生成脚本自动将所有已安装的Arch Linux内核的菜单项，添加到生成的grub主配置文件中
 # 只要改动了/etc/default/grub或/etc/grub.d/，或者添加/删除了内核，都需要再次执行此命令重新生成grub主配置文件
 grub-mkconfig -o /boot/grub/grub.cfg
-```
-
-###### 安装微码更新（可选）
-
-它是内核在启动时加载的一段数据，用来修复CPU的硬件bug和安全漏洞
-
-```sh
-# 查看cpu型号
-cat /proc/cpuinfo | grep "model name"
-
-# 如果是intel的cpu，安装 intel-ucode
-pacman -S intel-ucode
-
-# 如果是amd的cpu，安装 amd-ucode
-pacman -S amd-ucode
-
-# 如果卸载了微码更新，需要更新GRUB配置
-sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ###### 重启
@@ -16752,9 +16749,8 @@ sudo pacman -S kde-gtk-config
 
 # plasma-nm，网络的托盘图标和系统设置
 # plasma-pa，图形音量控制器（托盘小喇叭）
-# kwin，窗口管理器，负责窗口动画、特效、布局
 # kscreen,显示设置，支持设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
-sudo pacman -S plasma-nm plasma-pa kwin kscreen
+sudo pacman -S plasma-nm plasma-pa kscreen
 ```
 
 - 只安装kde-applications的部分应用
@@ -16815,22 +16811,13 @@ EDITOR=vim visudo
 usermod -aG wheel handle
 ```
 
-###### 安装音频支持（推荐 PipeWire），安装完后重启
+###### 安装声音驱动
 
-```sh
-# pipewire 核心服务 音频/视频服务器，替代 PulseAudio 和 JACK，支持低延迟和多设备
-# pipewire-pulse 兼容层 提供 PulseAudio API 兼容性，让旧程序（如 Firefox、Steam）能正常输出声音
-# wireplumber 会话管理器 管理设备热插拔、权限、策略，替代旧的 pipewire-media-session
-# pipewire-audio 模块扩展 提供额外音频模块支持（如 PCM、蓝牙、JACK 桥接），增强兼容性
-# alsa-utils 调试工具 提供 aplay、alsamixer、speaker-test 等命令行工具，用于声卡识别与音量调试，声音正常后无需调试了可卸载
-# sof-firmware 驱动固件 Intel 声卡 DSP 所需固件，适用于 Tiger Lake、Ice Lake、Alder Lake 等平台（非 Intel 可跳过）
-# 如果使用的是2019年及以后生产的笔记本电脑，可能需要安装sof-firmware，否则可能没有声音
-sudo pacman -S pipewire pipewire-pulse wireplumber pipewire-audio alsa-utils sof-firmware
+ALSA(Advanced Linux Sound Architecture)驱动作为linux内核的一部分，已经作为依赖安装了
 
-# 其中3个设置为开机自动启动，并立即启动服务
-# 其他组件无需启动，它们是工具或驱动，安装即可
-systemctl --user enable pipewire pipewire-pulse wireplumber --now
-```
+台式机无需再安装高级的声音驱动
+
+笔记本电脑如果没有声音，参考官网进行安装：<https://wiki.archlinux.org/title/General_recommendations#Sound_system>
 
 ###### 安装显卡驱动
 
