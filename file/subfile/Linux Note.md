@@ -946,6 +946,9 @@ sudo pacman -Sg kde-applications
 
 # 选择安装包组里面的应用，默认全部安装，可以根据交互选择应用对应的数字，如果安装多个用空格隔开，来自定义安装
 sudo pacman -S kde-applications
+
+# 查看包组中还没安装的软件
+sudo pacman -Sg plasma | grep -v " $(sudo pacman -Qg) "
 ```
 
 ### .AppImage软件包
@@ -1438,6 +1441,9 @@ sudo pacman -S konsole dolphin
 
 ```sh
 sudo pacman -S sddm
+
+# 可选安装，可以在系统设置选择登录界面的样式
+sudo pacman -S sddm-kcm
 
 # 启用SDDM开机启动
 sudo systemctl enable sddm
