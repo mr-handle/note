@@ -17138,6 +17138,16 @@ sudo pacman -S virtualbox
 sudo pacman -S virtualbox-guest-utils
 ```
 
+#### 挂载其它硬盘
+
+```sh
+# 安装分区工具
+sudo pacman -Syu partitionmanager
+
+# 如果是挂载ntfs格式的硬盘，还要安装ntfs-3g，否则只能读
+sudo pacman -S ntfs-3g
+```
+
 #### 创建菜单/桌面快捷方式
 
 - 如果只想创建桌面快捷方式，则在`~/Desktop`目录下创建`应用名.desktop`文件
