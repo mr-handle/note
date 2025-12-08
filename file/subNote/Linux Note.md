@@ -541,6 +541,16 @@ ip addr
 # 查看ip地址信息2，此命令一般需要先安装相应工具
 ifconfig
 
+# 列出网络接口（设备）
+# 网络接口（设备）被udev管理，通过systemd.link文件进行配置
+# 前缀en表示有线/以太网，wl表示无线/WLAN，ww表示mobile broadband/WWAN
+# lo： Virtual Loopback Interface（虚拟回环接口），是操作系统网络栈里的一种特殊接口，用来让主机和自己通信。它不是物理网卡，而是纯软件实现的网络接口。
+# 只显示网络接口（设备）名称
+ls /sys/class/net
+
+# 除了显示网络接口（设备）名称外还有别的信息显示
+ip link
+
 # 进入对应网卡文件进行修改
 vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
 
@@ -1418,7 +1428,7 @@ sudo pacman -S plasma-desktop
 # 必须安装kde-gtk-config，否则火狐浏览器的最大化和最小化按钮是不显示的
 sudo pacman -S kde-gtk-config
 
-# plasma-nm，管理网络连接，并且在任务栏显示网络托盘图标
+# plasma-nm，管理网络连接，并且在任务栏显示网络托盘图标，可作为NetworkManager的GUI
 # plasma-pa，音量控制器，并且在任务栏显示托盘小喇叭
 # plasma-systemmonitor，系统监视器，类似Windows的任务管理器
 # kscreen，显示设置，如设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
