@@ -1807,3 +1807,46 @@ Exec=wine /path/to/App.exe
 ```sh
 sha256sum path/to/下载文件
 ```
+
+### 其它可能用到的命令
+
+- 加载/卸载内核模块
+
+```sh
+# kmod工具包用于管理内核模块，它作为内核依赖已经安装
+# 手动加载内核模块
+modprobe module_name
+
+# 也可以使用以下任一命令，通过指定文件名加载没有安装到/usr/lib/modules/kernel_release/里面的模块
+insmod file_name module_options
+modprobe file_name
+
+# 使用以下任一命令卸载/删除一个模块
+rmmod module_name
+modprobe -r module_name
+modprobe --remove module_name
+```
+
+- 确认网卡驱动是否已加载
+
+```sh
+# pci网卡
+lspci -k 
+
+# usb网卡，但是笔者试了没有打印相关的驱动信息，这个命令废了
+# 还不如直接用lsusb，输出更简洁
+sudo lsusb -v
+
+# usb网卡，可以看到类似：usbcore: registered new interface driver rtl8187
+sudo dmesg | grep usbcore
+```
+
+- 确认网络接口设备是否已创建
+
+```sh
+# 列出可用的网络接口设备
+ip link
+
+# 启用网络接口设备，以网络接口设备名称：wlp2s0，为例
+ip link set wlp2s0 up
+```
