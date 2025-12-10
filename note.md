@@ -50,7 +50,7 @@ tar -zxvf xxx.tar.gz -C 指定目录
 
 ```sh
 # /etc/profile 是系统级的shell启动配置文件，它作用于所有用户的登录shell
-# 启动一个非登录shell，这时会读取 ~/.bashrc
+# 启动一个交互式非登录shell（比如打开一个新的终端窗口），这时会读取 ~/.bashrc
 # 当通过SSH登录远程服务器，或在图形界面登录后启动一个shell，会读取~/.bash_profile，目前笔者用的是这个
 # 下面以/etc/profile为例，其它两个文件类似
 

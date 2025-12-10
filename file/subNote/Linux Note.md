@@ -1556,6 +1556,16 @@ sudo pacman -S mesa libva-intel-driver vulkan-intel
 
 ##### 安装yay
 
+AUR（Arch User Repository）是Arch Linux社区维护的一个用户贡献的包脚本仓库
+
+AUR本身只提供PKGBUILD脚本，不提供二进制包
+
+用户需要用makepkg手动下载源码、编译、打包，再用pacman安装
+
+AUR助手（比如 yay、paru、pamac）就是帮你自动化这一整套流程的工具
+
+yay (Yet Another Yogurt)是AUR助手之一，Yogurt：是一个早期的AUR助手
+
 官网：<https://github.com/Jguer/yay>
 
 - 1.下载官方编译版本.tar.gz,解压
@@ -1571,6 +1581,14 @@ export PATH=$PATH:${YAY_HOME}
 
 ```sh
 yay --version
+```
+
+- 4.安装base-devel
+
+```sh
+# base-devel是使用yay -S 包名 构建AUR包时用到的依赖
+# 它包含了常见的编译工具和脚本，如make、gcc等
+sudo pacman -S --needed base-devel
 ```
 
 ##### 安装切换显卡工具
