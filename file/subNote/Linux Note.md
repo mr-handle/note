@@ -1734,9 +1734,6 @@ sudo pacman -S kwalletmanager
 # 压缩/解压软件ark
 sudo pacman -S ark
 
-# 截图工具，安装好后到系统设置里面设置截图的快捷方式
-sudo pacman -S flameshot
-
 # 图片查看器 
 sudo pacman -S gwenview
 
@@ -1824,6 +1821,41 @@ Exec=wine /path/to/App.exe
 
 ```sh
 sha256sum path/to/下载文件
+```
+
+### 系统启动美化
+
+试了一下就重启的时候比较明显，开机的时候根本看不到，没什么卵用的，不建议安装
+
+- 安装plymouth和GUI
+
+```sh
+# plymouth
+sudo pacman -S plymouth
+
+# plymouth主题选择的GUI
+sudo pacman -S plymouth-kcm
+```
+
+- 编辑grub配置模板并生成配置文件
+
+```sh
+# GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet splash"
+sudo vim /etc/default/grub
+
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+- 修改 initramfs HOOKS
+
+```sh
+# HOOKS=(... plymouth ...)
+# 如果用的是systemd，则plymouth要放在其后面
+# 如果系统用dm-crypt加密，则plymouth要放在encrypt or sd-encrypt之前
+sudo vim /etc/mkinitcpio.conf
+
+# 重新生成 initramfs
+mkinitcpio -P
 ```
 
 ### 其它可能用到的命令
