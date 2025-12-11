@@ -1784,6 +1784,28 @@ sudo pacman -S virtualbox
 sudo pacman -S virtualbox-guest-utils
 ```
 
+#### 安装debtap
+
+对于pacman仓库没有的软件，可以找yay有没有
+
+如果yay也没有，那就去官网看看有没有
+
+如果官网只有.deb格式的包，那么就只能用debtap来转成.pkg.tar.zst包再进行安装了
+
+```sh
+# 安装
+yay -S debtap
+
+# 更新
+sudo debtap -u
+
+# 进行转换，根据提示进行交互
+sudo debtap path/to/file.deb
+
+# 安装转换后的包
+sudo pacman -U path/to/file.pkg.tar.zst
+```
+
 ### 挂载其它硬盘
 
 ```sh
