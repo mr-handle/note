@@ -1734,6 +1734,10 @@ sudo pacman -S kwalletmanager
 # 压缩/解压软件ark
 sudo pacman -S ark
 
+# ark不支持rar解压，还需要安装unrar才能用ark解压rar文件
+# 安装即可，无需配置ark
+sudo pacman -S unrar
+
 # 图片查看器 
 sudo pacman -S gwenview
 
