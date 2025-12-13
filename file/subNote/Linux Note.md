@@ -1628,6 +1628,12 @@ sudo systemctl enable firewalld
 # noto-fonts-cjk：谷歌版的思源黑体，覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
 # 不安装中文会乱码，装一个够了，不够用再找别的字体
 sudo pacman -S noto-fonts-cjk
+
+# 然后用来刷新和重建系统的字体缓存
+# fc-cache：Fontconfig
+# -f (force)：强制刷新，即使缓存已经存在也会重新生成
+# -v (verbose)：详细模式，会在终端输出扫描过程和结果，方便确认哪些字体被识别
+fc-cache -fv
 ```
 
 ##### 安装火狐浏览器
@@ -1760,17 +1766,58 @@ steam
 
 #### 安装wine
 
+- 1.安装
+
 ```sh
 # 需要启用multilib仓库来兼容32位的软件运行
 sudo pacman -S wine
 
+# 安装Wine的.NET替代运行环境，用于运行依赖.NET 的Windows程序（推荐）
+# 如果不安装，首次启动wine时也会提示安装，但是这种安装下载速度可能很慢，容易失败，且不受系统包管理器管理（不推荐）
+sudo pacman -S wine-mono
+```
+
+- 2.配置wine字体映射，这样Wine请求Windows字体时，就会自动用Arch系统的字体替代
+
+```sh
+# 打开wine注册表
+wine regedit
+
+# 进入HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes
+# 添加字符串值（String Value）
+# 笔者前面只安装了noto-fonts-cjk字体，所以都映射为"Noto Sans CJK SC","SC"是简体中文的意思
+# "Noto Sans CJK SC"的得来请看后面的笔记
+# 笔者目前只设置了"SimSun"="Noto Sans CJK SC"就没有乱码了，后面两个先列出来备用吧，哪天乱码了再编辑注册表补上
+"SimSun"="Noto Sans CJK SC"
+"MS YaHei"="Noto Sans CJK SC"
+"KaiTi"="Noto Sans CJK SC"
+
+# 如果想确认Wine替换后会用到哪个字体，如：
+# fc-match SimSun，输出NotoSerif-Regular.ttf: "Noto Serif" "Regular"
+# 则字符串值可以设置为"SimSun"="Noto Serif"
+# 但是，"Noto Sans"是西文字体，中文覆盖不完整，中文可能显示方框或fallback到其它字体，还是推荐用"Noto Sans CJK SC"
+# 所以总结得到：fc-match命令没卵用
+fc-match SimSun
+
+# 当然也可以设置为系统其它的字体的家族名
+# 列出系统所有字体的家族名
+# 如输出的其中一行为：Noto Serif CJK KR,Noto Serif CJK KR ExtraLight
+# 表示这个字体文件既可以被识别为 “Noto Serif CJK KR”，也可以被识别为 “Noto Serif CJK KR ExtraLight”
+# 在Wine注册表替换时，你通常只需要用主家族名（第一个名字）
+# 第二个名字（ExtraLight）是具体的字重/样式别名，一般不用于注册表替换
+fc-list : family
+```
+
+- 3.使用wine运行/卸载windows应用
+
+```sh
 # 安装/运行exe
 wine path/to/exe文件
 
 # 卸载windows程序
 wine uninstaller
 
-# 配置
+# wine配置
 winecfg
 ```
 
