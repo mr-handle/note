@@ -1713,6 +1713,12 @@ fcitx5-configtool
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择Fcitx 5，然后应用就可以了
 ```
 
+- 字体设置（可选）
+
+都设置为"Noto Sans CJK SC"，字号、是否加粗用默认
+
+![fcitx5字体设置](/images/fcitx5-fonts.png)
+
 ##### 安装输入法ibus-rime,(在vscode下会抽风，所以建议换成fcitx5)
 
 ```sh
