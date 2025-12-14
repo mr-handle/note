@@ -1632,7 +1632,7 @@ Sans-serif：无衬线，笔画末端没有装饰，线条简洁
 
 ![衬线和无衬线对比图](/images/Sans-Serif.png)
 
-- 谷歌版的思源黑体(等比例)
+- 安装谷歌版的思源黑体（等比例/等宽）
 
 ```sh
 # noto-fonts-cjk：谷歌版的思源黑体，覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
@@ -1646,12 +1646,21 @@ sudo pacman -S noto-fonts-cjk
 fc-cache -fv
 ```
 
+- 系统字体设置
+
+字体大小跟系统默认一样，除了Fixed width设置为"Noto Sans Mono CJK SC"，其它都用"Noto Sans CJK SC"，
+
+特别是General那里，一定要设置，不然有些中字会显示半宽，特别别扭
+
+![系统字体设置](/images/system-fonts.png)
+
 ##### 安装火狐浏览器
 
 ```sh
 sudo pacman -S firefox
 
 # 启动火狐浏览器
+# 进入浏览器设置，搜索font，将字体设置为"Noto Sans CJK SC"（可选）
 firefox
 ```
 
