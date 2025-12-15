@@ -1913,6 +1913,16 @@ sudo genfstab -U /mnt/data >> /etc/fstab
 cat /etc/fstab
 ```
 
+#### 修改挂载点的权限
+
+```sh
+# 修改目录的所有者和所在组
+sudo chown -R 当前用户:当前用户 /mnt/data
+
+# 修改目录的读写权限
+sudo chmod u=rwx,g=rx,o=rx /mnt/data
+```
+
 ### 创建菜单/桌面快捷方式
 
 - 如果只想创建桌面快捷方式，则在`~/Desktop`目录下创建`应用名.desktop`文件
