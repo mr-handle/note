@@ -1757,8 +1757,11 @@ sudo pacman -S gwenview
 # 草莓音乐播放器
 sudo pacman -S strawberry
 
-# vlc音乐/视频播放器
-sudo pacman -S vlc
+# 视频播放器
+sudo pacman -S haruna
+
+# 录屏软件
+sudo pacman -S obs-studio
 ```
 
 #### 安装steam
@@ -1784,7 +1787,12 @@ sudo pacman -S wine
 sudo pacman -S wine-mono
 ```
 
-- 2.配置wine字体映射，这样Wine请求Windows字体时，就会自动用Arch系统的字体替代
+- 2.配置wine字体
+    - 2.1复制Windows系统的字体到`/home/具体用户名/.wine/drive_c/windows/Fonts`
+        - 2.1.1 直接复制Windows系统`C:/Windows/Fonts`文件夹
+        - 2.1.2 wine安装7z解压工具，然后用7z打开从微软官方下载的ISO系统镜像文件，复制`\..\Windows.iso\sources\install.wim\1\Windows\Fonts`文件夹
+            - install.wim里面有1-n个数字文件夹，选其中一个就行了
+    - 2.2~~配置wine字体映射，这样Wine请求Windows字体时，就会自动用Arch系统的字体替代~~（此方法已废，有个软件更新后还是乱码了，手动映射不过来的）
 
 ```sh
 # 打开wine注册表
@@ -2055,6 +2063,7 @@ fdisk -l
 # 不同文件系统对应不同的命令，以分区/dev/sda1为例
 mkfs.ext4 /dev/sda1
 mkfs.exfat /dev/sda1
+mkfs.fat -F 32 /dev/sda1
 
 # 挂载一个文件系统，以分区/dev/sda1，挂载点/mnt/data为例
 mount /dev/sda1 /mnt/data
