@@ -1876,6 +1876,9 @@ sudo pacman -Syu partitionmanager
 
 # 如果是挂载ntfs格式的硬盘，还要安装ntfs-3g，否则只能读
 sudo pacman -S ntfs-3g
+
+# 如果是想要完整支持exFAT（读写、格式化），比如U盘（exFAT支持超过4GB的单文件，适合U盘跨平台使用），还要安装exfatprogs
+sudo pacman -S exfatprogs
 ```
 
 #### 使用命令行
