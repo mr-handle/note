@@ -998,7 +998,27 @@ yay --version
 
 - 下载Arch Linux系统镜像文件并校验：<https://archlinux.org/download/>
 
-- 下载Rufus（Portable版本，免安装）：<https://rufus.ie>，制作U盘启动
+- 制作U盘启动
+    - 如果是在windows系统制作，下载Rufus（Portable版本，免安装）：<https://rufus.ie>
+    - 如果是在Linux系统制作，步骤如下：
+
+```sh
+# 列出系统中的磁盘分区表信息，找到U盘的设备名称，如：/dev/sdx
+sudo fdisk -l
+
+# 用dd命令把Arch Linux的ISO镜像写入到USB设备
+# dd：一个底层复制工具，可以按块复制文件或设备
+# bs=4M：设置块大小为4MB。这样每次读写4MB数据，比默认的512字节快很多
+# if：输入文件（input file），填Arch Linux的ISO镜像
+# of：输出文件（output file），填目标U盘的设备名称，如：/dev/sdx
+# conv=fsync：在写完数据后调用 fsync()，确保数据真正写入磁盘，而不是停留在缓存里。避免写入未完成就拔掉设备
+# oflag=direct：使用直接 I/O，绕过内核缓存，把数据直接写到设备。这样可以减少缓存污染，但速度可能略慢
+# status=progress：在执行过程中显示进度信息（已写入字节数），否则 dd 默认是静默的
+sudo dd bs=4M if=path/to/archlinux-version-x86_64.iso of=/dev/disk/by-id/usb-My_flash_drive conv=fsync oflag=direct status=progress
+
+# 如果没有安装dd，可以直接用cp命令，但是不能设置每次的读写大小
+cp path/to/archlinux-version-x86_64.iso /dev/disk/by-id/usb-My_flash_drive
+```
 
 - 关闭BIOS的安全启动模式，不然可能会提示安全引导违规
 
