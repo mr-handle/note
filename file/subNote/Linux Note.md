@@ -1017,7 +1017,7 @@ sudo fdisk -l
 sudo dd bs=4M if=path/to/archlinux-version-x86_64.iso of=/dev/disk/by-id/usb-My_flash_drive conv=fsync oflag=direct status=progress
 
 # 如果没有安装dd，可以直接用cp命令，但是不能设置每次的读写大小
-cp path/to/archlinux-version-x86_64.iso /dev/disk/by-id/usb-My_flash_drive
+sudo cp path/to/archlinux-version-x86_64.iso /dev/disk/by-id/usb-My_flash_drive
 ```
 
 - 关闭BIOS的安全启动模式，不然可能会提示安全引导违规
@@ -1100,7 +1100,7 @@ fdisk -l
 # 选择要分区的设备
 fdisk /dev/the_disk_to_be_partitioned
 
-# 首先输入g创建 GPT 分区表
+# 首先输入g创建GPT分区表
 g 
 
 # 随后输入n创建新的分区
@@ -2015,6 +2015,61 @@ ip link
 
 # 启用网络接口设备，以网络接口设备名称：wlp2s0，为例
 ip link set wlp2s0 up
+```
+
+- 创建分区表/分区
+
+```sh
+# 列出设备和分区信息
+fdisk -l
+
+# 选择要分区的设备
+fdisk /dev/the_disk_to_be_partitioned
+
+# 首先输入g创建GPT分区表
+g 
+
+# 随后输入n创建新的分区
+n
+
+# 然后根据终端提示，输入分区编号，然后enter
+# 然后根据终端提示，输入第一扇区，这一步保持默认，直接enter
+# 然后根据终端提示，指定分区大小，+512M表示创建512M的分区
+# 然后输入t改变分区类型，根据提示输入类型名称或者代码
+t
+
+# 查看分区
+p
+
+# 保存并退出分区
+w
+```
+
+- 创建（格式化）/挂载/卸载文件系统（分区）
+
+```sh
+# 列出设备和分区信息
+fdisk -l
+
+# 创建一个新的文件系统（即格式化为指定的文件系统），前提是该分区必须已经卸载
+# 不同文件系统对应不同的命令，以分区/dev/sda1为例
+mkfs.ext4 /dev/sda1
+mkfs.exfat /dev/sda1
+
+# 挂载一个文件系统，以分区/dev/sda1，挂载点/mnt/data为例
+mount /dev/sda1 /mnt/data
+
+# 卸载一个文件系统，以分区/dev/sda1，挂载点/mnt/data为例
+umount /dev/sda1
+
+# 也可以是
+umount /mnt/data
+
+# 列出所有已挂载的文件系统，可以加上分区名进行筛选，不然内容太多了
+findmnt [/dev/sda1]
+
+# 列出系统已经存在的存储设备（文件系统），包括已挂载和未挂载的
+lsblk -f
 ```
 
 - 查看硬盘是否4k对齐
