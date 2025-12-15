@@ -1251,7 +1251,8 @@ vim /etc/locale.gen
 locale-gen
 
 # 创建并编辑/etc/locale.conf
-# 输入LANG=en_US.UTF-8并保存
+# 如果想显示英文就输入LANG=en_US.UTF-8并保存
+# 如果想显示中文就输入LANG=zh_CN.UTF-8并保存
 vim /etc/locale.conf
 
 # 创建并编辑/etc/vconsole.conf
@@ -1884,12 +1885,32 @@ sudo pacman -U path/to/file.pkg.tar.zst
 
 ### 挂载其它硬盘
 
+#### 使用partitionmanager进行分区和挂载
+
+如果改硬盘已经在/etc/fstab中了要先删掉，不然会重复生成
+
 ```sh
 # 安装分区工具
 sudo pacman -Syu partitionmanager
 
 # 如果是挂载ntfs格式的硬盘，还要安装ntfs-3g，否则只能读
 sudo pacman -S ntfs-3g
+```
+
+#### 使用命令行
+
+```sh
+# 先创建一个目录作为挂载点
+sudo mkdir /mnt/data
+
+# 将硬盘挂载到该目录
+sudo mount /dev/sdb1 /mnt/data
+
+# 生成该挂载点的fstab条目，追加到/etc/fstab文件中
+sudo genfstab -U /mnt/data >> /etc/fstab
+
+# 确认是否正确挂载了
+cat /etc/fstab
 ```
 
 ### 创建菜单/桌面快捷方式
