@@ -3178,6 +3178,48 @@ Java语言编写，是sun.misc.Launcher的内部类AppClassLoader，间接继承
     - 重写findClass()方法，推荐
 - 编写好自定义类加载器后，便可以在程序中调用loadClass()方法来实现类加载
 
+```java
+@Test
+public void test() throws ClassNotFoundException {
+    MyClassLoader myClassLoader = new MyClassLoader("字节码文件的所在目录");
+    String className = "全限定类名";
+    Class<?> clazz = myClassLoader.loadClass(className);
+    System.out.println(clazz.getClassLoader().getClass().getName());
+    System.out.println(clazz.getClassLoader().getParent().getClass().getName());
+}
+
+public class MyClassLoader extends  ClassLoader {
+    private String bytecodePath;
+
+    public MyClassLoader(String bytecodePath) {
+        this.bytecodePath = bytecodePath;
+    }
+
+    @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        // 如果类名为某个类，就不走双亲委派，自己加载
+        if ("全限定类名".equals(name)) {
+            return findClass(name);
+        }
+        return super.loadClass(name);
+    }
+
+    @Override
+    protected Class<?> findClass(String className) throws ClassNotFoundException {
+        String fileName = bytecodePath + className.replace(".", "/") + ".class";
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(fileName));
+             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            bufferedInputStream.transferTo(byteArrayOutputStream);
+            byte[] bytes = byteArrayOutputStream.toByteArray();
+            // 这里还可以对bytes做一些操作，如解密
+            return defineClass(className, bytes, 0, bytes.length);
+        } catch (IOException e) {
+            throw new ClassNotFoundException(className);
+        }
+    }
+}
+```
+
 ##### 获取类加载器的途径
 
 ```java
