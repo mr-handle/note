@@ -1621,6 +1621,9 @@ Sans-serif：无衬线，笔画末端没有装饰，线条简洁
 # 不安装中文会乱码，装一个够了，不够用再找别的字体
 sudo pacman -S noto-fonts-cjk
 
+# 包含更多的汉字特别是生僻字和繁体字，根据需要安装
+sudo pacman -S ttf-hanazono
+
 # 然后用来刷新和重建系统的字体缓存
 # fc-cache：Fontconfig
 # -f (force)：强制刷新，即使缓存已经存在也会重新生成
