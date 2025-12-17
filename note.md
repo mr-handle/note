@@ -4420,7 +4420,11 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 -XX:+PrintFlagsInitial
 
 # 查看所有参数的最终值（可能存在修改，不再是初始值）
+# =的是默认值，:=的是赋值过的
 -XX:+PrintFlagsFinal
+
+# 查看已经被用户或者JVM设置过的详细的参数名称和值
+-XX:+PrintCommandLineFlags
 
 # 设置可使用的最大直接内存，默认与堆空间最大值（-Xmx参数值）一致
 # java进程使用的内存可以简单看成等于java堆+直接内存
@@ -4843,7 +4847,7 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 
 ##### 性能调优工具
 
-- JDK命令行
+###### jps
 
 ```sh
 # jps（Java Process Status）查看当前正在运行的java进程信息
@@ -4857,12 +4861,143 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 # 除了-q只能单独使用外其它参数可以组合使用
 # 如果进程使用了-XX:-UsePerfData参数，则jpa、jstat将无法获取到该进程
 jps
+```
 
-# 查看进程内存使用和垃圾收集信息
-jstat -gc 进程id
+###### jstat
 
+jstat：JVM Statistics Monitoring Tool
+
+作用：查看JVM统计信息（进程内存使用和垃圾收集信息）
+
+用法：`jstat -<option> [-t] [-h<lines>] <vmid> [<interval> [<count>]]`
+
+- option：选项，可以用jstat -options查看所有的选项
+
+|序号|选项|描述|
+|:-|:-|:-|
+|1|-class|显示类加载/卸载的信息，如：类加载/卸载数量，占用空间，消耗的时间等|
+|2|-compiler|显示jit编译器编译过的方法、耗时等信息|
+|3|-gc|显示垃圾收集相关的信息，如Eden、两个Survivor、老年代、元空间等的容量，已用空间、GC时间合计等信息|
+|4|-gccapacity|显示内容与-gc基本相同，但输出主要关注java堆各个区域使用到的最大、最小空间|
+|5|-gccause|显示内容与-gcutil一样，但是会额外输出导致最后一次或当前正在发生的GC的原因|
+|6|-gcmetacapacity|显示元空间使用到的最大、最小空间|
+|7|-gcnew|显示新生代GC信息|
+|8|-gcnewcapacity|显示内容与-gcnew基本相同，但主要关注使用到的最大、最小空间|
+|9|-gcold|显示老年代GC信息|
+|10|-gcoldcapacity|显示内容与-gcold基本相同，但主要关注使用到的最大、最小空间|
+|11|-gcutil|显示内容与-gc基本相同，但输出主要关注已使用空间占总空间的百分比|
+|12|-printcompilation|显示已经被jit编译的方法|
+
+- `-t`：在输出的信息前加上时间（从进程启动开始算起），单位为秒
+    - 可以比较进程的启动时间和总GC时间，或者两次测量的间隔时间，得出GC时间占运行时间的比例
+        - 如果该比例超过20%，说明目前堆的压力较大
+        - 如果该比例超过90%，说明堆里几乎没有可用空间了，随时可能OOM
+
+- `-h`：在周期性数据输出时，输出多少行后输出一行表头
+
+- vmid：虚拟机id，也就是进程id
+
+- interval：用于指定输出统计数据的周期，即查询间隔，单位为毫秒
+
+- count：用于指定查询的总次数
+
+```sh
+jstat [指定option] [-t] -h[指定行数] 进程id [指定interval] [指定count]
+```
+
+- `-gc`的表头描述
+    - S0C：幸存者0区容量
+    - S1C：幸存者1区容量
+    - S0U：幸存者0区已使用的空间
+    - S1U：幸存者1区已使用的空间
+    - EC：伊甸园区容量
+    - EU：伊甸园区已使用的空间
+    - OC：老年代容量
+    - OU：老年代已使用的空间
+        - 可以每隔一段较长时间获取多组-gc数据，每一组看OU最小值
+            - 如果这些值呈上涨趋势，说明老年代使用的空间在不断上涨
+            - 意味着无法回收的对象在不断增加，有可能存在内存泄露
+    - MC：方法区容量
+    - MU：方法区已使用的空间
+    - CCSC：压缩类的容量
+    - CCSU：压缩类已使用的空间
+    - YGC：Young GC发生的次数
+    - YGCT：Young GC花费的时间
+    - FGC：Full GC发生的次数
+    - FGCT：Full GC花费的时间
+    - GCT：总的GC时间（Young GC花费的时间 + Full GC花费的时间）
+
+###### jinfo
+
+jinfo：Configuration Info for Java
+
+作用：实时查看和修改JVM配置参数
+
+用法：`jinfo <option> <pid>`
+
+- option：选项，可以用jinfo命令查看所有的选项
+
+|序号|选项|描述|
+|:-|:-|:-|
+|1|no option|输出全部的JVM参数和系统属性|
+|2|-flag name|输出对应名称的JVM参数值|
+|3|-flag [+/-] name|开启或关闭对应名称的JVM参数，只有被标记为manageable的参数才可以被动态修改|
+|4|-flag name=value|设置对应名称的JVM参数的值|
+|5|-flags|输出全部（赋值过）的参数，Non-default的就是赋值过的参数|
+|6|-sysprops|输出系统属性|
+
+```sh
 # 查看java进程某个参数的值（最终值）
 jinfo -flag 参数名（比如NewRatio） 进程id
+
+# 查看标记为manageable的JVM参数
+java -XX:+PrintFlagsFinal -version | grep manageable
+```
+
+###### jmap
+
+jmap：JVM Memory Map
+
+作用：导出内存映像文件、内存使用情况和查看系统的类加载信息等
+
+用法：`jmap option <pid>`
+
+|序号|选项|描述|
+|:-|:-|:-|
+|1|-clstats|输出类加载统计信息|
+|2|-dump|生成java堆的存储快照：dump文件|
+|3|-finalizerinfo|打印出那些被放入Finalization Queue，等待Finalizer线程执行finalize()方法的对象信息|
+|4|-histo|输出堆空间中对象的统计信息，包括类、实例数量和合计容量|
+
+- `-dump`还有自己的子选项
+
+|序号|选项|描述|
+|:-|:-|:-|
+|1|live|只dump堆中存活的对象，如果也指定了all选项，live生效|
+|2|all|dump堆中所有的对象，如果没有指定live和all选项，它是默认的|
+|3|format=b|二进制格式|
+|4|file=文件名|dump堆中的对象到指定文件|
+|5|gz=压缩级别数字|如果指定了此选项，则将dump数据以指定的压缩级别压缩为gz，1最快，9压缩比最高|
+
+```sh
+jmap -dump:<dump-options> <pid>
+
+jmap -dump:live,format=b,file=heap.bin <pid>
+```
+
+- `-histo`也有自己的子选项
+
+|序号|选项|描述|
+|:-|:-|:-|
+|1|live|只统计存活的对象，如果也指定了all选项，live生效|
+|2|all|统计所有的对象，如果没有指定live和all选项，它是默认的|
+|3|file=文件名|dump出堆统计信息到指定文件|
+|4|parallel=number|堆审查所使用的并行线程数量，默认为0,由JVM自己决定；1表示只用一个线程，不并行；其它数值，JVM将尝试用指定的线程数，但是最终可能会少于指定的线程数|
+
+```sh
+jmap -histo[:[<histo-options>]] <pid>
+
+jmap -histo:live,file=/tmp/histo.data <pid>
 ```
 
 ##### 获取dump文件
