@@ -1142,7 +1142,7 @@ public class ForiJoinDemoTest {
 #### 线程池
 
 - 处理器核的数目：cpuNumbers = Runtime.getRuntime().availableProcessors();
-- CPU利用率：cpuUsage = (0, 1]
+- CPU利用率：cpuUsage = `(0, 1]`
 - 等待时间：waitTime
 - 计算时间：computeTime
 - 建议线程池大小：`threadSize = cpuNumbers * cpuUsage * (1 + waitTime / computeTime)`
@@ -4819,10 +4819,10 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 
 对于web应用来说，响应时间和吞吐量是最看重的两个指标
 
-- 响应时间
-- 吞吐量
-- 并发数
-- (堆）内存占用
+- 1.响应时间
+- 2.吞吐量
+- 3.并发数
+- 4.堆内存占用
 
 ##### 性能调优步骤
 

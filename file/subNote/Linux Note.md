@@ -6,7 +6,7 @@
 |序号|目录|描述|
 |:-|:-|:-|
 |1|/|根目录，在此目录下创建其它目录|
-|2|/bin,usr/bin,usr/local/bin| binary的缩写，存放着最经常使用的命令|
+|2|/bin,usr/bin,usr/local/bin|binary的缩写，存放着最经常使用的命令|
 |3|/sbin,usr/sbin,usr/local/sbin|存放着系统管理员使用的系统管理程序|
 |4|/home|普通用户的主目录，每个用户都有一个自己的家目录，一般家目录名是用户的账号，如：/home/handle|
 |5|/root|系统管理员的用户主目录|
@@ -1676,30 +1676,59 @@ sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路�
 
 ##### 安装输入法fcitx5
 
+###### 1.安装输入法框架
+
 ```sh
 # fcitx5-im是一个元包，包含了fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool
 # fcitx5，主程序
 # fcitx5-gtk fcitx5-qt，UI开发工具包的输入法模块，如果装有vscode，则必须安装，否则输入法会抽风
 # fcitx5-configtool，GUI配置程序
-# fcitx5-rime,一种可自定义的输入法引擎，但默认情况下其默认配置为拼音。
 sudo pacman -S fcitx5-im fcitx5-rime
+```
 
-# 配置环境变量（官方建议的，其实一开始笔者没配置也没啥问题发生），在~/.bash_profile中添加如下内容，SDDM+KDE+Wayland的桌面环境只用添加这一行就可以了
+###### 2.安装输入法（引擎）
+
+- 安装拼音输入法（推荐，候选词汇更多）
+
+```sh
+sudo pacman -S fcitx5-chinese-addons
+
+# 安装适用于拼音输入法的词库，会自动加载，不用配置
+sudo pacman -S fcitx5-pinyin-zhwiki
+```
+
+- 安装rime输入法
+
+```sh
+# fcitx5-rime,一种可自定义的输入法引擎，但默认情况下其默认配置为拼音
+sudo pacman -S fcitx5-rime
+
+# 安装适用于rime输入法的词库，不会自动加载，需要手动配置
+sudo pacman -S rime-pinyin-zhwiki
+```
+
+###### 3.配置输入法
+
+```sh
+# 配置环境变量
 # v2rayN和微信输入法需要设置GTK_IM_MODULE、QT_IM_MODULE和SDL_IM_MODULE，虽然官方和电脑提示不需要设置，不要听
+# 在~/.bashrc文件中添加如下内容
 export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 export SDL_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 
-# 然后配置输入法
+# 然后运行输入法配置GUI，也可以通过系统设置的"Input Method"进入
 fcitx5-configtool
 
-# 然后在input method添加：Rime
-# 然后在input method，下方的configure addons，选择Classic User Interface,然后配置字体大小，然后应用直接见效，不然候选字真的太小了
+# 然后在系统设置的"Input Method"->"Add Input Method"
+# 如果安装的是拼音输入法，添加：Pinyin
+# 如果安装的是rime输入法，添加：Rime
+# 然后在"Input Method"，下方的"Configure addons"，选择Classic User Interface，然后配置字体大小，然后应用直接见效，不然候选字真的太小了
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择Fcitx 5，然后应用就可以了
 ```
 
-- 字体设置（可选）
+###### 4.字体设置（可选）
 
 都设置为"Noto Sans CJK SC"，字号、是否加粗用默认
 
