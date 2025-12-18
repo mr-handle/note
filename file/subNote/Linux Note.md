@@ -1688,7 +1688,7 @@ sudo pacman -S fcitx5-im fcitx5-rime
 
 ###### 2.安装输入法（引擎）
 
-- 安装拼音输入法（推荐，候选词汇更多）
+- 安装拼音输入法（推荐新手使用，候选词汇更多）
 
 ```sh
 sudo pacman -S fcitx5-chinese-addons
@@ -1709,6 +1709,8 @@ sudo pacman -S rime-pinyin-zhwiki
 
 ###### 3.配置输入法
 
+- 通用配置
+
 ```sh
 # 配置环境变量
 # v2rayN和微信输入法需要设置GTK_IM_MODULE、QT_IM_MODULE和SDL_IM_MODULE，虽然官方和电脑提示不需要设置，不要听
@@ -1728,11 +1730,102 @@ fcitx5-configtool
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择Fcitx 5，然后应用就可以了
 ```
 
+- rime输入法需要手动配置词库
+
+```yaml
+# 进入`~/.local/share/fcitx5/rime`目录
+# 在该目录下新建final.dict.yaml文件，输入如下内容
+---
+name: final
+version: "2025.12.18"
+sort: by_weight
+# 是否启用默认的“八股文”词库及词频系统，如需启用请设为true 
+use_preset_vocabulary: true
+import_tables:
+    # 这里的缩进必须用空格
+    # 添加默认词库
+    - luna_pinyin
+    # 添加安装的rime-pinyin-zhwiki词库
+    - zhwiki
+...
+
+# 继续在该目录下新建luna_pinyin.custom.yaml文件，输入如下内容
+patch:
+    # final对应final.dict.yaml文件
+    "translator/dictionary": final
+
+# 然后重新部署输入法就可以了
+```
+
 ###### 4.字体设置（可选）
 
 都设置为"Noto Sans CJK SC"，字号、是否加粗用默认
 
 ![fcitx5字体设置](/images/fcitx5-fonts.png)
+
+###### 5.创建自定义词库（可选）
+
+因为自定义词库文件分两部分：头部是yaml格式的，用空格缩进
+
+尾部（自定义词条）是要用到真正的制表符分隔每个词条的词汇、拼音、权重的
+
+当用文本编辑器重新打开这个文件，可能文件头部和尾部的空格和制表符直接统一格式化为空格了，导致自定义词条不生效
+
+因此笔者创建两个文件，一个放头部信息，一个放尾部的自定义词条
+
+当然如果重新打开放自定义词条信息的文件还是要检查制表符有没有被编辑器替换掉，根据情况设置回制表符再保存
+
+- 1.进入`~/.local/share/fcitx5/rime`目录
+
+- 2.在该目录下创建自定义词库文件extension.dict.yaml，存放自定义词条
+
+```yaml
+# 自定义词库
+# 记得用UTF-8编码并保存
+---
+# name对应extension.dict.yaml文件
+name: extension
+version: "2025.12.18"
+sort: by_weight
+...
+
+# 以下开始为自定义词条
+# 词汇、拼音、权重间用4长度的制表符，千万不要用空格，重新打开此文件也要注意检查和设置
+# 权重可以不写
+# \t表示制表符，例子：㘃\tre\t99%
+㘃 re 99%
+```
+
+- 3.在该目录下创建final.dict.yaml文件，存放想要添加的词库
+
+```yaml
+---
+# name对应final.dict.yaml文件
+name: final
+version: "2025.12.18"
+sort: by_weight
+# 是否启用默认的“八股文”词库及词频系统，如需启用请设为true 
+use_preset_vocabulary: true
+import_tables:
+    # 这里的缩进必须用空格
+    # 添加默认词库
+    - luna_pinyin
+    # 添加安装的rime-pinyin-zhwiki词库
+    - zhwiki
+    # 添加自定义的词库，对应自定义的extension.dict.yaml文件
+    - extension
+...
+```
+
+- 4.在该目录下创建luna_pinyin.custom.yaml文件（luna_pinyin为输入方案名称，根据使用的输入方案的不同要作相应变更）
+
+```yaml
+patch:
+    # final对应final.dict.yaml文件
+    "translator/dictionary": final
+```
+
+- 5.然后重新部署输入法
 
 ##### 安装输入法ibus-rime,(在vscode下会抽风，所以建议换成fcitx5)
 

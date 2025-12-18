@@ -664,9 +664,9 @@ List<Integer> list = Stream.iterate(0, n -> n + 1)
 
 |操作|throw Exception|返回false或null|
 |:-|:-|:-|
-|添加元素到队尾| add(E e)| boolean offer(E e)|
-|取队首元素并删除| E remove()| E poll()|
-|取队首元素但不删除| E element()| E peek()|
+|添加元素到队尾|add(E e)|boolean offer(E e)|
+|取队首元素并删除|E remove()|E poll()|
+|取队首元素但不删除|E element()|E peek()|
 
 注意：不要把null添加到队列中，否则poll()方法返回null时，很难确定是取到了null元素还是队列为空
 
@@ -685,12 +685,12 @@ Queue<String> queue = new LinkedList<>();
 
 |操作|Queue|Deque|
 |:-|:-|:-|
-|添加元素到队尾| add(E e) / offer(E e) |addLast(E e) / offerLast(E e)|
-|取队首元素并删除| E remove() / E poll() |E removeFirst() / E pollFirst()|
-|取队首元素但不删除| E element() / E peek() |E getFirst() / E peekFirst()|
-|添加元素到队首| 无 |addFirst(E e) / offerFirst(E e)|
-|取队尾元素并删除| 无 |E removeLast() / E pollLast()|
-|取队尾元素但不删除| 无 |E getLast() / E peekLast()|
+|添加元素到队尾|add(E e) / offer(E e)|addLast(E e) / offerLast(E e)|
+|取队首元素并删除|E remove() / E poll()|E removeFirst() / E pollFirst()|
+|取队首元素但不删除|E element() / E peek()|E getFirst() / E peekFirst()|
+|添加元素到队首|无|addFirst(E e) / offerFirst(E e)|
+|取队尾元素并删除|无|E removeLast() / E pollLast()|
+|取队尾元素但不删除|无|E getLast() / E peekLast()|
 
 注意：Deque接口实际上扩展自Queue，因此，Queue提供的add()/offer()方法在Deque中也可以使用，但是，使用Deque，推荐总是明确调用offerLast()/offerFirst()或者pollFirst()/pollLast()方法，这样更加顾名思义。
 
@@ -1024,35 +1024,35 @@ try {
 
 - CompletableFuture的静态方法
 
-| 方法名                                                    | 描述                                            |
-|:------------------------------------------------------ |:--------------------------------------------- |
-| runAsync(Runnable runnable)                            | 使用ForkJoinPool.commonPool()作为它的线程池执行异步代码，无返回值 |
-| runAsync(Runnable runnable, Executor executor)         | 使用指定的thread pool执行异步代码，无返回值                   |
-| supplyAsync(`Supplier<U>` supplier)                    | 使用ForkJoinPool.commonPool()作为它的线程池执行异步代码，有返回值 |
-| supplyAsync(`Supplier<U>` supplier, Executor executor) | 使用指定的thread pool执行异步代码，有返回值                   |
+|方法名|描述|
+|:-|:-|
+|runAsync(Runnable runnable)|使用ForkJoinPool.commonPool()作为它的线程池执行异步代码，无返回值|
+|runAsync(Runnable runnable, Executor executor)|使用指定的thread pool执行异步代码，无返回值|
+|supplyAsync(`Supplier<U>` supplier)|使用ForkJoinPool.commonPool()作为它的线程池执行异步代码，有返回值|
+|supplyAsync(`Supplier<U>` supplier, Executor executor)|使用指定的thread pool执行异步代码，有返回值|
 
 - CompletableFuture的实例方法
 
-| 方法名                                 | 描述                                                                        |
-|:----------------------------------- |:------------------------------------------------------------------------- |
-| exceptionally                       | 执行异步代码发生异常时执行，如果有返回值，可以指定一个异常发生时的返回值，另外需要注意exceptionally方法会返回一个新的CompletableFuture，更推荐链式调用的方式定义exceptionally方法                                                            |
-| whenComplete                        | future完成或异常时执行                                                            |
-| handle                              | 如果在链式调用的时候抛出异常，则可以在最后使用handle来接收                                          |
-| thenRun                             | 无返回值的future执行成功后执行                                                        |
-| thenAccept                          | 有返回值的future执行成功后执行                                                        |
-| runAfterBoth                        | 等待两个无返回值的future完成，然后执行                                                    |
-| thenAcceptBoth                      | 等待两个有返回值的future完成，然后执行                                                    |
-| thenCompose                         | step1.thenCompose() 将 step1 的结果作为输入，对两个异步操作进行流水线，返回新的CompletableFuture，阻塞 |
-| thenApply                           | step1.thenApply() 将 step1 的结果作为输入，同一个CompletableFuture，不阻塞                |
-| thenCombine                         | 两个有返回值的future完成，然后合并其结果                                                   |
-| join                                | 获取future返回结果，阻塞                                                           |
-| acceptEither                        | 两个future任意一个执行完毕，无返回值                                                     |
-| applyToEither                       | 两个future任意一个执行完毕，有返回值                                                     |
-| runAfterEither                      | 两个future任意一个执行完毕，无返回值                                                     |
-| allOf                               | 等待所有future都执行完毕，无返回值                                                      |
-| anyOf                               | 任意个future只要一个成功，返回值类型为Object                                              |
-| complete(T t)                       | 完成异步执行，并返回future的结果                                                       |
-| completeExceptionally(Throwable ex) | 抛出future执行异常                                                              |
+|方法名|描述|
+|:-|:-|
+|exceptionally|执行异步代码发生异常时执行，如果有返回值，可以指定一个异常发生时的返回值，另外需要注意exceptionally方法会返回一个新的CompletableFuture，更推荐链式调用的方式定义exceptionally方法|
+|whenComplete|future完成或异常时执行|
+|handle|如果在链式调用的时候抛出异常，则可以在最后使用handle来接收|
+|thenRun|无返回值的future执行成功后执行|
+|thenAccept|有返回值的future执行成功后执行|
+|runAfterBoth|等待两个无返回值的future完成，然后执行|
+|thenAcceptBoth|等待两个有返回值的future完成，然后执行|
+|thenCompose|step1.thenCompose() 将 step1 的结果作为输入，对两个异步操作进行流水线，返回新的CompletableFuture，阻塞|
+|thenApply|step1.thenApply() 将 step1 的结果作为输入，同一个CompletableFuture，不阻塞|
+|thenCombine|两个有返回值的future完成，然后合并其结果|
+|join|获取future返回结果，阻塞|
+|acceptEither|两个future任意一个执行完毕，无返回值|
+|applyToEither|两个future任意一个执行完毕，有返回值|
+|runAfterEither|两个future任意一个执行完毕，无返回值|
+|allOf|等待所有future都执行完毕，无返回值|
+|anyOf|任意个future只要一个成功，返回值类型为Object|
+|complete(T t)|完成异步执行，并返回future的结果|
+|completeExceptionally(Throwable ex)|抛出future执行异常|
 
 ```java
 // 需要定义exceptionally或whenComplete打印异常日志，不然如果不调用future.get()异常将会丢失
@@ -1991,17 +1991,17 @@ Function<Integer, Integer> h2 = f.compose(g);
 
 - Java 8中的常用函数式接口
 
-| 函数式接口 | 函数描述符 | 原始类型特化 |
-|:--------- | --------- | ----------- |
-| `Predicate<T>` | T -> boolean | IntPredicate, LongPredicate, DoublePredicate |
-| `Consumer<T>`       | T -> void        | IntConsumer, LongConsumer, DoubleConsumer |
-| `Function<T,R>`     | T -> R           | `IntFunction<R>`, `LongFunction<R>`, `DoubleFunction<R>`,`ToIntFunction<T>`, `ToLongFunction<T>` `ToDoubleFunction<T>`, IntToLongFunction, IntToDoubleFunction, LongToIntFunction, LongToDoubleFunction |
-| `Supplier<T>`       | () -> T          | BooleanSupplier, IntSupplier, LongSupplier, DoubleSupplier |
-| `UnaryOperator<T>`  | T -> T           | IntUnaryOperator, LongUnaryOperator, DoubleUnaryOperator|
-| `BinaryOperator<T>` | (T,T) -> T       | IntBinaryOperator, LongBinaryOperator, DoubleBinaryOperator |
-| `BiPredicate<L,R>`  | (L,R) -> boolean ||
-| `BiConsumer<T,U>`   | (T,U) -> void    | `ObjIntConsumer<T>`, `ObjLongConsumer<T>`, `ObjDoubleConsumer<T>` |
-| `BiFunction<T,U,R>` | (T, U) -> R      | `ToIntBiFunction<T, U>`, `ToLongBiFunction<T, U>`, `ToDoubleBiFunction<T, U>` |
+|函数式接口|函数描述符|原始类型特化|
+|:-|:-|:-|
+|`Predicate<T>`|T -> boolean|IntPredicate, LongPredicate, DoublePredicate|
+|`Consumer<T>`|T -> void|IntConsumer, LongConsumer, DoubleConsumer|
+|`Function<T,R>`|T -> R|`IntFunction<R>`, `LongFunction<R>`, `DoubleFunction<R>`,`ToIntFunction<T>`, `ToLongFunction<T>` `ToDoubleFunction<T>`, IntToLongFunction, IntToDoubleFunction, LongToIntFunction, LongToDoubleFunction|
+|`Supplier<T>`|() -> T|BooleanSupplier, IntSupplier, LongSupplier, DoubleSupplier|
+|`UnaryOperator<T>`|T -> T|IntUnaryOperator, LongUnaryOperator, DoubleUnaryOperator|
+|`BinaryOperator<T>`|(T,T) -> T|IntBinaryOperator, LongBinaryOperator, DoubleBinaryOperator|
+|`BiPredicate<L,R>`|(L,R) -> boolean||
+|`BiConsumer<T,U>`|(T,U) -> void|`ObjIntConsumer<T>`, `ObjLongConsumer<T>`, `ObjDoubleConsumer<T>`|
+|`BiFunction<T,U,R>`|(T, U) -> R|`ToIntBiFunction<T, U>`, `ToLongBiFunction<T, U>`, `ToDoubleBiFunction<T, U>`|
 
 ### Stream
 
@@ -2222,40 +2222,40 @@ Map<Boolean, Dish> mostCaloricPartitionedByVegetarian = menu.stream().collect(
 
 #### 单个字符的匹配规则
 
-| 正则表达式    | 规则           | 可以匹配                          |
-|:-------- |:------------ |:----------------------------- |
-| `A`      | 指定字符         | `A`                           |
-| `\u548c` | 指定Unicode字符  | `和`                           |
-| `.`      | 任意字符         | `a`，`b`，`&`，`0`               |
-| `\d`     | 数字0~9        | `0`~`9`                       |
-| `\D`     | 非数字          | `a`，`A`，`&`，`_`，……            |
-| `\w`     | 大小写字母，数字和下划线 | `a`~ `z`，`A`~ `Z`，`0`~`9`，`_` |
-| `\W`     | 非`\w`        | `&`，`@`，`中`，……                |
-| `\s`     | 空格、Tab键      | 空格，Tab                        |
-| `\S`     | 非`\s`        | `a`，`A`，`&`，`_`，……            |
+|正则表达式|规则|可以匹配|
+|:-|:-|:-|
+|`A`|指定字符|`A`|
+|`\u548c`|指定Unicode字符|`和`|
+|`.`|任意字符|`a`，`b`，`&`，`0`|
+|`\d`|数字0~9|`0`~`9`|
+|`\D`|非数字|`a`，`A`，`&`，`_`，……|
+|`\w`|大小写字母，数字和下划线|`a`~ `z`，`A`~ `Z`，`0`~`9`，`_`|
+|`\W`|非`\w`|`&`，`@`，`中`，……|
+|`\s`|空格、Tab键|空格，Tab|
+|`\S`|非`\s`|`a`，`A`，`&`，`_`，……|
 
 #### 多个字符的匹配规则
 
-| 正则表达式     | 规则      | 可以匹配                 |
-|:--------- |:------- |:-------------------- |
-| `A*`      | 任意个字符   | 空，`A`，`AA`，`AAA`，……  |
-| `A+`      | 至少1个字符  | `A`，`AA`，`AAA`，……    |
-| `A?`      | 0个或1个字符 | 空，`A`                |
-| `A{n}`    | n个字符    | `AAA`                |
-| `A{m, n}` | m-n个字符  | `AA`，`AAA`           |
-| `A{n, }`  | 至少n个字符  | `AA`，`AAA`，`AAAA`，…… |
-| `A{0, n}` | 最多n个字符  | 空，`A`，`AA`，`AAA`     |
+|正则表达式|规则|可以匹配|
+|:-|:-|:-|
+|`A*`|任意个字符|空，`A`，`AA`，`AAA`，……|
+|`A+`|至少1个字符|`A`，`AA`，`AAA`，……|
+|`A?`|0个或1个字符|空，`A`|
+|`A{n}`|n个字符|`AAA`|
+|`A{m, n}`|m-n个字符|`AA`，`AAA`|
+|`A{n, }`|至少n个字符|`AA`，`AAA`，`AAAA`，……|
+|`A{0, n}`|最多n个字符|空，`A`，`AA`，`AAA`|
 
 #### 复杂匹配规则
 
-| 正则表达式      | 规则         | 可以匹配                          |
-|:---------- |:---------- |:----------------------------- |
-| ^          | 开头         | 字符串开头                         |
-| $          | 结尾         | 字符串结束                         |
-| [ABC]      | […]内任意字符   | A，B，C                         |
-| [A-F0-9xy] | 指定范围的字符    | `A`，……，`F`，`0`，……，`9`，`x`，`y` |
-| [^A-F]     | 指定范围外的任意字符 | 非`A`~`F`                      |
-| AB\|CD\|EF | AB或CD或EF   | `AB`，`CD`，`EF`                |
+|正则表达式|规则|可以匹配|
+|:-|:-|:-|
+|^|开头|字符串开头|
+|$|结尾|字符串结束|
+|[ABC]|[…]内任意字符|A，B，C|
+|[A-F0-9xy]|指定范围的字符|`A`，……，`F`，`0`，……，`9`，`x`，`y`|
+|[^A-F]|指定范围外的任意字符|非`A`~`F`|
+|AB\|CD\|EF|AB或CD或EF|`AB`，`CD`，`EF`|
 
 ### 异常
 
@@ -2879,13 +2879,13 @@ XML有几个特点：一是纯文本，默认使用UTF-8编码，二是可嵌套
 
 常见的特殊字符如下：
 
-| 字符  | 表示       |
-|:--- |:-------- |
-| <   | `&lt;`   |
-| >   | `&gt;`   |
-| &   | `&amp;`  |
-| "   | `&quot;` |
-| '   | `&apos;` |
+|字符|表示|
+|:-|:-|
+|<|`&lt;`|
+|>|`&gt;`|
+|&|`&amp;`|
+|"|`&quot;`|
+|'|`&apos;`|
 
 格式正确的XML（Well Formed）是指XML的格式是正确的，可以被解析器正常读取。而合法的XML是指，不但XML格式正确，而且它的数据结构可以被DTD或者XSD验证。
 
@@ -3663,7 +3663,7 @@ field_info {
 |F|float|single-precision floating-point value|
 |I|int|integer|
 |J|long|long integer|
-|L`ClassName;`|reference|  an instance of class ClassName|
+|L`ClassName;`|reference|an instance of class ClassName|
 |S|short|signed short|
 |Z|boolean|true or false|
 |`[`|reference|one array dimension|
@@ -5107,13 +5107,13 @@ java -Dsun.jnu.encoding=UTF-8 myApp.jar
 
 #### scope
 
-| 依赖范围 | 编译有效 | 测试有效 | 运行有效 | 打包有效 | 例子 |
-|:- |:- |:- |:- |:- |:- |
-| compile | true | true | true | true | spring-core |
-| test | false | true | false | false | junit |
-| provided | true | true | false | false | lombok |
-| runtime | false | true | true | true | 数据库驱动 |
-| system | true | true | false | false | 本地maven仓库之外的类库，基本用不到 |
+|依赖范围|编译有效|测试有效|运行有效|打包有效|例子|
+|:-|:-|:-|:-|:-|:-|
+|compile|true|true|true|true|spring-core|
+|test|false|true|false|false|junit|
+|provided|true|true|false|false|lombok|
+|runtime|false|true|true|true|数据库驱动|
+|system|true|true|false|false|本地maven仓库之外的类库，基本用不到|
 
 #### 依赖的传递性
 
@@ -6620,16 +6620,16 @@ public class Role {
 
 也可以用`<![CDATA[特殊符号]]>`，无需进行转义
 
-| 符号 | 原符号| 替换符号 |
-| ---  | ---- | ------- |
-| 小于 | < | `&lt;` |
-| 小于等于 | <= | `&lt;=` |
-| 大于 | > | `&gt;` |
-| 大于等于 | >= | `&gt;=` |
-| 不等于 | <> | `&lt;&gt;` |
-| 与 | & | `&amp;` |
-| 单引号 | ' | `&apos;` |
-| 双引号 | " | `&quot;` |
+|符号|原符号|替换符号|
+|:-|:-|:-|
+|小于|<|`&lt;`|
+|小于等于|<=|`&lt;=`|
+|大于|>|`&gt;`|
+|大于等于|>=|`&gt;=`|
+|不等于|<>|`&lt;&gt;`|
+|与|&|`&amp;`|
+|单引号|'|`&apos;`|
+|双引号|"|`&quot;`|
 
 ### 动态SQL
 
