@@ -5063,6 +5063,42 @@ jstatd服务器将本机的Java应用程序信息传递到远程计算机
 
 作用：远程主机信息收集
 
+###### jconsole
+
+作用：对正在执行的JVM进程的内存、线程（可以检测死锁）和类等的监控，是一个基于JMX（java management extensions）的GUI性能监控工具
+
+###### VisualVM
+
+VisualVM 集成了多个jdk命令行工具的功能，是一个功能强大的多合一故障诊断和性能监控的可视化工具
+
+作用：可用于显示JVM进程、进程配置和环境信息（jps、jinfo）；监视应用程序的CPU、GC、堆、方法区及线程的信息（jstat、jstack）等，甚至代替jconsole
+
+- 推荐安装的插件：Visual GC
+
+- 主要功能
+    - 生成/读取堆内存快照
+    - 查看JVM参数和系统属性
+    - 查看运行中的虚拟机进程
+    - 生成/读取线程快照
+    - 实时监控程序资源
+    - CPU和内存分析
+    - JMX代理连接
+    - 远程环境监控
+
+- 远程连接Java服务
+    - 1.确定远程服务器的ip
+    - 2.添加JMX（通过JMX技术具体监控远端服务器的哪个Java进程）
+    - 3.修改bin/catalina.sh文件，连接远程的tomcat
+    - 4.在.../conf中添加jmxremote.access和jmxremote.password文件
+    - 5.将服务器地址改为公网ip地址
+    - 6.设置阿里云安全策略和防火墙策略
+    - 7.启动tomcat，查看tomcat启动日志和端口监听
+    - 8.JMX中输入端口号、用户名、密码进行登录
+
+###### MemoryAnalyzer(MAT)
+
+- 可打开dump文件查看GC Roots
+
 ##### 获取dump文件
 
 - 方式1: 使用jmap
@@ -5076,16 +5112,6 @@ jmap -dump:format=b,live,file=dumpfile.bin 进程id
 ```
 
 - 方式2: 使用visualvm导出
-
-##### visualvm
-
-- 可导出dump文件
-
-##### MemoryAnalyzer(MAT)
-
-- 可打开dump文件查看GC Roots
-
-##### jconsole
 
 #### 一些指令
 
