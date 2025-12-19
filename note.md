@@ -4956,6 +4956,14 @@ java -XX:+PrintFlagsFinal -version | grep manageable
 
 ###### jmap
 
+jmap将访问堆中所有对象，为保证在此过程中不被应用线程干扰，jmap需要借助安全点机制
+
+让所有线程停留在不改变堆中数据的状态。所以jmap导出的堆快照是安全点位置的，这可能导致基于堆快照的分析结果存在偏差。
+
+如果对象的生命周期在两个安全点之间，那么加上live的子选项将无法探知这些对象
+
+如果某个线程长时间无法跑到安全点，jmap将一直等下去
+
 jmap：JVM Memory Map
 
 作用：导出内存映像文件、内存使用情况和查看系统的类加载信息等
@@ -4966,7 +4974,7 @@ jmap：JVM Memory Map
 |:-|:-|:-|
 |1|-clstats|输出类加载统计信息|
 |2|-dump|生成java堆的存储快照：dump文件|
-|3|-finalizerinfo|打印出那些被放入Finalization Queue，等待Finalizer线程执行finalize()方法的对象信息|
+|3|-finalizerinfo|查看被放入Finalization Queue，等待Finalizer线程执行finalize()方法的对象信息|
 |4|-histo|输出堆空间中对象的统计信息，包括类、实例数量和合计容量|
 
 - `-dump`还有自己的子选项
@@ -4998,6 +5006,19 @@ jmap -dump:live,format=b,file=heap.bin <pid>
 jmap -histo[:[<histo-options>]] <pid>
 
 jmap -histo:live,file=/tmp/histo.data <pid>
+```
+
+- 导出内存映像文件（dump文件）
+
+```sh
+# 手动导出，指定了format=b，文件名可以是.bin、.hprof等二进制文件格式
+jmap -dump:format=b,file=dumpfile.hprof 进程id
+
+# 生产环境导出比较关注的是存活的对象，因此这个命令使用比较多
+jmap -dump:live,format=b,file=dumpfile.hprof 进程id
+
+# OOM异常终止时自动导出
+-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=dumpfile.hprof
 ```
 
 ##### 获取dump文件
