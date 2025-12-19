@@ -5021,6 +5021,48 @@ jmap -dump:live,format=b,file=dumpfile.hprof 进程id
 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=dumpfile.hprof
 ```
 
+###### jstack
+
+jstack：JVM Stack Trace
+
+作用：生成JVM中指定进程当前时刻的线程快照（每一条线程正在执行的方法堆栈的集合），可用于定位线程长时间停顿的原因
+
+用法：`jstack [-l][-e] <pid>`
+
+|序号|选项|描述|
+|:-|:-|:-|
+|1|-l|除堆栈外，还显示关于锁的附加信息|
+|2|-e|除堆栈外，还显示关于线程的附加信息|
+
+###### jcmd
+
+作用：可以用来实现除了jstat之外所有命令的功能
+
+用法：
+    - `jcmd <pid | main class> <command ...|PerfCounter.print|-f file>`
+    - `jcmd -l`
+
+```sh
+# 列出所有的JVM进程
+jcmd -l
+
+# 列出支持该进程的所有命令
+jcmd pid help
+
+# 对指定进程执行指定命令
+jcmd pid 具体命令
+```
+
+###### jstatd
+
+上述的一些命令行工具（jps、jstat），也可以对远程计算机进行监控，只需配合使用jstatd工具
+
+jstatd是一个RMI服务端程序，它的作用相当于代理服务器，建立本地计算机与远程监控工具的通信
+
+jstatd服务器将本机的Java应用程序信息传递到远程计算机
+
+作用：远程主机信息收集
+
 ##### 获取dump文件
 
 - 方式1: 使用jmap

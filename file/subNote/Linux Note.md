@@ -1888,6 +1888,12 @@ sudo pacman -S haruna
 
 # 录屏软件
 sudo pacman -S obs-studio
+
+# 图像处理软件
+sudo pacman -S gimp
+
+# 文本比对软件
+sudo pacman -S meld
 ```
 
 #### 安装steam
