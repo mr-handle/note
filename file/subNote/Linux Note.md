@@ -664,7 +664,7 @@ tar -zcvf xxx.tar.gz 被压缩文件夹
 tar -zxvf xxx.tar.gz
 
 # 解压到指定目录
-tar -zxvf xxx.tar.gz -C path/to/directory
+tar -zxvf xxx.tar.gz -C /path/to/directory
 ```
 
 #### gz文件
@@ -690,7 +690,7 @@ zip -r xxx.zip 被压缩目录
 unzip xxx.zip
 
 # 解压到指定目录
-unzip -d path/to/directory xxx.zip
+unzip -d /path/to/directory xxx.zip
 ```
 
 ### 应用/端口命令
@@ -895,7 +895,7 @@ sudo pacman -Syu
 sudo pacman -S 软件名
 
 # 安装本地.pkg.tar.zst安装包或.pacman安装包
-sudo pacman -U path/to/pkg.tar.zst安装包或.pacman安装包
+sudo pacman -U /path/to/pkg.tar.zst安装包或.pacman安装包
 
 # 卸载软件
 # R：删除指定包
@@ -919,7 +919,7 @@ sudo pacman -Sg kde-applications
 sudo pacman -S kde-applications
 
 # 查看包组中还没安装的软件
-sudo pacman -Sg plasma | grep -v " $(sudo pacman -Qg) "
+sudo pacman -Sg plasma | grep -v " $(sudo pacman -Qg)"
 ```
 
 ### .AppImage软件包
@@ -941,13 +941,13 @@ sudo pacman -S fuse2
 
 ```sh
 # 给.run软件包执行权限
-chmod +x path/to/软件包
+chmod +x /path/to/软件包
 
 # 执行安装，可能需要root权限
-sudo path/to/软件包
+sudo /path/to/软件包
 
 # 卸载
-sudo path/to/软件包 uninstall
+sudo /path/to/软件包 uninstall
 ```
 
 ### 从git源码编译安装
@@ -1014,10 +1014,10 @@ sudo fdisk -l
 # conv=fsync：在写完数据后调用 fsync()，确保数据真正写入磁盘，而不是停留在缓存里。避免写入未完成就拔掉设备
 # oflag=direct：使用直接 I/O，绕过内核缓存，把数据直接写到设备。这样可以减少缓存污染，但速度可能略慢
 # status=progress：在执行过程中显示进度信息（已写入字节数），否则 dd 默认是静默的
-sudo dd bs=4M if=path/to/archlinux-version-x86_64.iso of=/dev/disk/by-id/usb-My_flash_drive conv=fsync oflag=direct status=progress
+sudo dd bs=4M if=/path/to/archlinux-version-x86_64.iso of=/dev/disk/by-id/usb-My_flash_drive conv=fsync oflag=direct status=progress
 
 # 如果没有安装dd，可以直接用cp命令，但是不能设置每次的读写大小
-sudo cp path/to/archlinux-version-x86_64.iso /dev/disk/by-id/usb-My_flash_drive
+sudo cp /path/to/archlinux-version-x86_64.iso /dev/disk/by-id/usb-My_flash_drive
 ```
 
 - 关闭BIOS的安全启动模式，不然可能会提示安全引导违规
@@ -1959,7 +1959,7 @@ fc-list : family
 
 ```sh
 # 安装/运行exe
-wine path/to/exe文件
+wine /path/to/exe文件
 
 # 卸载windows程序
 wine uninstaller
@@ -1998,10 +1998,10 @@ yay -S debtap
 sudo debtap -u
 
 # 进行转换，根据提示进行交互
-sudo debtap path/to/file.deb
+sudo debtap /path/to/file.deb
 
 # 安装转换后的包
-sudo pacman -U path/to/file.pkg.tar.zst
+sudo pacman -U /path/to/file.pkg.tar.zst
 ```
 
 ### 挂载其它硬盘
@@ -2076,7 +2076,10 @@ Exec=wine /path/to/App.exe
 ### 获取下载文件的哈希码
 
 ```sh
-sha256sum path/to/下载文件
+# 根据官方给的哈希码执行对应的命令
+sha256sum /path/to/file
+
+sha512sum /path/to/file
 ```
 
 ### 系统启动美化

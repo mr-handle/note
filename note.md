@@ -4372,6 +4372,8 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 ##### 在OOM时，打印输出
 
 ```properties
+# 也可以在Full GC前生成dump文件：-XX:+HeapDumpBeforeFullGC
+# 不指定-XX:HeapDumpPath，则在当前目录下生成dump文件
 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=你要输出的日志路径
 ```
 
@@ -4472,7 +4474,7 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 
 - 内存溢出（OOM）：没有空闲内存，并且垃圾收集也无法提供更多内存
 
-- 内存泄露（Memory Leak）：狭义上，对象不会再被程序用到，但是GC又不能将其回收的情况；广义上，不规范的对象声明和定义，导致其生命周期变得很长最终导致OOM的情况
+- 内存泄漏（Memory Leak）：狭义上，对象不会再被程序用到，但是GC又不能将其回收的情况；广义上，不规范的对象声明和定义，导致其生命周期变得很长最终导致OOM的情况
 
 - 垃圾收集的并行：多个垃圾收集线程并行工作，但此时的用户线程处于等待状态
 
@@ -4830,7 +4832,7 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
     - GC频繁
     - CPU Load过高
     - OOM
-    - 内存泄露
+    - 内存泄漏
     - 死锁
     - 程序响应时间较长
 - 2.性能分析
@@ -4916,7 +4918,7 @@ jstat [指定option] [-t] -h[指定行数] 进程id [指定interval] [指定coun
     - OU：老年代已使用的空间
         - 可以每隔一段较长时间获取多组-gc数据，每一组看OU最小值
             - 如果这些值呈上涨趋势，说明老年代使用的空间在不断上涨
-            - 意味着无法回收的对象在不断增加，有可能存在内存泄露
+            - 意味着无法回收的对象在不断增加，有可能存在内存泄漏
     - MC：方法区容量
     - MU：方法区已使用的空间
     - CCSC：压缩类的容量
@@ -5011,7 +5013,7 @@ jmap -histo:live,file=/tmp/histo.data <pid>
 - 导出内存映像文件（dump文件）
 
 ```sh
-# 手动导出，指定了format=b，文件名可以是.bin、.hprof等二进制文件格式
+# 手动导出，指定了format=b，文件名推荐.hprof二进制文件格式
 jmap -dump:format=b,file=dumpfile.hprof 进程id
 
 # 生产环境导出比较关注的是存活的对象，因此这个命令使用比较多
@@ -5069,6 +5071,8 @@ jstatd服务器将本机的Java应用程序信息传递到远程计算机
 
 ###### VisualVM
 
+官网：<https://visualvm.github.io/>
+
 VisualVM 集成了多个jdk命令行工具的功能，是一个功能强大的多合一故障诊断和性能监控的可视化工具
 
 作用：可用于显示JVM进程、进程配置和环境信息（jps、jinfo）；监视应用程序的CPU、GC、堆、方法区及线程的信息（jstat、jstack）等，甚至代替jconsole
@@ -5077,11 +5081,11 @@ VisualVM 集成了多个jdk命令行工具的功能，是一个功能强大的�
 
 - 主要功能
     - 生成/读取堆内存快照
+    - 生成/读取线程快照
+    - CPU和内存抽样分析，进行快照
     - 查看JVM参数和系统属性
     - 查看运行中的虚拟机进程
-    - 生成/读取线程快照
     - 实时监控程序资源
-    - CPU和内存分析
     - JMX代理连接
     - 远程环境监控
 
@@ -5095,23 +5099,78 @@ VisualVM 集成了多个jdk命令行工具的功能，是一个功能强大的�
     - 7.启动tomcat，查看tomcat启动日志和端口监听
     - 8.JMX中输入端口号、用户名、密码进行登录
 
-###### MemoryAnalyzer(MAT)
+- 程序结束不了，看下是不是出现了死锁，看cpu哪个方法占用的时间多
+- Full GC多，或者OOM了，就看内存那些实例占用多
 
-- 可打开dump文件查看GC Roots
+###### MAT
 
-##### 获取dump文件
+MAT：Memory Analyzer Tool，是一款功能强大的Java堆内存分析器，用于查找内存泄漏及查看内存消耗情况
 
-- 方式1: 使用jmap
+官网：<https://eclipse.dev/mat/>
 
-```sh
-# 通过jps查看进程id
-jps
+作用：可生成/分析dump文件，查看堆内存信息，特别是生成内存泄漏报表，方便定位问题和分析问题
 
-# 生成dump文件
-jmap -dump:format=b,live,file=dumpfile.bin 进程id
+- 这些内存信息包括
+    - 所有的对象信息，包括对象实例、成员变量、存储于栈中的基本类型值和存储于堆中的其它对象的引用值
+    - 所有的类信息，包括类加载器、类名称、父类、静态变量等
+    - GCRoot到所有的这些对象的引用路径
+    - 线程信息，包括线程的调用栈及此线程的线程局部变量（TLS）
+
+- 浅堆（Shallow Heap）：一个对象所消耗的内存，对象的基本类型字段+引用类型字段（每个4个字节）+对象头，最后还可能向8字节对齐
+
+- 保留集（Retained Set）：对象A的保留集指当对象A被垃圾回收后，可以被释放的所有的对象集合（包括对象A本身），即对象A的保留集可以被认为是只能通过对象A直接或间接访问到的所有对象的集合。通俗地说，就是指仅被对象A所持有的对象的集合
+
+- 深堆（Retained Heap）：对象的保留集中所有对象的浅堆大小之和
+
+- 对象实际大小：一个对象所能触及的所有对象的浅堆大小之和
+
+- 支配树（Dominator Tree）：在对象引用图中，所有指向对象B的路径都经过对象A，则认为对象A支配对象B。如果对象A是离对象B最近的一个支配对象，则认为对象A为对象B的直接支配者，它有以下性质：
+    - 对象A的子树（所有被对象A支配的对象集合）表示对象A的保留集，即深堆
+    - 如果对象A支配对象B，那么对象A的直接支配者也支配对象B
+    - 支配树的边与对象引用图的边不直接对应
+
+- OQL(Object Query Language),类SQL的查询语音，可以进行对象的查找和筛选
+
+```sql
+# from可以指定类名、正则或对象地址
+select * from java.util.Vector
+select * from "com\.handle\..*"
+select * from 0x123456
+
+# objects：以对象的形式显示结果集的项
+select objects v.elementData from from java.util.Vector v
+select objects s.value from from java.lang.String s
+
+# as retained set：得到所得对象的保留集
+select as retained set * from java.lang.String
+
+# 去重
+select distince objects classof(s) from java.lang.String s
+
+select * from char[] s where s.@length>10
+select * from java.lang.String s where toString(s) like ".*handle.*"
+select * from java.lang.String s where s.value!=null
+# 数组长度>15, 深堆>1000字节的所有Vector对象
+select * from java.util.Vector v where v.elementData.@length>15 and v.@retainedHeapSize>1000
+
+# 访问属性和方法
+select toString(f.path.value) from java.io.File f
+select s.toString() from java.lang.String s
+
+# 所有的Vector对象及其子类型
+select * from instanceof java.util.Vector
 ```
 
-- 方式2: 使用visualvm导出
+#### 内存泄漏
+
+- 长生命周期的对象持有短生命周期对象的引用，如定义集合类型变量为类的静态变量，集合中的元素就不会被回收
+- 单例对象持有外部对象的引用，这个外部对象也不会被回收
+- 外部类的实例方法返回内部类的实例对象，这个内部类对象被长期引用，那么由于内部类持有外部类的实例对象，导致外部类的实例对象不会被回收
+- 连接（数据库连接、网络连接、IO等）没有关闭，导致相关资源无法被回收
+- 变量不合理的作用域，导致不会被回收或长时间没被回收
+- 当一个对象被存储进哈希集合（如HashMap、HashSet）后，改变对象中参与计算哈希值的字段，导致无法从哈希集合中删除该对象，造成内存泄漏
+- 缓存泄漏，没有用弱引用的结构存放缓存对象，数据量大导致启动慢或卡死，甚至直接OOM
+- 监听器和回调
 
 #### 一些指令
 
@@ -13196,7 +13255,7 @@ cat ~/.gitconfig
 ssh-keygen -t ed25519 -C "这里填你的邮箱"
 
 # 复制公钥
-cat path/to/id_ed25519.pub
+cat /path/to/id_ed25519.pub
 ```
 
 ### 创建版本库
