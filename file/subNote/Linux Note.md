@@ -1511,11 +1511,12 @@ sudo vim /etc/pacman.conf
 lspci -k -d ::03xx
 
 # NVIDIA（闭源）
-# nvidia：NVIDIA内核模块
-# nvidia-utils：NVIDIA驱动工具，安装nvidia时会将nvidia-utils作为依赖进行安装
+# 新版显卡的驱动已经从nvidia改成nvidia-open了
+# nvidia-open：NVIDIA内核模块
+# nvidia-utils：NVIDIA驱动工具，安装nvidia-open时会将nvidia-utils作为依赖进行安装
 # lib32-nvidia-utils：NVIDIA驱动工具（32位）（可选）,Steam需要用到，笔者建议安装具体的软件的时候再根据交互提示选择安装
 # nvidia-settings：NVIDIA图形驱动程序配置工具（可选）
-sudo pacman -S nvidia lib32-nvidia-utils nvidia-settings
+sudo pacman -S nvidia-open lib32-nvidia-utils nvidia-settings
 
 # 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
 # 从nvidia-utils 560.35.03-5起,默认已经启用DRM
@@ -1534,6 +1535,30 @@ sudo pacman -S xf86-video-amdgpu mesa
 # libva-intel-driver 视频加速（VA-API）
 # vulkan-intel Vulkan 支持（如游戏、图形加速）
 sudo pacman -S mesa libva-intel-driver vulkan-intel
+```
+
+###### 安装GTX 1060显卡驱动
+
+GTX 1060显卡驱动已经被老黄归为Legacy, supported，需要自己编译安装了
+
+```sh
+# 安装headers，如果是linux内核就安装linux-headers
+sudo pacman -S linux-headers
+
+# 安装显卡驱动，如果内核有更新了，header也会更新，这时候显卡驱动也得更新了
+yay -S nvidia-580xx-dkms
+
+# 使dkms命令生效
+source /usr/share/bash-completion/completions/dkms
+
+# 将可以看到刚刚安装的显卡驱动
+dkms status
+
+# 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
+# 从nvidia-utils 560.35.03-5起,默认已经启用DRM
+# 对于老版本的驱动，设置modeset=1
+# 先确认，输出应该为Y
+sudo cat /sys/module/nvidia_drm/parameters/modeset
 ```
 
 ##### 安装yay
@@ -1900,6 +1925,9 @@ sudo pacman -S meld
 
 ```sh
 # 需要启用multilib仓库
+# 安装过程中会提示让你选择为lib32-vulkan-driver选择依赖
+# nvidia-open选择lib32-nvidia-utils
+# nvidia-580xx-dkms选择lib32-vulkan-swrast
 sudo pacman -S steam
 
 # 安装完后首次用命令启动，不然可能弹不出界面，都不知道什么问题

@@ -5161,6 +5161,33 @@ select s.toString() from java.lang.String s
 select * from instanceof java.util.Vector
 ```
 
+###### Arthas（阿尔萨斯）
+
+阿里巴巴开源的Java诊断工具，在线排除问题，无需重启，动态跟踪Java代码，实时监控JVM状态
+
+官网：<https://arthas.aliyun.com/>
+
+```sh
+# 启动方式1，启动后选择JVM进程数字
+./as.sh
+
+# 启动方式2，启动后选择JVM进程数字
+java -jar arthas-boot.jar
+
+# 启动方式3，先jps查看JVM进程id
+java -jar arthas-boot.jar 进程id
+
+# 退出当前客户端
+quit/exit
+
+# 退出所有客户端，并关闭arthas
+stop/shutdown
+
+# 卸载
+rm -rf ~/.arthas/
+rm -rf ~/logs/arthas
+```
+
 #### 内存泄漏
 
 - 长生命周期的对象持有短生命周期对象的引用，如定义集合类型变量为类的静态变量，集合中的元素就不会被回收
