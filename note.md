@@ -5307,6 +5307,18 @@ JMC是对Java应用程序进行管理、监视、概要分析和故障排除的�
     - 取样事件（Sample Event），是周期性取样的事件
         - 如方法抽样，即每隔一段时间统计各个线程的栈轨迹。如果在这些抽样取得的栈轨迹中存在一个反复出现的方法，那么可以推测该方法是热点方法
 
+###### TProfiler
+
+官网：<https://github.com/alibaba/TProfiler>，已经停更
+
+TProfiler最重要的特性就是能够统计出指定时间段内JVM的top method，这些top method极有可能就是造成JVM性能瓶颈的元凶
+
+###### 其它工具
+
+Btrace、YourKit、JProbe、String Insight
+
+建议是VisualVM、MAT和Arthas掌握就行
+
 #### 火焰图（Flame Graphs）
 
 在追求极致性能的场景下，了解程序运行过程中CPU在干什么很重要，火焰图就是一种非常直观的展示CPU在程序整个生命周期过程中时间分配的工具，能显示出调用栈中的CPU消耗瓶颈
