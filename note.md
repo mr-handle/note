@@ -5270,6 +5270,49 @@ profiler stop --format flamegraph
 # http://localhost:3658/arthas-output/
 ```
 
+###### JMC（JDK Mission Control）
+
+官网：<https://www.oracle.com/java/technologies/jdk-mission-control.html>
+
+JMC是对Java应用程序进行管理、监视、概要分析和故障排除的工具套件，内置了Java Flight Recorder
+
+它采用取样，而不是传统的代码植入技术，对性能的影响极小，完全可以开着JMC做压测
+
+- 如果是连接远程服务器，要开JMX，然后才能在JMC连接
+
+```sh
+-Dcom.sun.management.jmxremote.port=${YOUR PORT}
+-Dcom.sun.management.jmxremote
+-Dcom.sun.management.jmxremote.authenticate=false
+-Dcom.sun.management.jmxremote.ssl=false
+-Djava.rmi.server.hostname=${YOUR HOST/IP}
+```
+
+- JFR（Java Flight Recorder）
+    - 是JMC的其中一个组件
+    - 它能以极低的性能开销收集JVM的性能数据
+    - JMC能够对它收集的数据进行高效、详细的分析
+
+- JFR使用前，服务器要加参数
+
+```sh
+-XX:+UnlockCommercialFeature
+-XX:+FlightRecorder
+```
+
+- 当启用JFR时，它将记录JVM进程运行过程中发生的一系列事件，共有4种事件类型
+    - 瞬时事件（Instant Event），用户关心的是它们发生与否，例如异常、线程启动事件
+    - 持续事件（Duration Event），用户关心的是它们的持续时间，如垃圾回收事件
+    - 计时事件（Timed Event），是时长超出指定阈值的持续事件
+    - 取样事件（Sample Event），是周期性取样的事件
+        - 如方法抽样，即每隔一段时间统计各个线程的栈轨迹。如果在这些抽样取得的栈轨迹中存在一个反复出现的方法，那么可以推测该方法是热点方法
+
+#### 火焰图（Flame Graphs）
+
+在追求极致性能的场景下，了解程序运行过程中CPU在干什么很重要，火焰图就是一种非常直观的展示CPU在程序整个生命周期过程中时间分配的工具，能显示出调用栈中的CPU消耗瓶颈
+
+- y轴是函数调用栈，x轴是方法调用时的CPU时间占比，一个个方框就是一个个方法
+
 #### 内存泄漏
 
 - 长生命周期的对象持有短生命周期对象的引用，如定义集合类型变量为类的静态变量，集合中的元素就不会被回收

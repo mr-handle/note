@@ -1902,6 +1902,10 @@ sudo pacman -S ark
 # 安装即可，无需配置ark
 sudo pacman -S unrar
 
+# 安装7z官方版，支持更多格式文件
+# 安装即可，无需配置ark
+sudo pacman -S 7zip
+
 # 图片查看器 
 sudo pacman -S gwenview
 
