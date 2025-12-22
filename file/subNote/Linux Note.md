@@ -1898,13 +1898,14 @@ sudo pacman -S kwalletmanager
 # 压缩/解压软件ark
 sudo pacman -S ark
 
-# ark不支持rar解压，还需要安装unrar才能用ark解压rar文件
-# 安装即可，无需配置ark
-sudo pacman -S unrar
-
 # 安装7z官方版，支持更多格式文件
 # 安装即可，无需配置ark
 sudo pacman -S 7zip
+
+# ark不支持rar解压，还需要安装unrar才能用ark解压rar文件
+# 安装了7zip应该不用安装，目前搞不到rar测试，后面遇到了如果7zip不支持rar再安装回来
+# 安装即可，无需配置ark
+sudo pacman -S unrar
 
 # 图片查看器 
 sudo pacman -S gwenview
@@ -1917,6 +1918,9 @@ sudo pacman -S haruna
 
 # 录屏软件
 sudo pacman -S obs-studio
+
+# 画图软件
+sudo pacman -S kolourpaint
 
 # 图像处理软件
 sudo pacman -S gimp
