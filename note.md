@@ -5163,7 +5163,7 @@ select * from instanceof java.util.Vector
 
 ###### Arthas（阿尔萨斯）
 
-阿里巴巴开源的Java诊断工具，在线排除问题，无需重启，动态跟踪Java代码，实时监控JVM状态
+阿里巴巴开源的Java命令行诊断工具，于服务器上在线排除问题，无需重启，动态跟踪Java代码，实时监控JVM状态
 
 官网：<https://arthas.aliyun.com/>
 
@@ -5186,6 +5186,88 @@ stop/shutdown
 # 卸载
 rm -rf ~/.arthas/
 rm -rf ~/logs/arthas
+```
+
+- 常用命令
+
+```sh
+# 查看指定命令的帮助
+dashboard -h
+
+# 每隔1秒打印一次数据面板，打印3次
+dashboard -i 1000 -n 3
+
+# 查看线程信息，不加参数默认按cpu使用率排序展示
+thread
+
+# 查看JVM进程的系统属性
+sysprop
+
+# dump出活的对象到文件
+heapdump --live /tmp/dump.hprof
+
+# 查看JVM已加载的类信息
+# -d：输出当前类的详细信息
+sc -d com.handle.Application
+
+# 查看已加载类的方法信息
+# -d：展示每个方法的详细信息
+sm -d com.handle.Application [方法名]
+
+# 反编译指定已加载类的源码
+jad com.handle.Application [方法名]
+
+# 编译.java文件生成.class
+# mc 命令有可能失败。如果编译失败可以在本地编译好.class文件，再上传到服务器
+# -c：指定 classloader
+# -d：指定输出目录
+ mc --classloader org.springframework.boot.loader.LaunchedURLClassLoader /tmp/UserController.java -d /tmp
+ 
+# 加载外部的.class文件
+retransform /tmp/MathGame.class
+
+# 查看 classloader 的继承树，urls，类加载信息
+# -t：打印所有 ClassLoader 的继承树
+classloader -t
+
+# 方法执行监控
+# -c：统计周期，默认值为 60 秒
+monitor -c 30 fully.qualified.ClassName methodName
+
+# 方法执行数据观测
+# 能观察到的范围为：返回值、抛出异常、入参
+# 观察表达式，默认值：{params, target, returnObj}
+watch fully.qualified.ClassName methodName {params, returnObj}
+
+# 方法内部调用路径，并输出方法路径上的每个节点上耗时
+# -n：执行次数，默认值为 100
+trace -n 10 fully.qualified.ClassName methodName
+
+# 输出当前方法被调用的调用路径
+# -n：执行次数
+stack -n 10 fully.qualified.ClassName methodName
+
+# 方法执行数据的时空隧道，记录下指定方法每次调用的入参和返回信息，并能对这些不同的时间下调用进行观测
+# -t：表明希望记录下所指定的类的方法的每次执行情况
+# -n：指定记录的次数
+tt -t -n 3 fully.qualified.ClassName methodName
+
+# 启动profiler
+# 默认情况下，生成的是cpu的火焰图，即event为cpu。可以用--event参数指定其他性能分析模式
+profiler start
+
+# 获取已采集的sample的数量
+profiler getSamples
+
+# 查看profiling状态
+profiler status
+
+# 停止profiler
+# 默认情况下，结果是 Flame Graph 格式的 html 文件，也可以用 -o 或 --format 参数指定其他内容格式，包括 flat、traces、collapsed、flamegraph、tree、jfr
+profiler stop --format flamegraph
+
+# 通过浏览器查看arthas-output下面的profiler结果
+# http://localhost:3658/arthas-output/
 ```
 
 #### 内存泄漏

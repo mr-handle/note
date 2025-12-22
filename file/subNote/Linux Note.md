@@ -2093,6 +2093,7 @@ Name=WeChat
 Exec=/home/handle/Applications/WeChat.AppImage
 Icon=/home/handle/Applications/WeChat.png
 Terminal=false
+Categories=Development;
 ```
 
 - 如果是wine，则Exec键值对需要做变动
