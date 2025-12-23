@@ -4268,6 +4268,20 @@ java -X
 -XX:+PrintFlagsFinal -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions
 ```
 
+##### 添加JVM参数选项
+
+```sh
+# 运行jar包
+java [JVM参数选项1 JVM参数选项2 ... JVM参数选项n] -jar /path/to/file.jar
+
+# Java程序运行过程中
+# 设置布尔类型的JVM参数选项
+jinfo -flag [+/-]JVM参数选项名称 进程id
+
+# 设置非布尔类型的JVM参数选项
+jinfo -flag JVM参数选项名称=值 进程id
+```
+
 ##### 指定堆（新生代+老年代）大小
 
 - 默认情况下，堆的初始内存大小为电脑的内存大小/64，堆的最大内存大小为电脑的内存大小/4
@@ -4318,17 +4332,20 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
 # 表示老年代占n（默认是2），新生代占1，新生代占整个堆的1/(1+n)
 -XX:NewRatio=n
 
-# 表示eden/两个survivor的比例，默认8:1:1（但是如果不显式指定比例，就算加上-XX:-UseAdaptiveSizePolicy，默认的比例也是不生效的）
+# 表示eden/两个survivor的比例，默认8:1:1
+# 但是如果不显式指定比例，就算加上-XX:-UseAdaptiveSizePolicy，默认的比例也是不生效的
+# 如果显示指定比例，就算-XX:+UseAdaptiveSizePolicy，也是手动指定的比例生效
 -XX:SurvivorRatio=8
 
 # 关闭（关闭用减号，开启用加号）自适应的内存分配策略
+# 建议启用，不要手动指定SurvivorRatio
 -XX:-UseAdaptiveSizePolicy
 ```
 
 ##### 指定对象晋升到老年代的年龄阈值
 
 ```properties
-# 默认是15
+# 默认是15，一般不会去改
 -XX:MaxTenuringThreshold=15
 ```
 
@@ -4423,12 +4440,22 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 -XX:+EliminateAllocations
 ```
 
-##### 在OOM时，打印输出
+##### OOM相关的JVM参数选项
 
-```properties
-# 也可以在Full GC前生成dump文件：-XX:+HeapDumpBeforeFullGC
+```sh
+# 在OOM的时候生成dump文件
+-XX:+HeapDumpOnOutOfMemoryError 
+
+# 在Full GC发生前生成dump文件（OOM之前肯定会FULL GC，所以可能会看到多个dump文件）
+-XX:+HeapDumpBeforeFullGC
+
 # 不指定-XX:HeapDumpPath，则在当前目录下生成dump文件
--XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=你要输出的日志路径
+# 指定一个目录就行，如果指定一个文件，OOM时将覆盖该文件内容
+-XX:HeapDumpPath=/path
+
+# 当OOM时要执行的命令或脚本的路径，比如重启服务
+-XX:OnOutOfMemoryError="echo OOM"
+-XX:OnOutOfMemoryError=/path/to/file.sh
 ```
 
 ##### 其它jvm设置
