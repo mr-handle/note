@@ -4400,11 +4400,45 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
 
 ##### 记录GC活动
 
-```properties
--XX:+UseGCLogFileRotation 
--XX:NumberOfGCLogFiles=50 
--XX:GCLogFileSize=100m
+```sh
+# 打印GC简要信息1
+-XX:+PrintGC
+
+# 打印GC简要信息2
+-verbose:gc
+
+# 打印GC简要信息3
+-Xlog:gc
+
+# 打印GC详情1
+-XX:+PrintGCDetails
+
+# 打印GC详情2
+-Xlog:gc*
+
+# 输出GC信息到指定文件
+-Xlog:gc:文件名
+
+# 输出GC详情到控制台，并且包含时间信息
+-Xlog:gc*:stdout:time
+
+# 把GC日志写入到一个文件中去，而不是打印到标准输出中
 -Xloggc:/.../gc.log
+
+# 启用GC日志文件的自动转储
+-XX:+UseGCLogFileRotation 
+
+# GC日志文件的循环数目
+-XX:NumberOfGCLogFiles=1 
+
+# GC日志文件的大小
+-XX:GCLogFileSize=100m
+
+# 打印GC时线程的停顿时间
+-XX:+PrintGCApplicationStoppedTime
+
+# 每次GC前和GC后，都打印堆信息
+-XX:+printHeapAtGC
 ```
 
 ##### 逃逸分析
@@ -4471,29 +4505,34 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 # 设置栈内存大小
 -Xss1024K
 
-# 打印GC简要信息1
--XX:+PrintGC
+# 禁止hotspot执行System.gc()，默认
+-XX:+DisableExplicitGC
 
-# 打印GC简要信息2
--verbose:gc
+# 指定代码缓存大小
+-XX:InitialCodeCacheSize=512m
+-XX:ReservedCodeCacheSize=512m
 
-# 打印GC简要信息3
--Xlog:gc
+# 启用代码缓存刷新，让JVM放弃一些被编译的代码
+# 避免代码缓存被占满时JVM切换到只解释执行的情况
+-XX:+UseCodeCacheFlushing
 
-# 打印GC详情1
--XX:+PrintGCDetails
+# 开启逃逸分析
+-XX:+DoEscapeAnalysis
 
-# 打印GC详情2
--Xlog:gc*
+# 开启偏向锁
+-XX:+UseBiasedLocking
 
-# 输出GC信息到指定文件
--Xlog:gc:文件名
-
-# 输出GC详情到控制台，并且包含时间信息
--Xlog:gc*:stdout:time
+# 开启使用大页面
+-XX:+UseLargePages
 
 # 开启TLAB空间（TLAB在Eden空间中，每个线程有自己的TLAB空间）
 -XX:+UseTLAB
+
+# 设置TLAB的大小
+-XX:TLABSize=1m
+
+# 打印TLAB的使用情况
+-XX:+PrintTLAB
 
 # 设置TLAB空间占Eden空间的百分比，默认TLAB仅占整个Eden空间的1%
 # 一旦对象在TLAB空间分配内存失败，JVM就会使用加锁机制，在Eden空间分配内存
@@ -4853,7 +4892,7 @@ System.out.println(phantomReference.get());
     - 设置最大的停顿时间
 
 ```sh
-# G1垃圾收集器
+# 启用G1垃圾收集器
 -XX:+UseG1GC
 
 # 设置每个Region的大小，值是2的幂，范围1MB-32MB之间，默认是堆内存的1/2000
@@ -4871,6 +4910,34 @@ System.out.println(phantomReference.get());
 
 # 触发并发GC周期的Java堆占用率阈值，超过这个值就触发GC，默认45
 -XX:InitiatingHeapOccupancyPercent=45
+
+# G1就不要用-Xmn和-XX:NewRatio来设置新生代了
+# 新生代占用整个堆内存的最小百分比（默认5%）
+-XX:G1NewSizePercent
+# 新生代占用整个堆内存的最大百分比（默认60%）
+-XX:G1MaxNewSizePercent
+
+# 保留内存区域，防止Survivor中的to区溢出
+-XX:G1ReservePercent=10
+
+# 设置堆占用率的百分比（0-100），达到这个数值的时候触发全局并发标记
+# 默认45%，值为0表示间断进行全局并发标记
+-XX:InitiatingHeapOccupancyPercent
+
+# 设置老年代的region被回收时的对象占比，默认85%
+# 只有老年代的region中存活的对象占用达到了这个值，才会在Mixed GC中被回收
+-XX:G1MixedGCLiveThresholdPercent
+
+# 在全局并发标记结束后，可以知道所有的区有多少空间要被回收
+# 每次Young GC之后再次发生Mixed GC之前，会检查垃圾占比是否达到这个值
+# 只有达到了，下次才会发生Mixed GC
+-XX:G1HeapWastePercent
+
+# 一次全局并发标记之后，最多执行Mixed GC的次数，默认8
+-XX:G1MixedGCCountTarget
+
+# 设置Mixed GC收集周期中要收集的老年代region数的上限，默认是Java堆的10%
+-XX:G1OldGCSetRegionThresholdPercent
 ```
 
 ###### ZGC
@@ -4891,6 +4958,12 @@ System.out.println(phantomReference.get());
 # 查看具体垃圾收集器参数的值
 jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 ```
+
+###### 垃圾收集器组合
+
+有线连接的都是可以组合来用，虚线表示过时的组合
+
+![垃圾收集器组合](/images/gc.png)
 
 #### 性能调优
 
