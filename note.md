@@ -4400,6 +4400,8 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
 
 ##### 记录GC活动
 
+###### GC相关的参数选项
+
 ```sh
 # 打印GC简要信息1
 -XX:+PrintGC
@@ -4412,6 +4414,12 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
 
 # 打印GC详情1
 -XX:+PrintGCDetails
+
+# 打印进程执行时间，不能单独使用，要加上打印GC的参数一起使用，如-XX:+PrintGCDetails
+-XX:+PrintGCTimeStamps
+
+# 打印系统时间（包括时区信息），不能单独使用，要加上打印GC的参数一起使用，如-XX:+PrintGCDetails
+-XX:+PrintGCDateStamps
 
 # 打印GC详情2
 -Xlog:gc*
@@ -4440,6 +4448,34 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
 # 每次GC前和GC后，都打印堆信息
 -XX:+printHeapAtGC
 ```
+
+###### GC日志格式
+
+- GC日志中有三个时间
+    - user：CPU执行用户态代码（核心之外）所使用的时间
+    - sys：进程在内核态消耗的CPU时间，即在内核执行系统调用或等待系统事件所使用的CPU时间
+    - real：此次GC事件从开始到结束所用的时间
+        - 由于多核的存在，一般的GC事件中，real是小于sys+user的
+        - 如果real大于sys+user，则应用可能存在IO负载非常重或是CPU不够用
+
+![GC日志规律](/images/gclogregular.png)
+
+![MinorGC日志](/images/minorgc.png)
+
+![FullGC日志](/images/fullgc.png)
+
+- 日志中的垃圾收集器
+    - DefNew：Seriall收集器（Default New Generation）
+    - ParNew：ParNew收集器
+    - PSYoung：Parallel Scanvenge收集器
+    - 老年代和新生代同理
+
+- 日志中的新生代总容量，是整个新生代的9/10,因为幸存者区有一个是空着的，没算进去
+- 日志中的堆内存总容量=9/10新生代+老年代，因此是小于初始化的内存大小的
+- 日志中的Full GC（GC发生的原因）
+    - Metadata GC Threshold：元空间不够用了
+    - Ergonomics：JVM自适应调整导致的GC
+    - System：调用了System.gc()方法
 
 ##### 逃逸分析
 
