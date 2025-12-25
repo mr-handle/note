@@ -606,7 +606,7 @@ systemctl stop firewalld
 systemctl disable firewalld
 
 # 重启防火墙
-firewall -cmd --reload
+firewall-cmd --reload
 
 # 查看防火墙状态1
 service firewalld status
@@ -614,8 +614,11 @@ service firewalld status
 # 查看防火墙状态2
 systemctl status firewalld 
 
+# 查看开放的端口，观察ports关键字列出的端口，默认是空的
+firewall-cmd --list-all
+
 # 放行端口
-firewall -cmd --zone=public --add -port=80/tcp --permanent
+firewall-cmd --zone=public --add-port=80/tcp --permanent
 ```
 
 ### 系统命令
@@ -2038,6 +2041,44 @@ sudo debtap /path/to/file.deb
 
 # 安装转换后的包
 sudo pacman -U /path/to/file.pkg.tar.zst
+```
+
+#### 安装f3
+
+f3是一个U盘真实容量检测工具
+
+官网：<https://github.com/AltraMayor/f3>
+
+- 安装f3
+
+```sh
+yay -S f3
+```
+
+- 检测/修复
+    - 方法1：f3write/f3read，
+        - 只能告诉你“能写多少”，不能告诉你“真实容量边界”，无法用于修复，并且速度慢
+        - 一般用于文件系统层面的压力测试，看看平均读写速度
+    - 方法2：f3probe，能给出真实容量的精确扇区号last-sec，用于修复
+
+```sh
+# 1.向U盘写入大量测试文件，用来填满整个盘
+f3write /path/to/你的U盘挂载点
+
+# 2.读取刚才写入的文件，检查是否有损坏或循环覆盖
+f3read /path/to/你的U盘挂载点
+
+
+# 先查看U盘的设备名称
+fdisk -l
+
+# 快速测试，要先卸载U盘
+sudo f3probe --destructive --time-ops /dev/sdX
+
+# 将U盘改回真实容量，此命令会创建MBR分区表、创建一个FAT32分区和格式化分区
+# 也可以用其他分区工具进行设置
+# 要先卸载U盘
+f3fix --last-sec=16477878 /dev/sdX
 ```
 
 ### 挂载其它硬盘
