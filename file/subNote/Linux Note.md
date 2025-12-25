@@ -1001,9 +1001,10 @@ yay --version
 
 - 下载Arch Linux系统镜像文件并校验：<https://archlinux.org/download/>
 
-- 制作U盘启动
-    - 如果是在windows系统制作，下载Rufus（Portable版本，免安装）：<https://rufus.ie>
-    - 如果是在Linux系统制作，步骤如下：
+#### 制作U盘启动
+
+- 如果是在windows系统制作，下载Rufus（Portable版本，免安装）：<https://rufus.ie>
+- 如果是在Linux系统制作，命令行，步骤如下：
 
 ```sh
 # 列出系统中的磁盘分区表信息，找到U盘的设备名称，如：/dev/sdx
@@ -1023,7 +1024,40 @@ sudo dd bs=4M if=/path/to/archlinux-version-x86_64.iso of=/dev/disk/by-id/usb-My
 sudo cp /path/to/archlinux-version-x86_64.iso /dev/disk/by-id/usb-My_flash_drive
 ```
 
-- 关闭BIOS的安全启动模式，不然可能会提示安全引导违规
+- 使用Ventoy，Windows和Linux都有安装包（推荐）
+
+##### Ventoy
+
+官网：<https://github.com/ventoy/Ventoy>
+
+Ventoy可制作同时支持Windows、Linux等多操作系统的U盘启动，并且多余的U盘空间还可以存放其它任意文件，实乃上上之选
+
+- 下载ventoy-version-linux.tar.gz，并校验哈希码，然后解压
+
+- 确保系统安装了dosfstools
+
+- 进入ventoy根目录
+
+```sh
+# 命令行启动
+Ventoy2Disk.sh
+
+# GUI启动，推荐
+VentoyGUI.x86_64
+
+# 网页版启动
+WebUI/index.html
+```
+
+- 关于Secure Boot Support，保持默认勾选就行
+    - 勾选了Secure Boot Support，如果主板的Secure Boot是开启的，那么第一次U盘启动，需要注册密钥，根据提示操作就行
+    - 无论勾选不勾选Secure Boot Support，只要把主板Secure Boot关掉，U盘启动都一定能正常启动
+
+- U盘启动制作完成后，会看到Ventoy创建了两个分区，默认名字为Ventoy和VTOYEFI
+    - 把系统镜像（iso文件）复制到Ventoy里面就行（里面任意目录下都可以），当然也可以存放其它你想存到U盘的任何文件
+    - VTOYEFI分区里放的是Ventoy的引导程序，不要动它
+
+- 如果提示安全引导违规，关闭BIOS的安全启动模式，保存重启，不要按ESC，因为会弹出一个确认是否真的要关闭安全引导的交互，选确认
 
 #### 设置终端键盘布局和字体（可选）
 
@@ -1901,13 +1935,12 @@ sudo pacman -S kwalletmanager
 # 压缩/解压软件ark
 sudo pacman -S ark
 
-# 安装7z官方版，支持更多格式文件
-# 安装即可，无需配置ark
+# ark不支持7z和zip解压，还需要安装7zip才能用ark解压
+# 首次安装无需配置ark
 sudo pacman -S 7zip
 
-# ark不支持rar解压，还需要安装unrar才能用ark解压rar文件
-# 安装了7zip应该不用安装，目前搞不到rar测试，后面遇到了如果7zip不支持rar再安装回来
-# 安装即可，无需配置ark
+# ark不支持rar解压，还需要安装unrar才能用ark解压
+# 首次安装无需配置ark
 sudo pacman -S unrar
 
 # 图片查看器 
@@ -2068,9 +2101,8 @@ f3write /path/to/你的U盘挂载点
 # 2.读取刚才写入的文件，检查是否有损坏或循环覆盖
 f3read /path/to/你的U盘挂载点
 
-
 # 先查看U盘的设备名称
-fdisk -l
+sudo fdisk -l
 
 # 快速测试，要先卸载U盘
 # 如果是缩水U盘，将会打印类似：
@@ -2096,6 +2128,7 @@ f3fix --last-sec=16477878 /dev/sdX
 ##### 安装GUI版本的f3
 
 ```sh
+# 安装f3-qt将自动安装作为依赖的f3
 yay -S f3-qt
 ```
 
