@@ -702,6 +702,9 @@ unzip -d /path/to/directory xxx.zip
 # 查看应用有没有启动
 ps -ef|grep 应用名
 
+# 关闭应用
+kill -9 进程id
+
 # 查看应用占用的端口
 netstat -tunlp|grep 应用名
 
@@ -2047,6 +2050,75 @@ wine uninstaller
 winecfg
 ```
 
+#### 安装qemu
+
+教程：<https://wiki.archlinux.org/title/QEMU>
+
+```sh
+# qemu-base：命令行版本
+# qemu-desktop：默认x86_64模拟器
+# qemu-full：完全版
+sudo pacman -S qemu-full
+
+# 管理KVM/QEMU（虚拟机）
+sudo pacman -S libvirt
+
+# win11要求TPM2.0，需要安装swtpm进行模拟
+sudo pacman -S swtpm
+
+# 轻量级，易于配置DNS转发器和DHCP服务器的一个工具
+# 作为默认的NAT/DHCP，不安装启动NAT网络的时候会报错
+sudo pacman -S dnsmasq
+
+# ssh远程管理的工具
+sudo pacman -S openbsd-netcat 
+
+# 通过libvirt管理KVM/QEMU（虚拟机）的GUI
+# virt-manager->libvirt-glib->libvirt
+# 安装了virt-manager不用单独安装libvirt
+sudo pacman -S virt-manager
+
+# 设置身份验证
+# 如果Arch Linux用户已经加入到wheel用户组了就可以跳过，会在启动virt-manager的时候提示输入密码
+# 如果没有加入wheel用户组，则将用户加入wheel组或libvirt组就行了
+usermod -aG libvirt 用户名
+
+# 设置开机自启动，然后重启
+sudo systemctl enable libvirtd
+```
+
+##### KVM
+
+官网：<https://wiki.archlinux.org/title/KVM>
+
+KVM：Kernel-based Virtual Machine，包含在linux内核里面
+
+```sh
+# 检查处理器是否支持KVM，如英特尔处理器会打印：VT-x
+LC_ALL=C.UTF-8 lscpu | grep Virtualization
+
+# Arch Linux内核提供了用于支持KVM的内核模块，输出应该是：y或m
+zgrep CONFIG_KVM= /proc/config.gz
+
+# 检查kvm内核模块是否自动加载
+lsmod | grep kvm
+
+# Virtio API半虚拟化
+# 在虚拟机中输入命令检查是否支持，以及是否自动加载内核模块了
+zgrep VIRTIO /proc/config.gz
+lsmod | grep virtio
+
+# 检查是否开启了嵌套虚拟化
+# 如果使用virt-manager，还要到虚拟机详情里面的CPU设置那里设置host-passthrough
+cat /sys/module/kvm_intel/parameters/nested
+```
+
+##### Libvirt
+
+Libvirt 是提供了一种便捷方式来管理虚拟机和虚拟化功能的软件集合，例如存储和网络接口管理
+
+它包括一个长期稳定的C API、一个守护线程（libvirtd）和一个命令行工具（virsh）
+
 #### 安装VirtualBox
 
 十分不推荐自己安装.run的软件包
@@ -2060,6 +2132,10 @@ sudo pacman -S virtualbox
 # 如果还需要虚拟机增强功能（共享剪贴板、共享文件夹等），可以安装
 sudo pacman -S virtualbox-guest-utils
 ```
+
+##### 安装win11
+
+勾选efi，首次启动提示按任意键选择CD/DVD的时候随便按一个键就行，千万不要再弹窗的时候重新选择系统镜像，会陷入循环的
 
 #### 安装debtap
 

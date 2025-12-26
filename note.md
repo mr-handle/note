@@ -15935,6 +15935,62 @@ server {
 }
 ```
 
+- location指令
+
+```conf
+# =：用于不含正则表达式的uri前，要求请求字符串与uri严格匹配，如果匹配成功，就停止继续向下搜索并立即处理该请求
+# ~：表示uri包含正则表达式，并且区分大小写
+# ~*：表示uri包含正则表达式，并且不区分大小写
+# ^~：用于不含正则表达式的uri前，要求nginx服务器找到标识uri和请求字符串匹配度最高的location后，立即使用此location处理请求，而不再使用location块中的正则uri和请求字符串做匹配
+location [=|~|~*|^~] uri {}
+```
+
+### 配置反向代理
+
+- 目的1：当访问`http://10.0.2.15:80`的时候，nginx将会转发请求给<http://127.0.0.1:8080>处理
+
+```conf
+server {
+    # nginx监听的端口号，记得开放80端口
+    listen 80;
+    # 主机名称：可以是主机名或IP地址（这里的例子，可以将这个主机名称理解为启动nginx服务的主机的IP地址）
+    server_name 10.0.2.15;
+
+    # 当请求路径有/，做跳转
+    location / {
+        root html;
+        # 记得开放8080端口
+        proxy_pass http://127.0.0.1:8080;
+        index index.html index.htm;
+    }
+}
+```
+
+- 目的2：
+    - 当访问`http://10.0.2.15:8001/handle/`的时候，nginx将会转发请求给<http://127.0.0.1:8081>处理
+    - 当访问`http://10.0.2.15:8001/jack/`的时候，nginx将会转发请求给<http://127.0.0.1:8082>处理
+
+```conf
+server {
+    # nginx监听的端口号，记得开放端口
+    listen 8001;
+    # 主机名称：可以是主机名或IP地址（这里的例子，可以将这个主机名称理解为启动nginx服务的主机的IP地址）
+    server_name 10.0.2.15;
+
+    # 当请求路径有handle，做跳转
+    location ~ /handle/ {
+        # 记得开放端口
+        proxy_pass http://127.0.0.1:8081;
+    }
+    
+    # 当请求路径有jack，做跳转
+    location ~ /jack/ {
+        # 记得开放端口
+        proxy_pass http://127.0.0.1:8082;
+    }
+}
+```
+
 ### 创建脚本启动nginx服务
 
 ```sh
