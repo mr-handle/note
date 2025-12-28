@@ -1912,6 +1912,18 @@ ibus-setup
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择IBus Wayland，然后应用就可以了
 ```
 
+##### 安装usb_modeswitch
+
+如果用usb网卡，遇到了插拔后usb网卡无法识别
+
+或者关机然后断电，再通电开机，进入桌面后发现usb网卡无法识别的情况
+
+笔者安装usb_modeswitch后usb网卡就能正常自动识别了
+
+```sh
+sudo pacman -S usb_modeswitch
+```
+
 ##### KWallet
 
 - kwallet-pam
