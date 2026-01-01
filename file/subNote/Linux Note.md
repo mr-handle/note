@@ -2352,26 +2352,26 @@ sudo vim /etc/mkinitcpio.conf
 mkinitcpio -P
 ```
 
-### 文件备份
+### 目录/文件备份
 
-整个系统的备份笔者认为是没有必要的，下面列出几个重要的目录，当系统挂掉可以通过LiveCD进入系统复制出来
+整个系统的备份笔者认为是没有必要的，下面列出几个重要的目录/文件，当系统挂掉可以通过LiveCD进入系统复制出来
 
 ```sh
 # （AppImage、tar.gz等免安装）应用放这里了，方便复制
-/home/handle/Applications
+~/Applications
 
 # 应用配置
-/home/handle/.config
+~/.config
 
 # 桌面快捷方式文件
-/home/handle/.local/share/applications
+~/.local/share/applications
 
 # 桌面快捷方式文件或链接文件
-/home/handle/Desktop
+~/Desktop
 
 # 环境变量
-/home/handle/.bash_profile
-/home/handle/.bashrc
+~/.bash_profile
+~/.bashrc
 ```
 
 ### 其它可能用到的命令
