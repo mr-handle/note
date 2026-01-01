@@ -1924,6 +1924,8 @@ ibus-setup
 sudo pacman -S usb_modeswitch
 ```
 
+另一种办法是手动切换为网卡模式，参考：<https://wiki.archlinux.org/title/ZTE_MF110/MF190#Switch_from_CD_mode_to_modem_mode_on_the_device>
+
 ##### KWallet
 
 - kwallet-pam
@@ -1985,6 +1987,15 @@ sudo pacman -S gimp
 
 # 文本比对软件
 sudo pacman -S meld
+
+# 系统安全扫描审计工具
+sudo pacman -S lynis
+
+# 恶意软件扫描，clamav的GUI
+sudo pacman -S clamtk
+
+# 应用沙盒
+sudo pacman -S firejail
 ```
 
 #### 安装steam
@@ -2339,6 +2350,28 @@ sudo vim /etc/mkinitcpio.conf
 
 # 重新生成 initramfs
 mkinitcpio -P
+```
+
+### 文件备份
+
+整个系统的备份笔者认为是没有必要的，下面列出几个重要的目录，当系统挂掉可以通过LiveCD进入系统复制出来
+
+```sh
+# （AppImage、tar.gz等免安装）应用放这里了，方便复制
+/home/handle/Applications
+
+# 应用配置
+/home/handle/.config
+
+# 桌面快捷方式文件
+/home/handle/.local/share/applications
+
+# 桌面快捷方式文件或链接文件
+/home/handle/Desktop
+
+# 环境变量
+/home/handle/.bash_profile
+/home/handle/.bashrc
 ```
 
 ### 其它可能用到的命令
