@@ -15991,6 +15991,65 @@ server {
 }
 ```
 
+### 配置负载均衡
+
+- nginx提供了几种负载均衡策略
+    - 1.轮询（默认）：每个请求按时间顺序逐一分配到不同的后端服务器，如果某个后端服务器宕机，能自动剔除
+    - 2.weight：默认权重为1,权重越高被分配的客户端越多，用于后端服务器性能不均的情况
+    - 3.ip_hash：每个请求按访客ip的hash结果分配，这样每个访客固定访问一个后端服务器，可以解决session的问题
+    - 4.fair（第三方）：按后端服务器的响应时间来分配请求，响应时间短的优先分配
+
+```conf
+# 轮询
+upstream myserver {
+    server 10.0.2.15:8080;
+    server 10.0.2.15:8081;
+}
+
+# weight
+upstream myserver {
+    server 10.0.2.15:8080 weight=1;
+    server 10.0.2.15:8081 weight=3;
+}
+
+# ip_hash
+upstream myserver {
+    ip_hash;
+    server 10.0.2.15:8080;
+    server 10.0.2.15:8081;
+}
+
+# fair
+upstream myserver {
+    server 10.0.2.15:8080;
+    server 10.0.2.15:8081;
+    fair;
+}
+```
+
+```conf
+http {
+    # 负载均衡服务器命名为myserver，配置负载均衡服务器列表
+    upstream myserver {
+        server 10.0.2.15:8080;
+        server 10.0.2.15:8081;
+    }
+    server {
+        # nginx监听的端口号，记得开放端口
+        listen 8001;
+        # 主机名称：可以是主机名或IP地址（这里的例子，可以将这个主机名称理解为启动nginx服务的主机的IP地址）
+        server_name 10.0.2.15;
+
+        location / {
+            # myserver对应前面负载均衡服务器的名字
+            proxy_pass http://myserver;
+            proxy_connect_timeout 10;
+            # ...
+        }
+    }
+}
+```
+
 ### 创建脚本启动nginx服务
 
 ```sh
