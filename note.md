@@ -7583,9 +7583,13 @@ UserDO user = userDAO.queryUser(userId);
 List<UserDO> users = userDAO.queryUsers(userAge);
 ```
 
+### IDEA插件
+
+- MyBatisX
+
 ## PageHelper
 
-官网<https://github.com/pagehelper/Mybatis-PageHelper>
+官网：<https://github.com/pagehelper/Mybatis-PageHelper>
 
 ### pom
 
