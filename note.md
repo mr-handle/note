@@ -15778,6 +15778,10 @@ Nginx是一个HTTP web服务器，反向代理，内容缓存，负载均衡器�
 
 通过反向代理服务器，把动态资源请求和静态资源请求分给不同的服务器处理，加快解析速度，降低单个服务器的压力
 
+- 实现
+    - 1.把静态文件（html、css、js、image）放在独立的服务器上，独立成一个域名，这是目前主流推崇的方案
+    - 2.动态跟静态文件混合一起发布，通过nginx分开
+
 ### 安装nginx
 
 - Red Hat系列Linux
@@ -16049,6 +16053,265 @@ http {
     }
 }
 ```
+
+### 配置动静分离
+
+- 目的
+    - 1.访问<http://10.0.2.15:8001/html/hello.html>的时候，返回/data/html/hello.html
+    - 2.访问<http://10.0.2.15:8001/image/hello.png>的时候，返回/data/image/hello.png
+    - 3.访问<http://10.0.2.15:8001/image>的时候，返回/data/image的子目录/文件列表
+
+```conf
+server {
+        # nginx监听的端口号，记得开放端口
+        listen 8001;
+        # 主机名称：可以是主机名或IP地址（这里的例子，可以将这个主机名称理解为启动nginx服务的主机的IP地址）
+        server_name 10.0.2.15;
+
+        # 请求路径
+        location /html/ {
+            # 系统目录
+            root /data/;
+            # ...
+        }
+        
+        # 请求路径
+        location /image/ {
+            # 系统目录
+            root /data/;
+
+            # 列出目录的内容，如访问http://10.0.2.15:8001/image的时候会列出/data/image目录里面的子目录/文件
+            autoindex on;
+        }
+    }
+```
+
+### 配置Nginx高可用集群
+
+![Nginx高可用](/images/nginx.png)
+
+keepalived官网：<https://www.keepalived.org/index.html>
+
+```sh
+# 启动keepalived
+sudo systemctl start keepalived.service
+
+# 设置keepalived开机启动
+sudo systemctl enable keepalived.service
+```
+
+- 两台服务器分别安装nginx和keepalived（可以通过包管理器安装）
+
+- 配置keepalived，/etc/keepalived/keepalived.conf，未完善...
+
+```conf
+# 全局配置
+global_defs {
+    notification_email {
+        acassen@firewall.loc
+        failover@firewall.loc
+        sysadmin@firewall.loc
+    }
+    notification_email_from Alexandre.Cassen@firewall.loc
+    smtp_server 192.168.200.1
+    smtp_connect_timeout 30
+    router_id LVS_DEVEL
+    vrrp_skip_check_adv_addr
+    vrrp_strict
+    vrrp_garp_interval 0
+    vrrp_gna_interval 0
+
+    # 视频教程里面有这个配置，但是新版本没看到，先保留着
+    # /etc/hosts文件中设置的：127.0.0.1 MY_HOST_NAME
+    # router_id MY_HOST_NAME
+}
+
+# 视频教程里面有检测脚本这个配置，但是新版本没看到，先保留着
+vrrp_script chk_http_port {
+    script "/usr/local/src/nginx_check.sh"
+    # 检测脚本执行的间隔
+    interval 2
+    # 当脚本成立的时候，设置当前服务器的权重
+    weight 2
+}
+
+vrrp_instance VI_1 {
+    # 主服务器为MASTER，从服务器为BACKUP
+    state MASTER
+    # 使用哪个网卡就填哪个网卡名
+    interface eth0
+    # 主、从必须相同
+    virtual_router_id 51
+    # 主、从设置不同的优先级，主服务器设置较大值，从服务器设置较小值
+    priority 100
+    # 每隔多少秒发送心跳
+    advert_int 1
+    authentication {
+        # 鉴权方式
+        auth_type PASS
+        # 密码
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        # 虚拟ip，如果按照图中的布置应该填192.168.17.50
+        192.168.200.16
+        192.168.200.17
+        192.168.200.18
+    }
+
+    # Allow packets addressed to the VIPs above to be received
+    accept
+}
+
+virtual_server 192.168.200.100 443 {
+    delay_loop 6
+    lb_algo rr
+    lb_kind NAT
+    persistence_timeout 50
+    protocol TCP
+
+    real_server 192.168.201.100 443 {
+        weight 1
+        SSL_GET {
+            url {
+              path /
+              digest ff20ad2481f97b1754ef3e12ecd3a9cc
+            }
+            url {
+              path /mrtg/
+              digest 9b3a0c85a887a256d6939da88aabd8cd
+            }
+            connect_timeout 3
+            retry 3
+            delay_before_retry 3
+        }
+    }
+}
+
+virtual_server 10.10.10.2 1358 {
+    delay_loop 6
+    lb_algo rr
+    lb_kind NAT
+    persistence_timeout 50
+    protocol TCP
+
+    sorry_server 192.168.200.200 1358
+
+    real_server 192.168.200.2 1358 {
+        weight 1
+        HTTP_GET {
+            url {
+              path /testurl/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            url {
+              path /testurl2/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            url {
+              path /testurl3/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            connect_timeout 3
+            retry 3
+            delay_before_retry 3
+        }
+    }
+
+    real_server 192.168.200.3 1358 {
+        weight 1
+        HTTP_GET {
+            url {
+              path /testurl/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334c
+            }
+            url {
+              path /testurl2/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334c
+            }
+            connect_timeout 3
+            retry 3
+            delay_before_retry 3
+        }
+    }
+}
+
+virtual_server 10.10.10.3 1358 {
+    delay_loop 3
+    lb_algo rr
+    lb_kind NAT
+    persistence_timeout 50
+    protocol TCP
+
+    real_server 192.168.200.4 1358 {
+        weight 1
+        HTTP_GET {
+            url {
+              path /testurl/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            url {
+              path /testurl2/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            url {
+              path /testurl3/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            connect_timeout 3
+            retry 3
+            delay_before_retry 3
+        }
+    }
+
+    real_server 192.168.200.5 1358 {
+        weight 1
+        HTTP_GET {
+            url {
+              path /testurl/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            url {
+              path /testurl2/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            url {
+              path /testurl3/test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            }
+            connect_timeout 3
+            retry 3
+            delay_before_retry 3
+        }
+    }
+}
+
+```
+
+- 脚本
+
+```sh
+#!/bin/bash
+A=`ps -C nginx --no-header | wc -l`
+if [$A -eq 0];then
+    /usr/local/nginx/sbin/nginx
+    sleep 2
+    if [`ps -C nginx --no-header | wc -l` -eq 0];then
+        killall keepalived
+    fi
+fi
+```
+
+### Nginx原理
+
+- Nginx有两个进程：master和（多个）worker，master管理worker，多个worker通过争抢的方式处理请求
+
+- 设置worker的数量和cpu的核数相等最为适宜
+
+- 连接数（worker_connection）
+    - 客户端发送一个请求，占用2个（一来一回，client<=>worker）或4（client<=>worker<=>tomcat）个worker的连接数
+    - nginx的静态资源访问最大并发数：连接数*worker数量/2
+    - nginx的动态资源访问（如反向代理）最大并发数：连接数*worker数量/4
 
 ### 创建脚本启动nginx服务
 
