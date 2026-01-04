@@ -206,6 +206,9 @@ who am i
 
 # 查看指定用户的信息
 id 用户名
+
+# 查看所有用户
+cat /etc/passwd
 ```
 
 #### 用户所在组
@@ -380,6 +383,23 @@ mv 源目录/文件 目的目录/文件
 # -h，human readable
 # -l，以列表的方式显示信息
 ls -ahl 文件/目录
+
+# 只展示文件（"^-"表示"-"开头）
+ls -l 目录 | grep "^-"
+
+# 统计目录下的文件数
+ls -l 目录 | grep "^-" | wc -l
+
+# 统计目录下的子目录数
+ls -l 目录 | grep "^d" | wc -l
+
+# 统计目录下的文件数，包括子目录里面的
+ls -Rl 目录 | grep "^-" | wc -l
+
+# 以树状展示目录结构
+# 一般要手动安装tree
+# arch安装命令：sudo pacman -S tree
+tree 目录
 ```
 
 #### cat查看文件内容
@@ -597,62 +617,6 @@ history [任意正整数]
 !历史命令编号
 ```
 
-### 网络命令
-
-#### 网卡配置
-
-```sh
-# 查看ip地址信息1
-ip addr
-
-# 查看ip地址信息2，此命令一般需要先安装相应工具
-ifconfig
-
-# 列出网络接口（设备）
-# 网络接口（设备）被udev管理，通过systemd.link文件进行配置
-# 前缀en表示有线/以太网，wl表示无线/WLAN，ww表示mobile broadband/WWAN
-# lo： Virtual Loopback Interface（虚拟回环接口），是操作系统网络栈里的一种特殊接口，用来让主机和自己通信。它不是物理网卡，而是纯软件实现的网络接口。
-# 只显示网络接口（设备）名称
-ls /sys/class/net
-
-# 除了显示网络接口（设备）名称外还有别的信息显示
-ip link
-
-# 进入对应网卡文件进行修改
-vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
-
-# 重启网络
-service network restart
-```
-
-#### 防火墙命令
-
-```sh
-# 关闭防火墙1
-service firewalld stop
-
-# 关闭防火墙2
-systemctl stop firewalld
-
-# 禁止防火墙开机启动
-systemctl disable firewalld
-
-# 重启防火墙
-firewall-cmd --reload
-
-# 查看防火墙状态1
-service firewalld status
-
-# 查看防火墙状态2
-systemctl status firewalld 
-
-# 查看开放的端口，观察ports关键字列出的端口，默认是空的
-firewall-cmd --list-all
-
-# 放行端口
-firewall-cmd --zone=public --add-port=80/tcp --permanent
-```
-
 ### 系统命令
 
 ```sh
@@ -726,22 +690,6 @@ unzip xxx.zip
 
 # 解压到指定目录
 unzip -d /path/to/directory xxx.zip
-```
-
-### 应用/端口命令
-
-```sh
-# 查看应用有没有启动
-ps -ef|grep 应用名
-
-# 关闭应用
-kill -9 进程id
-
-# 查看应用占用的端口
-netstat -tunlp|grep 应用名
-
-# 查看端口有没有被某个进程占用
-lsof -i:6379
 ```
 
 ### 日期/时间类命令
@@ -828,9 +776,9 @@ grep "handle" /home/handle/hello.txt
 cat /home/handle/hello.txt | grep "handle"
 ```
 
-### 任务调度
+### crond任务调度
 
-任务调度：系统在某个时间执行的特定的命令或程序
+任务调度：系统在某个时间执行的特定的命令或程序（周而复始地反复执行）
 
 - 任务调度分类：
     - 1.系统工作：有些重要的工作必须周而复始地执行，如病毒扫描
@@ -882,6 +830,91 @@ crontab -e
 
 - 星期几和几号最好不要同时出现，它们定义的都是天，容易混乱
 
+### at定时任务
+
+- at命令是一次性的定时计划任务，at的守护进程atd以后台模式运行，检查任务队列运行定时任务
+- 默认情况下，atd守护进程每60秒检查任务队列，有任务时，会检查任务运行时间，如果与当前时间匹配，则运行此任务
+- 在使用at命令的时候，一定要保证atd进程的启动
+
+```sh
+# archlinux安装at
+sudo pacman -S at
+
+# 检查atd是否已经启动
+ps -ef | grep atd
+
+# at命令格式，输入完后按两次Ctrl+D结束具体任务内容输入
+at 选项 时间
+
+# 步骤1：任务时间
+at 8am tomorrow
+
+# 步骤2：任务内容
+date > /tmp/date.log
+
+# 查询在等待执行的定时任务
+atq
+
+# 删除任务，先通过atq得到任务号
+atrm 任务编号
+```
+
+|选项|描述|
+|:-|:-|
+|-m|当指定的任务被完成后，将给用户发送邮件，即使没有标准输出|
+|-I|查询，atq的别名|
+|-d|删除，atrm的别名|
+|-v|显示任务将被执行的时间|
+|-c|打印任务的内容到标准输出|
+|-V|显示版本信息|
+|-q <队列>|使用指定的队列|
+|-f <文件>|从指定文件读入任务而不是从标准输入读入|
+|-t <时间参数>|以时间参数的形式提交要运行的任务|
+
+|时间|描述|
+|:-|:-|
+|hh:mm|如果当天该时间已经过去，就会在第二天执行，如04:00|
+|midnight或noon或teatime|使用比较模糊的词语来指定时间，teatime一般是下午4点|
+|采用12小时计时制，时间后加上am或pm|如8am|
+|指定具体日期，month day或mm/dd/yy或dd.mm.yy|指定的日期必须跟在指定的时间后面，如04:00 2026-01-03|
+|now + 数字 时间单位|时间单位有minutes、hours、days、weeks，如now + 5 minutes|
+|today或tomorrow|直接使用这两个词语中的某个指定时间|
+
+### Linux分区
+
+一个硬盘可以分很多个分区，但是对于Linux来说，它就只有一个根目录，一个独立且唯一的文件结构，每个分区都是用来组成这个文件系统的一部分
+
+#### 硬盘说明
+
+Linux硬盘分IDE硬盘和SCSI硬盘，此外还有nvme固态硬盘，目前基本上是SCSI硬盘
+
+- 对于IDE硬盘，驱动器标识符为`hdx~`
+    - `hd`：分区所在设备的类型，这里就是指IDE硬盘了
+    - `x`：盘号，a为基本盘，b为基本从属盘，c为辅助主盘，d为辅助从属盘
+    - `~`：分区，前4个分区用数字1-4表示，它们是主分区或扩展分区，从5开始就是逻辑分区
+    - `hdb2`：第二个IDE硬盘上的第二个主分区或扩展分区
+- 对于SCSI硬盘，驱动器标识符为`sdx~`
+    - `sd`：分区所在设备的类型，这里就是指SCSI硬盘了
+    - 其余和IDE硬盘的表示方法一样
+- 对于nvme固态硬盘，待补充
+
+```sh
+# 查看所有设备挂载情况
+# -f：列出文件系统信息
+lsblk [-f]
+
+# 查看系统整体磁盘使用情况
+df -h
+
+# 查看指定目录的磁盘占用情况
+# -s：只显示汇总
+# -h：人类可读格式
+# -a：统计包含文件，而不只是目录
+# -d：最大子目录深度，为"-d 0"时和-s结果一样
+# -c：生成汇总
+du -h 目录
+```
+
 ## 环境变量
 
 - 按照作用域来分
@@ -895,6 +928,248 @@ crontab -e
 ```sh
 # 输出环境变量
 echo $PATH
+```
+
+## 网络
+
+### NAT网络配置
+
+![NAT网络配置](/images/NAT网络配置.png)
+
+主机上有一个虚拟网卡vmnet8，这个网卡可以跟虚拟机的网卡相互ping通，它们在同一个网段
+
+虚拟机访问互联网要通过主机的虚拟网卡，无线网卡对虚拟网卡的请求进行代理
+
+### 网络命令
+
+```sh
+# 查看ip地址信息1
+ip addr
+
+# 查看ip地址信息2
+# 此命令一般需要先安装相应工具
+ifconfig
+
+# 列出网络接口（设备）
+# 网络接口（设备）被udev管理，通过systemd.link文件进行配置
+# 前缀en表示有线/以太网，wl表示无线/WLAN，ww表示mobile broadband/WWAN
+# lo： Virtual Loopback Interface（虚拟回环接口），是操作系统网络栈里的一种特殊接口，用来让主机和自己通信。它不是物理网卡，而是纯软件实现的网络接口。
+# 只显示网络接口（设备）名称
+ls /sys/class/net
+
+# 除了显示网络接口（设备）名称外还有别的信息显示
+ip link
+
+# 进入对应网卡文件进行修改
+vi /etc/sysconfig/network-scripts/ifcfg-enp0s3
+
+# 重启网络
+service network restart
+
+# 修改主机名，编辑/etc/hostname文件并保存重启
+vim /etc/hostname
+
+# 设置主机名/域名和hosts映射，
+# 编辑/etc/hosts文件，输入：10.0.2.5 你的主机名/域名
+vim /etc/hosts
+```
+
+### 主机名解析机制
+
+- 例子：在浏览器输入www.baidu.com访问百度网页
+    - 1.浏览器先检查浏览器缓存有没有该域名信息，如果有就使用缓存完成域名解析
+    - 2.如果没有，就检查系统缓存有没有该域名信息，如果有就使用系统缓存完成域名解析
+    - 3.如果没有，就检查系统hosts文件中有没有配置对于的域名IP映射，如果有就使用它完成域名解析
+    - 4.如果没有，则到域名服务（DNS）解析域名得到IP
+    - 5.如果DNS也没有，则返回域名不存在
+
+#### 防火墙命令
+
+```sh
+# 开启/关闭防火墙，开启/关闭防火墙自启动，查看防火墙状态
+systemctl <start|stop|enable|disable|status> firewalld
+
+# 查看所有开放的端口，观察ports关键字列出的端口，默认是空的
+firewall-cmd --list-all
+
+# 查看某个端口是否开放
+firewall-cmd --query-port=端口/协议
+
+# 打开/关闭端口，需要重新加载防火墙才会生效
+firewall-cmd --permanent --zone=public --add-port=端口/协议
+firewall-cmd --permanent --zone=public --remove-port=端口/协议
+
+# 重新加载防火墙
+firewall-cmd --reload
+```
+
+## 进程
+
+在Linux中，每个执行的程序都称为一个进程，系统为每个进程都分配一个进程号（pid）
+
+- 每个进程都可能以两种方式存在：前台和后台
+    - 前台进程：用户可以在屏幕上进行操作的进程
+    - 后台进程：用户无法在屏幕上看到，但实际上在执行的进程
+    - 一般的系统服务都是以后台进程的方式存在，而且开机后常驻系统中，直到关机才结束
+
+### ps命令查看进程信息
+
+查看目前系统中有哪些进程正在执行，以及它们的状态
+
+- `ps -aux`显示的信息字段
+
+|字段|描述|
+|:-|:-|
+|USER|执行进程的用户|
+|PID|进程ID|
+|%CPU|进程占用CPU的百分比|
+|%MEM|进程占用物理内存的百分比|
+|VSZ|进程占用虚拟内存的大小（kb）|
+|RSS|进程占用物理内存的大小（kb）|
+|TTY|终端名称|
+|STAT|进程状态，S：睡眠，s：该进程是会话的先导进程，N：进程拥有比普通优先级更低的优先级，R：正在运行，D：短期等待，Z：僵死（可能进程死掉了但是内存没有释放，需要定时清除），T：被跟踪或者被停止|
+|START|进程的启动时间|
+|TIME|进程占用的CPU时间|
+|COMMAND|执行此进程所用的命令，如果过长会截断显示，进程名称也是看这个字段|
+
+- `ps -ef`显示的信息字段，只展示上面表格没出现过的
+
+|字段|描述|
+|:-|:-|
+|PPID|父进程ID|
+|C|CPU用于计算执行优先级的因子，数值越大，表示进程是CPU密集型运算，执行优先级会降低；数值越小，表示进程是I/O密集型运算，执行优先级会提高|
+|STIME|进程的启动时间|
+
+```sh
+# -a：显示当前终端的所有进程信息
+# -u：以用户的格式显示进程信息
+# -x：显示后台进程运行的参数
+# -e：显示所有进程
+# -f：全格式，包括命令行
+ps [-aux]
+
+# 以全格式显示当前所有的进程
+ps -ef
+
+# 查看进程树
+# -p：显示进程id
+# -u：显示进程所属用户
+pstree [选项]
+
+# 查看应用有没有启动
+ps -ef|grep 应用名
+
+# 查看打开的终端
+ps -aux | grep bash
+
+# 查看远程登录服务进程，可以看到谁登录并且通过进程号终止进程进而强制用户下线
+# 要是终止了sshd服务，可以通过"sudo systemctl start sshd"重启sshd服务
+ps -aux | grep sshd
+```
+
+### 终止进程
+
+```sh
+# 通过进程id终止进程
+# -9：强制进程立即停止
+kill [选项] 进程id
+
+# 通过进程名称终止进程，这个进程的所有子进程也会被终止
+# 支持通配符，这在系统因负载过大而变得很慢时很有用
+killall 进程名称
+```
+
+### 应用/端口命令
+
+```sh
+# 查看应用占用的端口
+netstat -tunlp|grep 应用名
+
+# 查看端口有没有被某个进程占用
+lsof -i:6379
+```
+
+## 服务
+
+服务（service）本质就是在后台运行的进程，又称为守护进程，通常会监听某个的端口，等待其它程序的请求，如mysqld、sshd、防火墙等
+
+### 服务管理
+
+```sh
+# 在CentOS 7.0后很多服务不再使用service，而是用systemctl
+# Arch Linux默认没有安装这个工具
+# 启动/停止/重启/重新加载服务/查看服务状态
+service 服务名 [start|stop|restart|reload|status]
+
+# service指令管理的服务在/etc/init.d可以看到
+ls -l /etc/init.d
+
+# 查看所有服务
+# Arch Linux没有这个命令工具
+setup
+```
+
+### 服务的运行级别
+
+- Linux有7种运行级别（runlevel）：常用的级别是3和5
+    - 0: 系统停机状态，系统默认运行级别不能设置为0,否则不能正常启动
+    - 1: 单用户工作状态，root权限，用于系统维护，禁止远程登录
+    - 2: 多用户状态（没有NFS），不支持网络
+    - 3: 完全的多用户状态（有NFS），登录后进入控制台命令行模式
+    - 4: 系统未使用，保留
+    - 5: X11控制台，登录后进入图形GUI模式
+    - 6: 系统正常关闭并重启，默认运行级别不能设置为6,否则不能正常启动
+
+- 开机流程：开机->BIOS->/boot->systemd进程->运行级别->启动运行级别对应的服务
+
+```sh
+# CentOS 7.0后
+# multi-user.target表示运行级别3
+# graphical.target表示运行级别5
+
+# 查看系统默认的运行级别
+sudo systemctl get-default
+
+# 设置系统默认的运行级别
+sudo systemctl set-default graphical.target
+```
+
+#### chkconfig命令
+
+设置服务在各个运行级别下开启/关闭自启动，比如设置某个服务在运行级别3的时候自启动，在运行级别五的时候关闭自启动
+
+Arch Linux没有这个命令工具
+
+```sh
+# chkconfig指令管理的服务在/etc/init.d可以看到
+ls -l /etc/init.d
+
+# 查看服务
+chkconfig --list
+chkconfig 服务名 --list
+
+# 设置后重启生效
+chkconfig --level 5 服务名 [on|off]
+```
+
+### systemctl命令
+
+```sh
+# 查看systemctl指令管理的服务
+ls -l /usr/lib/systemd/system [| grep 服务名关键字]
+
+# 注意：当服务名是xxx.service时，指定服务名时可以带或者不带.service
+# 启动/停止/重启/重新加载服务/查看服务状态
+systemctl <start|stop|restart|reload|status> 服务名
+
+# 开启/关闭自启动
+systemctl <enable|disable> 服务名
+
+# 列出所有/符合条件的服务的开机自启动状态
+systemctl list-unit-files [| grep 服务名关键字]
+
+# 查看某个服务是否开启了自启动
+systemctl is-enabled 服务名
 ```
 
 ## vi/vim编辑器
@@ -1669,7 +1944,7 @@ vim /etc/hostname
 pacman -S networkmanager
 
 # 设置网络管理器开机启动
-systemctl enable NetworkManager.service
+systemctl enable NetworkManager
 ```
 
 ##### Initramfs（了解）
@@ -2091,6 +2366,10 @@ sudo pacman -S firefox
 # 启动火狐浏览器
 # 进入浏览器设置，搜索font，将字体设置为"Noto Sans CJK SC"（可选）
 firefox
+
+# 解决下载莫名其妙自动暂停，点击恢复下载，立马下载失败的问题
+# 地址栏输入about:config
+# 搜索browser.safebrowsing.downloads.enabled，然后设置为false，立即生效
 ```
 
 ##### 安装Watt Tookit
@@ -2817,7 +3096,7 @@ p
 w
 ```
 
-- 创建（格式化）/挂载/卸载文件系统（分区）
+- 创建（格式化）文件系统（分区）
 
 ```sh
 # 列出设备和分区信息
@@ -2828,14 +3107,22 @@ fdisk -l
 mkfs.ext4 /dev/sda1
 mkfs.exfat /dev/sda1
 mkfs.fat -F 32 /dev/sda1
+```
 
+- 挂载/卸载文件系统（分区）
+
+```sh
 # 挂载一个文件系统，以分区/dev/sda1，挂载点/mnt/data为例
-mount /dev/sda1 /mnt/data
+# 这种挂载方式重启后挂载会失效，要重新挂载
+# 想要永久挂载需要修改/etc/fstab，修改完后执行"mount -a"挂载立即生效
+# --mkdir：当还没创建/mnt/data目录时，自动创建该目录
+mount --mkdir /dev/sda1 /mnt/data
 
 # 卸载一个文件系统，以分区/dev/sda1，挂载点/mnt/data为例
+# 方法1：通过指定分区名称卸载
 umount /dev/sda1
 
-# 也可以是
+# 方法2：通过指定挂载点卸载
 umount /mnt/data
 
 # 列出所有已挂载的文件系统，可以加上分区名进行筛选，不然内容太多了
