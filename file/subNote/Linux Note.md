@@ -33,7 +33,7 @@ Linux 使用一种称为目录树的层次结构来组织文件和目录
 |8|/etc|所有的系统管理所需要的配置文件和目录，比如mysql的my.conf|
 |9|/usr|用户的很多应用程序和文件都放在这个目录下，类似Windows的program files目录|
 |10|/usr/local|也是安装软件所安装的目录，一般是通过编译源码方式安装的程序，存放的是可执行程序|
-|11|/opt|给主机额外安装软件存放的目录，如mysql、jdk等的安装文件|
+|11|/opt|optional，系统之外的、可选安装的第三方软件放在这里，如vscode解压后得到的整个文件夹|
 |12|/tmp|用于存放各种临时文件，是公用的临时文件存储点|
 |13|/lib,lib64|存放着和系统运行相关的库文件，类似Windows的dll文件，几乎所有的应用程序都需要用到这些共享库|
 |14|/boot|存放用于系统引导时使用的各种文件|
@@ -116,6 +116,16 @@ make uninstall
 ```sh
 rm -rf 安装目标路径
 ```
+
+## 命令
+
+- 命令选项的参数写法
+
+|选项类型|写法|
+|:-|:-|
+|短选项`-x`|如果是必选参数，可以写成`-x参数`或`-x 参数`，标准写法是后者；如果是可选参数，必须写成`-x参数`|
+|短选项组合`-xyz`|`-xyz 参数`，这个参数只会绑定到组合里的最右边的选项，只适用`-z`是必选参数的情况，建议带参数还是不要用组合写法了|
+|长选项`--x`|如果是必选参数，可以写成`--x 参数`或`--x=参数`；如果是可选参数，必须写成`--x=参数`|
 
 ## Linux常用命令
 
@@ -649,7 +659,7 @@ cat /var/log/messages | grep nginx
 |-c|产生.tar打包文件|
 |-v|显示详细信息|
 |-f|指定压缩后的文件名|
-|-z|打包同时压缩|
+|-z|tar只负责打包/解包，不负责压缩/解压，把数据推给其它压缩/解压程序处理|
 |-x|解包.tar文件|
 
 ```sh
@@ -926,8 +936,19 @@ du -h 目录
 - `etc/profile.d`被`/etc/profile`加载
 
 ```sh
-# 输出环境变量
-echo $PATH
+# 设置环境变量
+# 实际上配置文件也是一个脚本文件
+# 设置环境变量就是用export语句，将shell变量输出为环境变量
+export 变量名=变量值
+
+# 让修改后的配置信息立即生效
+source /path/to/config_file
+
+# 查看环境变量的值
+echo "$PATH"
+
+# 查看所有的环境变量
+env
 ```
 
 ## 网络
@@ -983,7 +1004,7 @@ vim /etc/hosts
     - 4.如果没有，则到域名服务（DNS）解析域名得到IP
     - 5.如果DNS也没有，则返回域名不存在
 
-#### 防火墙命令
+### 防火墙命令
 
 ```sh
 # 开启/关闭防火墙，开启/关闭防火墙自启动，查看防火墙状态
@@ -1001,6 +1022,31 @@ firewall-cmd --permanent --zone=public --remove-port=端口/协议
 
 # 重新加载防火墙
 firewall-cmd --reload
+```
+
+### 监控网络状态
+
+#### netstat
+
+netstat已经过时，推荐使用ss命令（arch的iproute2包）
+
+```sh
+# 查看系统网络状况
+# -an：按一定顺序排列输出
+# -p：显示那个进程正在调用
+netstat [选项]
+
+# 可以查看端口使用的协议
+netstat -anp
+
+# 查看应用占用的端口
+netstat -tunlp|grep 应用名
+
+# 查看端口有没有被某个进程占用
+lsof -i:6379
+
+# 检测两个主机间的网络连接是否联通
+ping [域名|IP]
 ```
 
 ## 进程
@@ -1067,6 +1113,62 @@ ps -aux | grep bash
 ps -aux | grep sshd
 ```
 
+### top动态更新显示正在执行的进程
+
+```sh
+# -d 秒数：指定每隔几秒更新，默认3秒
+# -i：不显示闲置或者僵死进程
+# -p：指定进程id
+top [选项]
+
+# 在top实时监控的终端界面，可以按下一些按键进行交互
+# P：按CPU使用率排序，默认
+# M：按内存使用率排序
+# N：按进程ID排序
+# 输入u然后输入用户名然后回车，可以监视特定用户
+# 输入k然后输入进程id然后回车，然后输入一个信号量（数字9）回车，可以终止该进程
+# q或"Ctrl+c"：退出top
+```
+
+- top显示的内容
+
+```sh
+# 13:14:28表示当前时间
+# 2:08表示系统运行时间
+# 1 user表示系统用户数量
+# load average: 1.11, 0.51, 0.52表示负载均衡，这3个值加起来除以3,如果在0.7以上，表示系统负载较大
+top - 13:14:28 up  2:08,  1 user,  load average: 1.11, 0.51, 0.52
+
+# 任务信息
+# zombie：僵尸进程，已经死掉了但是内存没释放，需要定时清除僵尸进程
+Tasks: 305 total, 1 running, 304 sleep, 0 d-sleep, 0 stopped, 0 zombie
+
+# CPU占用百分比
+# us表示用户占用的百分比
+# sy表示系统占用的百分比
+# id表示空闲的百分比
+# wa表示CPU等待I/O的百分比
+# hi表示CPU用于处理硬件中断的百分比
+# si表示CPU用于处理软件中断的百分比
+# st表示CPU被偷走用于运行虚拟机的百分比
+%Cpu(s):  8.0 us,  6.7 sy,  0.0 ni, 82.7 id,  0.0 wa,  1.3 hi,  1.3 si,  0.0 st 
+
+# 内存占用情况
+MiB Mem :  32021.4 total,  21731.5 free,   4856.2 used,   5430.5 buff/cache     
+
+# swap占用情况
+# avail Mem表示系统在不触发 swap 的情况下，应用程序仍然可以立即使用的内存估算值，即上面的物理内存free大小
+MiB Swap:      0.0 total,      0.0 free,      0.0 used.  27165.1 avail Mem
+
+# PR：进程优先级（数值越小优先级越高）
+# NI：Nice 值（影响 PR，范围 -20～19）
+# VIRT：进程使用的虚拟内存总量（含代码、数据、共享库、swap 等）
+# RES：Resident Memory，实际占用的物理内存（不含 swap）
+# SHR：共享内存大小（共享库、共享页等）
+# S：进程状态
+PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND 
+```
+
 ### 终止进程
 
 ```sh
@@ -1077,16 +1179,6 @@ kill [选项] 进程id
 # 通过进程名称终止进程，这个进程的所有子进程也会被终止
 # 支持通配符，这在系统因负载过大而变得很慢时很有用
 killall 进程名称
-```
-
-### 应用/端口命令
-
-```sh
-# 查看应用占用的端口
-netstat -tunlp|grep 应用名
-
-# 查看端口有没有被某个进程占用
-lsof -i:6379
 ```
 
 ## 服务
@@ -1208,9 +1300,6 @@ Shell为用户提供了一种命令行的接口，接收用户的键盘输入，
 # 查看当前用户Shell类型
 echo $SHELL
 
-# 查看所有的环境变量
-env
-
 # 查看帮助或保留关键字
 help
 ```
@@ -1233,7 +1322,7 @@ echo "Hello World!"
 - 赋予脚本文件执行权限
 
 ```sh
-chmod u+x file.sh
+chmod u+x /path/to/file.sh
 ```
 
 - 执行脚本
@@ -1244,26 +1333,94 @@ chmod u+x file.sh
 # 但是当前目录"."默认不在PATH中（出于安全考虑），所以直接输入"file.sh"时，shell找不到它
 # 而"./file.sh"则是明确告诉了shell去指定的目录找到这个文件并执行它
 /path/to/file.sh
+
+# 以后台的方式运行
+/path/to/file.sh &
+
+# 脚本没被赋予执行权限的执行方式
+sh /path/to/file.sh
 ```
 
 ### Shell语法
 
-- "#"表示注释
-
-- 变量
+#### 注释
 
 ```sh
-# 定义和使用局部变量
-# 赋值语句=左右不能有空格
-# 变量作为命令参数一致加双引号
-hello="Hello World!"
-echo "$hello"
+# 单行注释
+# 注释内容
 
-# 使用环境变量
-echo "$PATH"
+# 多行注释
+:<<!
+注释内容
+!
 ```
 
-- 字符串
+#### Shell变量
+
+Shell变量分为系统变量（所有环境变量都是系统变量）和用户自定义变量
+
+- 用户自定义变量
+
+```sh
+# 定义和使用用户自定义变量
+# 变量名不能以数字开头，规范为大写
+# 赋值语句=左右不能有空格
+变量名=变量值
+
+# 使用变量，为了规范，变量作为命令参数时一致加双引号
+echo "$变量名"
+
+# 撤销（销毁）变量
+unset 变量名
+
+# 定义只读变量（不能unset）
+readonly 变量名=变量值
+
+# 将命令的结果赋给变量的两种写法
+# $(具体命令)：把命令的输出作为字符串返回
+变量名=`具体命令`
+变量名=$(具体命令)
+
+# 将算术运算的结果赋给变量
+# $((运算表达式))：执行算术运算并返回结果
+变量名=$((运算表达式))
+```
+
+- 系统变量
+
+```sh
+# 显示当前shell中所有变量
+set
+```
+
+#### 位置参数变量
+
+|语法|描述|
+|:-|:-|
+|`$n`或`${n}`|当n=0-9时，用`$n`，`$0`表示命令本身，`$1-$9`表示第1-第9个参数;当n>=10,用`${n}`|
+|`$*`|表示命令行中的所有参数，并且把所有的参数看成一个整体|
+|`$@`|表示命令行中的所有参数，但是把每个参数区分对待|
+|`$#`|表示命令行中所有参数的总个数|
+
+```sh
+# 当执行下面的脚本时，如果希望获取到命令行的参数信息，就可以用到位置参数变量了
+sh /path/to/file.sh p1 p2 pn
+
+# 比如想在/path/to/file.sh中输出第一个参数的值可以这样写
+echo "$1"
+```
+
+#### 预定义变量
+
+预定义变量就是shell设计者事先已经定义好的变量，可以直接在shell脚本中使用
+
+|语法|描述|
+|:-|:-|
+|`$$`|表示当前进程的进程id|
+|`$!`|表示后台运行的最后一个进程的进程id|
+|`$?`|表示最后一次执行的命令的返回值，如果为0,说明上一个命令正确执行；如果为非0, 说明上一个命令执行不正常|
+
+#### 字符串
 
 ```sh
 # 可以用单引号或双引号定义字符串
@@ -1286,7 +1443,7 @@ expr length "$name"
 echo ${name:0:2}
 ```
 
-- 数组
+#### 数组
 
 ```sh
 # 只支持一维数组，不限定数组大小
@@ -1312,12 +1469,24 @@ for item in ${array[@]}; do
 done
 ```
 
+#### 运算符
+
 - 算术运算符：`+ - * / %`
 
 ```sh
-# 使用expr命令时，表达式中的运算符左右必须包含空格
+# 写法1，现代bash的标准算术扩展，功能强、语法安全，推荐
+# 表达式左右不强制要求有空格
+$((运算表达式))
+
+# 写法2，旧语法
+$[运算表达式]
+
+# 写法3,
+# 注意这种写法运算表达式中的运算符左右必须包含空格
 # 如果不包含空格，将会输出表达式本身
 # 对于某些运算符，还需要用\进行转义，不然会报错
+expr 运算表达式
+
 expr 1 + 2
 expr 1 \* 2
 expr 1 / 2
@@ -1326,15 +1495,14 @@ expr 1 / 2
 echo `expr 1 + 2`
 ```
 
-- 整数比较运算符（不能单独使用）：`-eq -ne -lt -gt -le -ge`
+#### 条件判断
 
-- 字符串比较运算符（不能单独使用）：`== != -z -n str`，
+- 字符串比较运算符（不能单独使用）：`= == != -z -n str`，
     - `-z`：字符串长度为0返回true
     - `-n`：字符串长度不为0返回true
     - `str`：字符串不为空返回true
-
+- 整数比较运算符（不能单独使用）：`-eq -ne -lt -gt -le -ge`
 - 逻辑运算符（不能单独使用）：`&& ||`
-
 - 布尔运算符（不能单独使用）：`! -o -a`，非、或、与
 
 - 文件相关运算符
@@ -1342,10 +1510,50 @@ echo `expr 1 + 2`
 ![文件相关运算符](/images/文件相关运算符.png)
 
 ```sh
+# 写法1，推荐
+# bash专用的增强条件表达式，一般用于字符串/文件判断
+# 注意条件表达式左右要有空格
+[[ 条件表达式 ]]
+
+# 写法2，功能弱、容易踩坑
+# 注意条件表达式左右要有空格
+# [  ]返回false，条件表达式非空就返回true
+[ 条件表达式 ]
+
+# 字符串判断
+if [[ "a" = "a" ]]; then
+    echo "a equals a"
+else
+    echo "a does not equal a"
+fi
+
+# 整数判断1
 if [[ 1 -lt 2 ]]; then
     echo "1 < 2"
 fi
+
+# 整数判断2
+# 内部变量需要"$"
+a=1
+b=2
+if [[ $a -lt $b ]]; then
+    echo "$a < $b"
+fi
+
+# 逻辑运算
+if [[ 3 -eq 3 ]] && [[ 5 -lt 10 ]]; then
+  echo "all true"
+fi
+
+# 判断文件是否存在
+if [[ -f /home/handle/Downloads/xxx.png ]]; then
+    echo "File exists."
+else
+    echo "File does not exist."
+fi
 ```
+
+#### 流程控制
 
 - `if`语法
 
@@ -1395,38 +1603,6 @@ while ((i<3)); do
     ((i++))
 done
 ```
-
-- `[[]]`（Bash专用的增强条件表达式）语法：字符串/文件判断
-
-```sh
-# 注意条件表达式左右要有空格
-[[ 条件表达式 ]]
-
-# 内部变量需要"$"
-a=1
-b=2
-if [[ $a -lt $b ]]; then
-    echo "$a < $b"
-fi
-```
-
-- `(( ))`（算术表达式）语法：数值判断，如整数运算、数值比较、递增递减、返回值判断
-
-```sh
-# 表达式左右不强制要求有空格
-(( 表达式 ))
-
-# 内部变量不需要"$"
-a=1
-b=2
-if ((a<b)); then
-    echo "$a < $b"
-fi
-```
-
-- `$(...)`：把命令的输出作为字符串返回
-
-- `$(( ))`：执行算术运算并返回结果
 
 ### 函数
 
@@ -1494,20 +1670,56 @@ echo "$result"
 
 - 生产环境还需设置开启kdump
 
-### yum工具
+### RPM包管理器
+
+RPM：RedHat Package Manager，红帽软件包管理工具
+
+RPM它生成具有.rpm扩展名的文件，类似Windows的setup.exe
+
+RPM的理念是通用的，Linux的很多分发版都采用了它
+
+```sh
+# 安装rpm包
+# -i：安装
+# -v：verbose（提示）
+# -h：hash（进度条）
+rpm -ivh /path/to/file.rpm
+
+# 查询已安装的rpm包
+rpm -qa
+
+# 查询软件包是否已安装
+rpm -q 包名
+
+# 查询软件包信息
+rpm -qi 包名
+
+# 查询软件包中的文件
+rpm -ql 包名
+
+# 查询文件所属的软件包
+rpm -qf 文件名
+
+# 卸载rpm包（erase）
+rpm -e 包名
+```
+
+### yum包管理器
+
+yum基于RPM包管理，能够从指定的服务器自动下载rpm包并安装，并且自动安装依赖包
 
 ```sh
 # 搜索软件
-yum search 软件名
+yum search 包名
 
 # 安装软件
-yum install 软件名
+yum install 包名
 
 # 卸载软件
-yum remove 软件名
+yum remove 包名
 
 # 升级软件
-yum update 软件名
+yum update 包名
 
 # 升级操作系统所有软件及内核，更新所有已安装包到最新版本，但会移除已废弃或替代的依赖包，可能影响系统稳定性
 yum upgrade 
@@ -1544,7 +1756,7 @@ lsb_release -a
 sudo pacman -Syu
 
 # 从远程仓库拉取软件安装
-sudo pacman -S 软件名
+sudo pacman -S 包名
 
 # 安装本地.pkg.tar.zst安装包或.pacman安装包
 sudo pacman -U /path/to/pkg.tar.zst安装包或.pacman安装包
@@ -1556,13 +1768,22 @@ sudo pacman -U /path/to/pkg.tar.zst安装包或.pacman安装包
 sudo pacman -Rns package_name
 
 # 搜索远程仓库的某个软件
-pacman -Ss 软件关键字
+sudo pacman -Ss 软件关键字
 
 # 搜索已安装的某个软件
-pacman -Qs 软件关键字
+sudo pacman -Qs 软件关键字
 
 # 查看已安装的所有软件
-pacman -Q
+sudo pacman -Q
+
+# 列出该包安装的所有文件及其路径
+sudo pacman -Q 包名
+
+# 列出未安装包的文件列表
+sudo pacman -Ql -p 包名.pkg.tar.zst
+
+# 查询文件属于哪个软件包
+sudo pacman -Qo 文件名
 
 # 列出包组的所有应用
 sudo pacman -Sg kde-applications
@@ -1572,6 +1793,12 @@ sudo pacman -S kde-applications
 
 # 查看包组中还没安装的软件
 sudo pacman -Sg plasma | grep -v " $(sudo pacman -Qg)"
+
+# pactree命令工具包，根据需要安装
+sudo pacman -S pacman-contrib
+
+# 显示包的依赖树，只显示直接依赖
+pactree -d1 pinta
 ```
 
 ### .AppImage软件包
@@ -1927,6 +2154,7 @@ locale-gen
 # 创建并编辑/etc/locale.conf
 # 如果想显示英文就输入LANG=en_US.UTF-8并保存
 # 如果想显示中文就输入LANG=zh_CN.UTF-8并保存
+# 只要在/etc/locale.conf的环境变量使用到某个locale，就必须先用locale-gen生成，否则不会生效
 vim /etc/locale.conf
 
 # 创建并编辑/etc/vconsole.conf
@@ -2118,7 +2346,9 @@ sudo pacman -S plasma-nm plasma-pa plasma-systemmonitor kscreen
 sudo pacman -S konsole dolphin 
 ```
 
-##### 安装SDDM（图形登录管理器）
+##### 安装SDDM（图形登录和会话管理器）
+
+SDDM：Simple Desktop Display Manager
 
 完整的plasma只包含了sddm-kcm（sddm的kde桌面配置工具），还需要自行安装SDDM
 
@@ -2132,6 +2362,16 @@ sudo pacman -S sddm-kcm
 
 # 启用SDDM开机启动
 sudo systemctl enable sddm
+```
+
+- 设置锁屏界面显示的时间为24小时制
+
+```sh
+# 查看C.UTF-8是不死已经内置有了，如果没有需要先生成
+locale -a | grep C
+
+# 添加：LC_TIME=C.UTF-8，然后重启
+vim /etc/locale.conf
 ```
 
 ##### 创建非root用户
@@ -2270,7 +2510,7 @@ yay (Yet Another Yogurt)是AUR助手之一，Yogurt：是一个早期的AUR助�
 
 - 1.下载官方编译版本.tar.gz,解压
 
-- 2.`.bash_profile`文件中设置环境变量
+- 2.`~/.bashrc`文件中设置环境变量
 
 ```sh
 export YAY_HOME=/home/handle/Applications/yay_x86_64
@@ -2612,6 +2852,7 @@ sudo pacman -S ark
 
 # ark不支持7z和zip解压，还需要安装7zip才能用ark解压
 # 首次安装无需配置ark
+# 对于右键菜单ark不支持的格式，需要7zip命令进行压缩/解压
 sudo pacman -S 7zip
 
 # ark不支持rar解压，还需要安装unrar才能用ark解压

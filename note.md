@@ -14040,10 +14040,24 @@ docker run -p 5050:80 \
 
 ```sh
 # 查看是否安装了mysql相关的组件
-rpm -qa | grep mariadbMySQL
+rpm -qa | grep mariadb
 
 # 卸载mysql相关组件
+# --nodeps：就算被其它包依赖了也强行卸载
 rpm -e --nodeps mariadb-libs
+
+# 下载mysql-xxx.rpm-bundle.tar,然后解压
+# 依次安装以下的rpm包
+rpm -ivh mysql-community-common-xxx.rpm
+rpm -ivh mysql-community-libs-xxx.rpm
+rpm -ivh mysql-community-client-xxx.rpm
+rpm -ivh mysql-community-server-xxx.rpm
+
+# 启动mysql
+sudo systemctl start mysqld
+
+# 查看mysql初始账号密码
+grep "password" /var/log/mysqld.log
 ```
 
 #### Docker安装MySQL
@@ -14065,6 +14079,9 @@ mysql -u root -p
 
 -- 指定ip和端口号登录
 mysql -u root -p -h 127.0.0.1 -P 3306
+
+-- 修改密码
+set password = Password('你的密码');
 
 -- 远程访问数据库
 -- 修改host字段的值为需要远程连接数据库的主机ip地址或者直接修改成%
