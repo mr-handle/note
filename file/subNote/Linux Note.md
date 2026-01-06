@@ -742,7 +742,10 @@ find 指定目录 可选选项
 
 # 前缀：+、-，表示大于、小于，不加前缀表示等于
 # 单位：k、M、G
-fine /home -size +10M
+find /home -size +10M
+
+# 删除指定目录下10天前的所有tar.gz文件
+find /path/to/directory -atime +10 -name "*.tar.gz" -exec rm -rf {} \;
 ```
 
 #### locate
@@ -1408,6 +1411,17 @@ sh /path/to/file.sh p1 p2 pn
 
 # 比如想在/path/to/file.sh中输出第一个参数的值可以这样写
 echo "$1"
+
+# 所有参数作为整体在一行中全部输出
+# 但是如果不加引号，则跟下面的例子一样
+for item in "$*"; do
+  echo "$item"
+done
+
+# 有多少个参数输出多少行
+for item in "$@"; do
+  echo "$item"
+done
 ```
 
 #### 预定义变量
@@ -1551,31 +1565,63 @@ if [[ -f /home/handle/Downloads/xxx.png ]]; then
 else
     echo "File does not exist."
 fi
+
+# 如果不用if语句可以这样写
+dir="/home/handle/mydir"
+[[ ! -d "$dir" ]] && echo "$dir does not exist"
 ```
 
 #### 流程控制
 
-- `if`语法
+- `if`语句
 
 ```sh
-if 条件1; then
+# 注意条件表达式左右要有空格
+if [[ 条件表达式1 ]]; then
     命令1
-elif 条件2; then
+elif [[ 条件表达式2 ]]; then
     命令2
 else
     命令3
 fi
 ```
 
-- for循环语法
+- case语句
 
 ```sh
-# 遍历数组
-array=(1 2 3)
-for item in ${array[@]}; do
-    echo "$item"
-done
+# 笔者试过了变量值是整数或者字符串时不加双引号也可以，但是还是按规范来吧
+case $变量名 in
+"变量值1")
+    # to do
+    ;;
+"变量值2")
+    # to do
+    ;;
+"变量值n")
+    # to do
+    ;;
+*)
+    # default to do
+    ;;
+esac
 
+# 当执行脚本文件的命令行参数是1时，输出：today...
+case $1 in
+"1")
+    echo "today"
+    ;;
+"2")
+    echo "tomorrow"
+    ;;
+*)
+    echo "other day"
+    ;;
+esac
+```
+
+- for语句
+
+```sh
 # 遍历现成的一组值1
 for item in 1 2 3; do
     echo "$item"
@@ -1587,14 +1633,27 @@ for item in {1..3}; do
     echo "$item"
 done
 
-# 数字循环，for的(())中引用变量不需要加$
+# 数字循环1，for的(())中引用变量不需要加$
 length=3
 for ((i=0; i<length; i++)); do
     echo "$i"
 done
+
+# 数字循环2，for的(())中引用变量不需要加$
+sum=0
+for ((i = 1; i <= 100; i++)); do
+  sum=$((sum + i))
+done
+echo "The sum of numbers from 1 to 100 is: $sum"
+
+# 遍历数组
+array=(1 2 3)
+for item in ${array[@]}; do
+    echo "$item"
+done
 ```
 
-- while循环
+- while语句
 
 ```sh
 i=0
@@ -1604,9 +1663,58 @@ while ((i<3)); do
 done
 ```
 
-### 函数
+#### read读取控制台输入
 
 ```sh
+# -p：提示
+# -t：读取等待时间，超时后不再等待输入
+read [选项] 读取值的变量名
+
+read -p "Enter your name: " name
+echo "Hello, $name!"
+```
+
+### 函数
+
+函数分为系统函数（可以直接使用了）和自定义函数
+
+- 系统函数
+
+```sh
+# 返回字符串最后一个/后面的部分，常用于获取文件名
+# 如果指定了后缀，则将字符串的后缀也去掉
+basename 字符串 [后缀]
+
+# 例子
+basename /home/handle/Documents/file.txt .txt
+
+# 返回字符串最后一个/签名面的部分，常用于获取文件所在目录
+dirname 字符串
+
+# 例子
+dirname /home/handle/Documents/file.txt
+```
+
+- 自定义函数
+
+```sh
+# 定义函数方法1，推荐
+函数名(){
+    # to do
+    # return 只能返回退出码（0-255）
+    [retuan int]
+}
+
+# 定义函数方法2
+function 函数名 {
+    # to do
+    # return 只能返回退出码（0-255）
+    [retuan int]
+}
+
+# 调用函数
+函数名 [参数1 参数2 ... 参数n]
+
 # 定义无参数无返回值函数1
 greet(){
     echo "Hello World!"
@@ -1629,7 +1737,7 @@ sum(){
 # 调用函数
 sum 1 2
 
-# 定义无参有返回值函数3
+# 定义有参有返回值函数3
 # return 只能返回退出码（0-255）
 # 如果想要返回字符串或数字，必须用echo，或定义全局变量然后在函数里面修改它的值（不推荐），或使用命令替换
 # 推荐使用echo+命令替换
