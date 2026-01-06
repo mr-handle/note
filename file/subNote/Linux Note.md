@@ -127,8 +127,6 @@ rm -rf 安装目标路径
 |短选项组合`-xyz`|`-xyz 参数`，这个参数只会绑定到组合里的最右边的选项，只适用`-z`是必选参数的情况，建议带参数还是不要用组合写法了|
 |长选项`--x`|如果是必选参数，可以写成`--x 参数`或`--x=参数`；如果是可选参数，必须写成`--x=参数`|
 
-## Linux常用命令
-
 ### Linux帮助命令
 
 ```sh
@@ -1031,7 +1029,7 @@ firewall-cmd --reload
 
 #### netstat
 
-netstat已经过时，推荐使用ss命令（arch的iproute2包）
+netstat（net-tools包）已经过时，推荐使用ss命令（arch的iproute2包）
 
 ```sh
 # 查看系统网络状况
@@ -1114,6 +1112,9 @@ ps -aux | grep bash
 # 查看远程登录服务进程，可以看到谁登录并且通过进程号终止进程进而强制用户下线
 # 要是终止了sshd服务，可以通过"sudo systemctl start sshd"重启sshd服务
 ps -aux | grep sshd
+
+# grep -v "grep"：不匹配自己
+ps -aux | grep sshd | grep -v "grep"
 ```
 
 ### top动态更新显示正在执行的进程
@@ -1266,6 +1267,118 @@ systemctl list-unit-files [| grep 服务名关键字]
 # 查看某个服务是否开启了自启动
 systemctl is-enabled 服务名
 ```
+
+## ssh
+
+ssh：Secure Shell，是建立在应用层和传输层上的安全协议，由IETF的网络工作小组制定
+
+ssh是目前较可靠，专为远程登录会话和其它网络服务提供安全的协议，常用于远程登录
+
+几乎所有的Unix/Linux都可以运行ssh，要使用ssh服务，就要安装相应的服务器和客户端
+
+```sh
+# 安装ssh
+# ubuntu，openssh-server实际上包含了服务器和客户端
+sudo apt-get install openssh-server
+
+# 启动sshd，作为服务器，作为客户端不需要
+sudo systemctl start sshd
+
+# 开机自启动sshd，作为服务器，作为客户端不需要
+sudo systemctl enable sshd
+
+# 连接
+# 如果访问出现错误，尝试删除~/.ssh/known_ssh
+ssh 用户名@服务器地址
+
+# 登出方法1
+exit
+
+# 登出方法2
+logout
+```
+
+## 日志
+
+日志文件是重要的系统信息文件，其中记录了许多重要的系统事件
+
+包括用户的登录信息、系统的启动信息、系统的安全信息、邮件相关信息、各种服务相关的信息等
+
+日志对于安全来说也很重要，它记录了系统每天发生的各种事情
+
+通过日志来检查错误发生的原因，或者受到攻击时攻击者留下的痕迹
+
+简而言之，日志是用来记录重大事件的工具
+
+- `/var/log`是系统日志文件的保存目录，日志文件如下表
+
+|日志文件|描述|
+|:-|:-|
+|boot.log|系统启动日志|
+|cron|与系统定时任务相关的日志|
+|cpus/|记录打印信息|
+|dmesg|系统在开机时内核自检的信息，可以使用dmesg命令查看内核自检信息|
+|btmp|错误登录日志，此文件是二进制文件，要用lastb命令查看|
+|lastlog|记录系统中所有用户最后一次登录的时间，此文件是二进制文件，要用lastlog命令查看|
+|mailog|记录邮件信息|
+|message|记录系统重要消息，如果系统出现问题，首先要检查的就是这个文件|
+|secure|记录验证和授权的信息，只要涉及账号和密码都会记录，如系统登录、ssh登录、su切换用户、sudo授权，甚至添加用户和修改用户密码都会记录在这个日志文件中|
+|wtmp|永久记录所有用户的登录、注销信息，同时记录系统的启动、重启和关机事件，此文件是二进制文件，要用last命令查看|
+|ulmp|记录当前已登录的用户的信息，这个文件会随着用户的登录和注销不断变化，只记录当前登录用户的信息，要用w、who、users等命令查看|
+
+### 日志管理服务
+
+```sh
+# CentOS 7.6, 查看系统的rsyslog服务是否已经启动
+ps -aux | grep rsyslog
+
+# CentOS 7.6, 查看rsyslog服务是否开启了自启动
+sudo systemctl list-unit-files | grep rsyslog
+```
+
+#### rsyslog服务配置文件
+
+rsyslog服务配置文件：`/etc/rsyslog.conf`，配置什么日志写到什么日志文件
+
+格式`*.*`，第一个`*`表示日志类型，第二个`*`表示日志级别
+
+- 日志类型见下表
+
+|日志类型|描述|
+|:-|:-|
+|auth|pam产生的日志|
+|authpriv|ssh、ftp等登录信息的验证信息|
+|corn|时间任务相关|
+|kern|内核|
+|lpr|打印|
+|mail|右键|
+|`mark(syslog)-rsyslog`|服务内部的信息，时间表示|
+|news|新闻组|
+|user|用户程序产生的相关信息|
+|uucp|unix to unix copy主机之间相关的通信日志|
+|`local 1-7`|自定义的日志设备|
+
+- 日志级别见下表
+
+|日志级别|描述|
+|:-|:-|
+|debug|包含调试信息，日志信息最多|
+|info|一般信息，最常用|
+|notice|最重要的普通信息|
+|warning|警告信息|
+|err|错误级别，阻止某个功能或者模块不能正常工作的信息|
+|crit|严重级别，阻止整个系统或者整个软件不能正常工作的信息|
+|alert|需要立刻修改的信息|
+|emerg|内核崩溃等重要信息|
+|none|什么都不记录|
+
+#### rsyslog服务记录的日志文件
+
+- 日志文件格式包含以下4列
+    - 产生事件的时间
+    - 产生事件服务器的主机名
+    - 产生事件的服务名或程序名
+    - 事件的具体信息
 
 ## vi/vim编辑器
 
@@ -1850,6 +1963,66 @@ yum install java-1.8.0-openjdk-devel.x86_64
 lsb_release -a
 ```
 
+### apt包管理器
+
+apt：Advanced Packaging Tool
+
+```sh
+# 更新源
+sudo apt-get update
+
+# 安装包
+# -f：修复安装
+# --reinstall：重新安装包
+sudo apt-get [-f] install 包名 [--reinstall]
+
+# 删除包
+# --purge：删除配置文件
+sudo apt-get remove 包名 [--purge]
+
+# 安装相关的编译环境
+sudo apt-get build-dep 包名
+
+# 下载该包的源代码
+sudo apt-get source 包名
+
+# 更新已经安装的包
+sudo apt-get upgrade
+
+# 升级系统
+sudo apt-get dist-upgrade
+
+# 搜索包
+sudo apt-cache search 包名
+
+# 查看包信息
+sudo apt-cache show 包名
+
+# 查看该包依赖哪些包
+sudo apt-cache depends 包名
+
+# 查看该包被哪些包依赖
+sudo apt-cache rdepends 包名
+```
+
+#### 修改apt下载源
+
+- 打开镜像站，如<https://mirrors-i.tuna.tsinghua.edu.cn/>
+
+- 搜索ubuntu，然后点击问号，根据镜像站的说明修改
+
+```sh
+# 先备份
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.bk
+
+# 修改下载源，一般是清空配置文件里面的内容然后粘贴镜像源的内容进来
+echo '' > /etc/apt/sources.list
+sudo vim /etc/apt/sources.list
+
+# 然后更新源
+sudo apt-get update
+```
+
 ## Arch Linux
 
 官网：<https://archlinux.org/>
@@ -2201,10 +2374,24 @@ pacstrap是Arch Linux安装环境提供的一个脚本，用来在目标挂载�
 
 pacstrap通常只用来安装基础系统包，安装完之后，可以用genfstab和arch-chroot进入新系统对其进行配置
 
+###### 物理机安装
+
 ```sh
 # base，linux，linux-firmware分别是基础包组，linux内核和驱动程序
 # Arch Linux 官方提供了 linux，linux-lts，linux-zen，linux-hardened内核，但是对于初学者，只推荐使用linux内核
 pacstrap -K /mnt base linux linux-firmware
+```
+
+###### 虚拟机安装
+
+```sh
+# qemu虚拟机先安装base，如果安装失败提示先执行"pacman-key --init"命令就先执行它
+pacstrap -K /mnt base
+
+# 然后安装内核包
+# linux-firmware可以不安装
+# 如果安装linux包的时候提示找不到/etc/vconsole.conf，直接创建一个就行了
+pacstrap -K /mnt linux
 ```
 
 #### 配置系统
@@ -2433,6 +2620,8 @@ sudo pacman -S plasma kde-applications
 ```sh
 # plasma-desktop，桌面壳，包含面板、菜单、任务栏等基本界面，它是最小的plasma安装
 # plasma-workspace，会话管理器、启动器、设置中心，安装plasma-desktop会将其作为依赖自动安装
+# 会提示jack2和pipeware-jack选一个安装，选前者
+# 会提示qt6-multimedia-ffmpeg和qt6-multimedia-gstreamer选一个安装，选前者
 sudo pacman -S plasma-desktop
 
 # kde-gtk-config，官方的描述是同步KDE设置到GTK应用，人话就是让GTK应用（如Firefox）在KDE（基于QT）下的外观和行为更接近QT应用
@@ -2753,7 +2942,7 @@ sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路�
 # fcitx5，主程序
 # fcitx5-gtk fcitx5-qt，UI开发工具包的输入法模块，如果装有vscode，则必须安装，否则输入法会抽风
 # fcitx5-configtool，GUI配置程序
-sudo pacman -S fcitx5-im fcitx5-rime
+sudo pacman -S fcitx5-im
 ```
 
 ###### 2.安装输入法（引擎）
@@ -3099,6 +3288,7 @@ sudo pacman -S openbsd-netcat
 # 通过libvirt管理KVM/QEMU（虚拟机）的GUI
 # virt-manager->libvirt-glib->libvirt
 # 安装了virt-manager不用单独安装libvirt
+# 新建虚拟机默认用UEFI：打开virt-manager，Edit->Preferences->New VM->x86 Firmware->设置为UEFI
 sudo pacman -S virt-manager
 
 # 设置身份验证
@@ -3109,6 +3299,24 @@ usermod -aG libvirt 用户名
 # 设置开机自启动，然后重启
 sudo systemctl enable libvirtd
 ```
+
+##### 配置共享剪切板
+
+- Arch Linux
+
+```sh
+# 在虚拟系统里面安装
+sudo pacman -S spice-vdagent
+
+# 设置开机自启动，然后重启
+sudo systemctl enable spice-vdagentd
+```
+
+##### 配置共享目录
+
+- 选中虚拟机->Edit->Virtual Machine Details
+    - Memory->勾选Enable shared memory
+    - Add Hardware->Filesystem->配置
 
 ##### KVM
 
