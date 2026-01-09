@@ -541,6 +541,8 @@ chgrp [-R] 组名 文件/目录
     - r：可读（ls查看目录内容）
     - w：可写，如创建、删除文件/（子）目录，重命名（子）目录
     - x：可进入该目录（cd）
+        - 如果对目录没有x权限，就算对该目录下的文件有读写权限也不能查看、修改
+        - 如果对目录没有x权限，就算对目录有w权限，也不能删除该目录下的文件
 
 ##### 修改文件权限
 
@@ -556,6 +558,29 @@ chmod u=rwx,g=rx,o=x 文件/目录
 
 chmod u-x,g+w+x,o+r 文件/目录
 ```
+
+##### 给文件加锁
+
+```sh
+# 加锁
+chattr +i /etc/passwd
+
+# 移动chattr到别的目录
+mv /usr/bin/chattr /path/to/target
+
+# 继续给chattr改名，这样任何人都无法执行chattr -i /etc/passwd解锁了
+# 想要解锁的时候，将文件名改回chattr并移动到原来的目录，就可以了
+mv /path/to/chattr /path/to/target
+
+# 解锁
+chattr -i /etc/passwd
+```
+
+- 除了给文件加锁外，还可以使用SUID，SGID，Sticky设置特殊权限
+
+- 还可以用chkrootkit或rootkit hunter检测rootkit脚本（rootkit是入侵者使用工具）
+
+- 还可以用Tripwire检测文件系统完整性
 
 ### echo命令
 
@@ -994,6 +1019,10 @@ vim /etc/hostname
 # 设置主机名/域名和hosts映射，
 # 编辑/etc/hosts文件，输入：10.0.2.5 你的主机名/域名
 vim /etc/hosts
+
+# 监听本机，将来自ip:22的连接数据保存到/var/log/tcpdump.log
+# ens33表示本机网卡
+tcpdump -i ens33 host ip and port 22 >> /var/log/tcpdump.log
 ```
 
 ### 主机名解析机制
@@ -1041,13 +1070,21 @@ netstat [选项]
 netstat -anp
 
 # 查看应用占用的端口
-netstat -tunlp|grep 应用名
+netstat -tunlp [| grep 应用名]
 
 # 查看端口有没有被某个进程占用
 lsof -i:6379
 
 # 检测两个主机间的网络连接是否联通
 ping [域名|IP]
+
+# 统计连接到服务器的各个ip情况，并按连接数从大到小排序并截取前两条
+# awk -F " " '{print $5}'：按空格分割，取第5段的字符串
+# cut -d ":" -f 1：按:分割，取第1段
+# uniq -c：统计个数，统计前要先排序
+# sort -nr：从大到小排序
+# head -2：截取前面两条
+netstat -an | grep ESTABLISHED | awk -F " " '{print $5}' | cut -d ":" -f 1 | sort | uniq -c | sort -nr | head -2
 ```
 
 ## 进程
@@ -1171,6 +1208,14 @@ MiB Swap:      0.0 total,      0.0 free,      0.0 used.  27165.1 avail Mem
 # SHR：共享内存大小（共享库、共享页等）
 # S：进程状态
 PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND 
+```
+
+### iotop显示进程的I/O使用信息
+
+```sh
+sudo pacman -S iotop
+
+sudo iotop
 ```
 
 ### 终止进程
@@ -1372,6 +1417,14 @@ rsyslog服务配置文件：`/etc/rsyslog.conf`，配置什么日志写到什么
 |emerg|内核崩溃等重要信息|
 |none|什么都不记录|
 
+```sh
+# 自定义日志服务
+# 增加一行：*.*                /var/log/handle.log
+# 如果没有/var/log/handle.log会自动创建，自己创建要设置读写权限
+# 然后重启，就可以看到日志了
+vim /etc/rsyslog.conf
+```
+
 #### rsyslog服务记录的日志文件
 
 - 日志文件格式包含以下4列
@@ -1379,6 +1432,79 @@ rsyslog服务配置文件：`/etc/rsyslog.conf`，配置什么日志写到什么
     - 产生事件服务器的主机名
     - 产生事件的服务名或程序名
     - 事件的具体信息
+
+### 日志轮替
+
+就是把酒的日志文件移动并改名，同时新建的空日志文件，当旧日志文件超出保存的范围后，就会进行删除
+
+- 日志轮替文件命名
+    - centos7用logrotate进行日志轮替管理，想要改变日志轮替文件名字，通过修改/etc/logrotate.conf中“ddateext”参数
+    - 如果配置文件中有“ddateext”参数，就会用日期作为日志文件后缀，例如secure-20260108, 这样日志文件名就不会重叠，也就不需要日志文件的改名，只需要指定保存日志的个数，删除多余的日志文件即可
+    - 如果配置文件中无“ddateext”参数，日志文件就需要改名了。第一次轮替时，当前的secure日志自动改名为secure.1，然后新建secure日志；第二次轮替时，secure.1自动改名为secure.2, 当前的secure日志自动改名为secure.1，然后新建secure日志；以此类推
+
+- 把自己的日志加入日志轮替
+    - 方法1：直接在/etc/logrotate.conf中写入该日志的轮替策略
+    - 方法2: 在/etc/logrotate.d中创建日志轮替文件，并写入该日志的轮替策略（推荐）
+
+```conf
+# 把/etc/logrotate.d这个目录中所有的子配置文件（也算是单独设置）读取进来
+include /etc/logrotate.d
+
+# 单独设置比全局设置的优先级更高
+# 下面的写法可以作为单独的子配置文件（如bootlog）内容或者追加在/etc/logrotate.conf中
+/var/log/wtmp {
+    # 每月堆日志文件进行一次轮替
+    monthly
+    # 建立新的日志文件，权限：0664，所有者：root，所在组：utmp
+    create 0664 root utmp
+    # 最小轮替大小，日志超过这个值才会轮替，否则就是时间到了一个月，也不进行日志转储
+    minsize 1M
+    # 仅保留一个日志备份: 即只有wtmp和wtmp.1
+    rotate 1
+}
+/var/log/btmp {
+    # 如果日志不存在，则忽略该日志的警告信息
+    missingok
+    monthly
+    # ...
+}
+```
+
+- /etc/logrotate.conf文件参数
+
+|参数|描述|
+|:-|:-|
+|daily|每天轮替|
+|weekly|每周轮替|
+|monthly|每月轮替|
+|rotate 数字|保留的日志文件个数，0表示不备份|
+|compress|日志轮替时，压缩旧日志|
+|create mode owner group|创建新日志，同时指定新日志的权限、所有者和所在组|
+|mail address|轮替时，输出内容发送到指定邮件|
+|missingok|如果日志不存在，则忽略该日志的警告信息|
+|notifempty|如果日志为空文件，则不进行日志轮替|
+|minsize|日志轮替的最小值，达到这个值，并且到了轮替时间，才会轮替|
+|size|按指定大小进行日志轮替，而不是按时间|
+|dateext|用日期作为日志轮替文件的后缀|
+|sharedscripts|在此关键字之后的脚本只执行一次|
+|prerotate/endscript|在日志轮替之前执行脚本|
+|postrotate/endscript|在日志轮替之后执行脚本|
+
+- 日志轮替原理：在/etc/cron.daily目录，有一个可执行文件logrotate，定时任务执行它来实现日志轮替
+
+### 内存日志
+
+内存日志重启会清空
+
+```sh
+# 查看内存日志
+# -n 3：查看最新3条
+# --since 19:00 --until 19:10：查看起始时间至结束时间的日志，可加秒和日期
+# -p err：查看报错日志
+# -o verbose：查看详情
+# _PID=进程id _COMM=sshd：查看包含进程id和sshd的日志，也可以用grep筛选
+journalctl | grep sshd
+```
 
 ## vi/vim编辑器
 
@@ -1630,6 +1756,8 @@ echo `expr 1 + 2`
     - `str`：字符串不为空返回true
 - 整数比较运算符（不能单独使用）：`-eq -ne -lt -gt -le -ge`
 - 逻辑运算符（不能单独使用）：`&& ||`
+    - `&&`连起来的两条命令，它们会先后执行
+    - `||`连起来的两条命令，左边的执行错了才会执行右边的
 - 布尔运算符（不能单独使用）：`! -o -a`，非、或、与
 
 - 文件相关运算符
@@ -1787,7 +1915,7 @@ read -p "Enter your name: " name
 echo "Hello, $name!"
 ```
 
-### 函数
+#### 函数
 
 函数分为系统函数（可以直接使用了）和自定义函数
 
@@ -1862,6 +1990,155 @@ sum(){
 result=$(sum 1 2)
 echo "$result"
 ```
+
+#### 综合
+
+```sh
+# test.txt文件第二列求和
+cat /path/to/test.txt | awk -F " " '{sum+=$2} END {print sum}' 
+
+# 统计/home/test目录下所有文件个数和所有文件总行数
+find /home/test -name "*.*"
+find /home/test -name "*.*" | xargs wc -l
+
+# 备份/home/handle目录到/home/test下，按备份时间生成备份包
+tar zcvf /home/test/handle-`date +%Y-%m-%d_%H%M%S`.tar.gz /home/handle
+```
+
+## 备份和恢复
+
+- 备份和恢复的两种方式
+    - 1.把需要的文件/分区用tar打包，恢复的时候解压覆盖就行
+    - 2.用dump和restore命令
+
+### dump
+
+- 红帽Linux
+
+```sh
+yum -y install dump
+yum -y install restore
+```
+
+```sh
+# dump支持分卷和增量备份
+# 通过dump命令，配合crontab，可以实现无人值守备份
+dump [-cu] [-123456789] [-f 生成的备份文件名] [-T 日期] [目录或文件系统]
+
+# 例1，将/boot分区所有内容备份到/opt/boot.bak.bz2中，备份层级为0
+dump -0uj -f /opt/boot.bak0.bz2 /boot
+
+# 例2, 备份/boot分区，备份层级为1（只备份上次使用层级0备份后发生过改变的数据）
+dump -1uj -f /opt/boot.bak1.bz2 /boot
+
+# 例3, 备份/etc目录
+dump -0j -f /opt/etc.bak.bz2 /etc
+
+# 查看备份的分区及最后一次备份的层级、日期时间
+dump -W
+ 
+# 查看备份时间文件
+cat /etc/dumpdates
+```
+
+- dump命令选项参数
+
+|选项|描述|
+|:-|:-|
+|-c|创建新的归档文件，并将由一个或多个文件参数所指定的内容写入归档文件的开头|
+|-0123456789|备份的层级，分区备份才可以用，目录/文件备份不可以（只能用层级0），0为完整备份，若指定0以上的层级，则备份至上一次备份以来修改或新增的文件，到9后，可以再次轮替（层级又从0开始）|
+|-f 文件名|指定生成的备份文件名|
+|-j|调用bzlib库压缩备份文件（bz2格式，文件更小）|
+|-T 日期|指定开始备份的日期时间|
+|-u|备份完成后，在/etc/dumpdates中记录备份的文件系统、层级、日期时间等|
+|-t|指定文件名，若该文件已经在备份文件中，则列出名称|
+|-W|显示需要备份的文件及最后一次备份的层级、时间、日期|
+|-w|与-W类似，但只显示需要备份的文件|
+
+### restore
+
+```sh
+# 恢复已备份的文件，如从dump生成的备份文件中恢复原文件
+# 模式只能选择一种
+restore [模式] [选项]
+
+# 例1
+restore -r -f /opt/etc.bak.bz2
+
+# 例2, 如果有增量备份，需要把增量备份文件按循序进行恢复
+restore -r -f /opt/boot.bak0.bz2
+restore -r -f /opt/boot.bak1.bz2
+restore -r -f /opt/boot.bak2.bz2
+restore -r -f /opt/boot.bakn.bz2
+```
+
+|模式|描述|
+|:-|:-|
+|-C|对比模式，将备份的文件与已存在的文件相互对比|
+|-i|交互模式，在进行还原操作时，依序询问用户|
+|-r|还原模式|
+|-t|查看模式，看备份文件包含哪些文件|
+
+|选项|描述|
+|:-|:-|
+|-f 备份文件|从指定的备份文件中读取备份数据，进行还原|
+
+## 系统管理工具
+
+### webmin
+
+webmin是基于web的功能强大的unix/linux系统管理工具，管理员可通过浏览器访问webmin的各种管理功能并完成相应的管理操作
+
+```sh
+# 安装，noarch表示通用版
+rpm -ivh webmin-xxx.noarch.rpm
+
+# 修改webmin的root用户密码
+/usr/libexec/webmin/changepass.pl /etc/webmin root 具体密码
+
+# 修改webmin服务的端口号（默认10000）
+# port和listen都改，改完后防火墙开放相应端口
+vim /etc/webmin/miniserv.conf
+
+# 启动/重启/停止
+/etc/webmin/start
+/etc/webmin/restart
+/etc/webmin/stop
+
+# 登录，输入root账号和你的密码
+# 首先要进行IP访问控制设置
+http://ip:port
+```
+
+### bt（宝塔）
+
+bt是提升运维效率的linux服务器管理软件（有些功能要付费）
+
+支持一键LAMP/LNMP/集群/监控/网站/FTP/数据库/Java/等多项服务器管理功能
+
+```sh
+# 安装完成控制台会打印访问的外网/内网地址和用户名/密码，可以在网页面板进行修改
+# 进入网页要手机号注册
+# 如果忘记了bt的外网/内网地址和用户名/密码，可以这样查看
+bt default
+```
+
+## 系统启动流程
+
+- 1.自检，检查硬件设备有没有故障
+- 2.如果有多块启动盘的话，需要在BIOS中选择启动磁盘
+- 3.启动MBR中的bootloader引导程序
+- 4.加载内核文件，两个关键文件如下
+    - 4.1 kernel文件：vmlinuz-xxx
+    - 4.2 initrd文件：initramfs-xxx.img
+- 5.执行所有进程的父进程：systemd
+- 6.欢迎界面
+
+### CentOS7启动流程
+
+![CentOS7启动流程](/images/CentOS7启动流程.png)
+
+![CentOS7启动流程2](/images/CentOS7启动流程2.png)
 
 ## Red Hat系列Linux
 
@@ -1953,6 +2230,21 @@ yum search java|grep jdk
 
 # 从查询结果中选择jdk安装
 yum install java-1.8.0-openjdk-devel.x86_64
+```
+
+```sh
+# 查看当前内核版本
+uname -a
+
+# 查看当前内核版本，显示可升级的内核版本
+yum info kernel -q
+
+# 升级内核，升级后重启在内核选择菜单选择新内核或旧内核
+# 新内核兼容原来安装的软件
+yum update kernel
+
+# 查看已经安装的内核
+yum list kernel -q
 ```
 
 ## Ubuntu
@@ -3266,6 +3558,8 @@ winecfg
 
 教程：<https://wiki.archlinux.org/title/QEMU>
 
+qemu还能运行virtualbox的vdi文件，但是长期来看用qemu-img转成raw或qcow2再运行性能更好
+
 ```sh
 # qemu-base：命令行版本
 # qemu-desktop：默认x86_64模拟器
@@ -3305,7 +3599,7 @@ sudo systemctl enable libvirtd
 - Arch Linux
 
 ```sh
-# 在虚拟系统里面安装
+# 在虚拟系统里面安装(archlinux)
 sudo pacman -S spice-vdagent
 
 # 设置开机自启动，然后重启
@@ -3317,6 +3611,78 @@ sudo systemctl enable spice-vdagentd
 - 选中虚拟机->Edit->Virtual Machine Details
     - Memory->勾选Enable shared memory
     - Add Hardware->Filesystem->配置
+
+##### 复制虚拟机文件
+
+- 不能使用gui的常规复制粘贴，不然它会按预定义大小来执行复制
+
+- 目前复制出来的文件启动还有问题，先不管复制的问题了，要考虑复制的话继续用virtualbox比较好
+
+```sh
+# 先安装rsync 
+yay -S rsync
+
+# -a：归档
+# -h：人类可读
+# --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小
+# --info=progress2：复制总体进度
+# 要先创建目的目录，最后源目录记得加/后缀，表示复制目录内容
+# rsync只能复制，不能整理碎片
+sudo mkdir -p /path/to/target
+sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
+
+# 这个命令会整理碎片并且将顶层文件和所有外部快照文件合并成target.qcow2一个文件
+# 如果想要保持原来的目录结构就用rsync
+# -O：目标格式，默认raw
+# -p：显示进度
+sudo qemu-img convert -O qcow2 -p /path/to/active.qcow2 /path/to/target.qcow2
+```
+
+##### 扩容
+
+raw和qcow2都支持扩容
+
+```sh
+# 如果有外部快照，需要按顺序扩容
+qemu-img resize base.qcow2 256G
+qemu-img resize snap1.qcow2 256G
+qemu-img resize snap2.qcow2 256G
+qemu-img resize active.qcow2 256G
+```
+
+##### virt-manager设置
+
+```sh
+# Edit->Preferences->勾选“Enable libguestfs VM introspection”，然后重启virt-manager
+sudo pacman -S libguestfs
+
+# 如果启动报错：failed to load Boot0002 "UEFI Misc Device" from t...: Not found
+# 按下任意键
+# 选择 EFI Internal Shell
+# 进入EFI系统分区（ESP）
+FS0:
+
+# 查看目录，能看到EFI目录
+ls
+
+# 进入EFI目录
+cd EFI
+
+# 查看目录，能看到GRUB
+ls
+
+# 进入GRUB目录
+cd GRUB
+
+# 查看目录，能看到grubx64.efi
+ls
+
+# 永久修复启动项
+bcfg boot add 0 FS0:\EFI\GRUB\grubx64.efi "GRUB"
+
+# 然后重启系统
+reset
+```
 
 ##### KVM
 
@@ -3360,8 +3726,15 @@ Libvirt 是提供了一种便捷方式来管理虚拟机和虚拟化功能的软
 # 安装它后无需自己编译，也不需要额外安装linux-headers
 sudo pacman -S virtualbox
 
-# 如果还需要虚拟机增强功能（共享剪贴板、共享文件夹等），可以安装
+# 如果还需要虚拟机增强功能（共享剪贴板、共享文件夹等）
+# 可以在虚拟机系统里面安装（archlinux）
 sudo pacman -S virtualbox-guest-utils
+
+# 然后启动服务
+sudo systemctl start vboxservice
+
+# 设置开机自启动
+sudo systemctl enable vboxservice
 ```
 
 ##### 安装win11

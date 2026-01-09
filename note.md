@@ -14829,6 +14829,38 @@ mysqldump -u root -p -P 3306 handle account employee spidata --single-transactio
 mysql -u root -p -P 3306 handle < d:/handle_backup.sql
 ```
 
+### 找回mysql的root密码
+
+```sh
+# 适用mysql5.7
+# 追加一行：skip-grant-tables
+vim /etc/my.cnf
+
+# 重启
+systemctl restart mysqld
+
+# 登录，输入空密码就行
+mysql -u root -p
+
+# 选择mysql数据库
+use mysql;
+
+# 设置新密码
+update user set authentication_string=password("具体密码") where user = 'root';
+
+# 刷新权限
+flush privileges;
+
+# 退出
+exit
+
+# 删除或注释：skip-grant-tables
+vim /etc/my.cnf
+
+# 重启
+systemctl restart mysqld
+```
+
 ### SQL Server
 
 ```sql
@@ -15778,6 +15810,16 @@ grep 'administrator' /data/powerjob/powerjob-server/logs/powerjob-server-applica
 Nginx是一个HTTP web服务器，反向代理，内容缓存，负载均衡器，TCP/UDP代理服务器和邮件代理服务器
 
 - 官网：<http://nginx.org/>
+
+|模块|功能|
+|:-|:-|
+|rewrite|实现重写功能|
+|access|来源控制|
+|ssl|安全加密|
+|ngx_http_gzip_module|网络传输压缩|
+|ngx_http_proxy_module|实现代理|
+|ngx_http_upstream_module|实现后端服务器列表定义|
+|ngx_cache_purge|实现缓存清除|
 
 ### 正向代理
 
