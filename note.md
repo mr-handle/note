@@ -12057,7 +12057,7 @@ docker的基本组成：镜像、容器、仓库
 
 ### 安装docker
 
-- Red Hat系列Linux
+#### Red Hat系列Linux安装Docker
 
 ```sh
 # 如果安装过docker，先卸载旧版本的docker
@@ -12093,6 +12093,47 @@ sudo rm -rf /var/lib/docker
 
 # 删除docker容器
 sudo rm -rf /var/lib/containerd
+```
+
+#### Ubuntu安装Docker
+
+教程：<https://docs.docker.com/engine/install/ubuntu/>
+
+- 卸载旧版本
+
+```sh
+sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc | cut -f1)
+```
+
+- 配置docker的apt仓库
+
+```sh
+# Add Docker's official GPG key:
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update
+```
+
+- 安装
+
+```sh
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 安装后一般docker会自己启动，查看命令
+sudo systemctl status docker
 ```
 
 #### 配置国内镜像源
@@ -13539,9 +13580,13 @@ systemctl enable haproxy
 - 在某一个节点上创建队列，会自动分散到各个节点上
 - 创建队列时，type选择Quorum，node选择一个节点作为主节点
 
-## elasticsearch
+## Elasticsearch
 
 - 官网：<https://www.elastic.co/cn/elasticsearch>
+
+Elastic Stack（ELK Stack）：包括Elasticsearch、Kibana、Beats和Logstash，它们能够安全可靠地获取任何来源、任何格式的数据，然后实时地对数据进行搜索、分析和可视化
+
+其中Elasticsearch是一个开源的高扩展的分布式全文搜索引擎，是整个ELK Stack的核心
 
 ### 安装elasticsearch
 
@@ -13556,7 +13601,7 @@ xpack.security.enabled: false
 
 ```sh
 # 创建elasticsearch用户，然后根据提示指定密码
-adduser elasticsearch
+useradd elasticsearch
 # 将elasticsearch的根目录权限赋给用户
 chown -R elasticsearch yourpath/elasticsearch-8.15.3
 

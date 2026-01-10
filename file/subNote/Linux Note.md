@@ -1510,6 +1510,11 @@ journalctl | grep sshd
 
 vim就是vi的增强版
 
+```sh
+# ubuntu
+sudo apt-get install vim
+```
+
 |序号|命令|描述|
 |:-|:-|:-|
 |1|`vi/vim 文件名`|打开文件|
@@ -2259,6 +2264,28 @@ lsb_release -a
 
 apt：Advanced Packaging Tool
 
+#### 修改apt下载源
+
+- 打开镜像站，如<https://mirrors-i.tuna.tsinghua.edu.cn/>
+
+- 搜索ubuntu，然后点击问号，根据镜像站的说明修改
+
+```sh
+# 查看ubuntu版本
+cat /etc/os-release
+
+# 先备份（24.04及以后版本）
+sudo cp /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources.bk
+
+# 修改下载源，一般是清空配置文件里面的内容然后粘贴镜像源的内容进来
+sudo vim /etc/apt/sources.list.d/ubuntu.sources
+
+# 然后更新源
+sudo apt-get update
+```
+
+#### apt常用命令
+
 ```sh
 # 更新源
 sudo apt-get update
@@ -2295,24 +2322,6 @@ sudo apt-cache depends 包名
 
 # 查看该包被哪些包依赖
 sudo apt-cache rdepends 包名
-```
-
-#### 修改apt下载源
-
-- 打开镜像站，如<https://mirrors-i.tuna.tsinghua.edu.cn/>
-
-- 搜索ubuntu，然后点击问号，根据镜像站的说明修改
-
-```sh
-# 先备份
-sudo cp /etc/apt/sources.list /etc/apt/sources.list.bk
-
-# 修改下载源，一般是清空配置文件里面的内容然后粘贴镜像源的内容进来
-echo '' > /etc/apt/sources.list
-sudo vim /etc/apt/sources.list
-
-# 然后更新源
-sudo apt-get update
 ```
 
 ## Arch Linux
@@ -3554,7 +3563,7 @@ wine uninstaller
 winecfg
 ```
 
-#### 安装qemu
+#### 安装qemu和virt-manager
 
 教程：<https://wiki.archlinux.org/title/QEMU>
 
@@ -3582,7 +3591,6 @@ sudo pacman -S openbsd-netcat
 # 通过libvirt管理KVM/QEMU（虚拟机）的GUI
 # virt-manager->libvirt-glib->libvirt
 # 安装了virt-manager不用单独安装libvirt
-# 新建虚拟机默认用UEFI：打开virt-manager，Edit->Preferences->New VM->x86 Firmware->设置为UEFI
 sudo pacman -S virt-manager
 
 # 设置身份验证
@@ -3592,6 +3600,20 @@ usermod -aG libvirt 用户名
 
 # 设置开机自启动，然后重启
 sudo systemctl enable libvirtd
+```
+
+##### virt-manager设置
+
+- Edit->Preferences
+    - General
+        - 勾选“Enable XML editing”
+        - 勾选“Enable libguestfs VM introspection”
+
+    - New VM->x86 Firmware->如果你新建虚拟机想要用UEFI就设置为UEFI，不设置会根据系统镜像默认
+
+```sh
+# 勾选“Enable libguestfs VM introspection”，提示安装libguestfs就照做，然后重启virt-manager
+sudo pacman -S libguestfs
 ```
 
 ##### 配置共享剪切板
@@ -3616,12 +3638,17 @@ sudo systemctl enable spice-vdagentd
 
 - 不能使用gui的常规复制粘贴，不然它会按预定义大小来执行复制
 
-- 目前复制出来的文件启动还有问题，先不管复制的问题了，要考虑复制的话继续用virtualbox比较好
+- 目前没有快照的情况下用rsync命令复制ubuntu，然后启动是没有问题的
+
+- 目前有外部快照用rsync命令复制后，新增虚拟机，快照丢失了，这种情况，要考虑复制的话继续用virtualbox比较好
+    - ubuntu复制启动没有问题，但是系统状态为创建快照那时候的系统
+    - archlinux启动引导丢失，修复后，系统状态为创建第一个快照那时候的系统
 
 ```sh
-# 先安装rsync 
-yay -S rsync
+# 如果没有先安装rsync 
+sudo pacman -S rsync
 
+# 如果有外部快照文件用rsync复制
 # -a：归档
 # -h：人类可读
 # --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小
@@ -3631,34 +3658,37 @@ yay -S rsync
 sudo mkdir -p /path/to/target
 sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
 
+# # 如果没有快照文件用rsync复制
 # 这个命令会整理碎片并且将顶层文件和所有外部快照文件合并成target.qcow2一个文件
 # 如果想要保持原来的目录结构就用rsync
 # -O：目标格式，默认raw
 # -p：显示进度
 sudo qemu-img convert -O qcow2 -p /path/to/active.qcow2 /path/to/target.qcow2
+
+# 如果有快照，还要复制快照文件
+# 然后删除所有快照文件里的<domain>...</domain>整段
+cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
+
+
+# 如果虚拟机使用了TMP，没试过先保留
+#cp -r /var/lib/libvirt/swtpm/虚拟机名称 /path/to/target
+
+# 当创建过外部快照时，复制后，修改这里恢复原来的系统状态
+# 创建新虚拟机后默认为：<source file="/path/to/yourvmName.suffix"/>
+<source file="/path/to/虚拟机名称.快照名称"/>
+
+# 导入快照
+# 需要先删除snapshot.xml里的<domain>...</domain>整段
+virsh snapshot-create 虚拟机名称 快照1.xml --redefine --current
+virsh snapshot-create 虚拟机名称 快照2.xml --redefine --current
 ```
 
-##### 扩容
-
-raw和qcow2都支持扩容
+###### 如果复制后新建虚拟机启动EFI引导失败
 
 ```sh
-# 如果有外部快照，需要按顺序扩容
-qemu-img resize base.qcow2 256G
-qemu-img resize snap1.qcow2 256G
-qemu-img resize snap2.qcow2 256G
-qemu-img resize active.qcow2 256G
-```
-
-##### virt-manager设置
-
-```sh
-# Edit->Preferences->勾选“Enable libguestfs VM introspection”，然后重启virt-manager
-sudo pacman -S libguestfs
-
 # 如果启动报错：failed to load Boot0002 "UEFI Misc Device" from t...: Not found
 # 按下任意键
-# 选择 EFI Internal Shell
+# 选择 EFI Internal Shell：新建虚拟机最后一步勾选手动配置然后安装，然后选择具体EFI才会有这个选项
 # 进入EFI系统分区（ESP）
 FS0:
 
@@ -3682,6 +3712,34 @@ bcfg boot add 0 FS0:\EFI\GRUB\grubx64.efi "GRUB"
 
 # 然后重启系统
 reset
+```
+
+##### 扩容
+
+raw和qcow2都支持扩容
+
+```sh
+# 如果有外部快照，需要按顺序扩容
+qemu-img resize base.qcow2 256G
+qemu-img resize snap1.qcow2 256G
+qemu-img resize snap2.qcow2 256G
+qemu-img resize active.qcow2 256G
+```
+
+##### Libvirt
+
+Libvirt 是提供了一种便捷方式来管理虚拟机和虚拟化功能的软件集合，例如存储和网络接口管理
+
+它包括一个长期稳定的C API、一个守护线程（libvirtd）和一个命令行工具（virsh）
+
+而我们安装的virt-manager就相当于Libvirt的GUI
+
+```sh
+# 显示虚拟机名称
+sudo virsh list --all --name
+
+# 查看快照链
+sudo qemu-img info --backing-chain 虚拟机名称.快照名称
 ```
 
 ##### KVM
@@ -3709,12 +3767,6 @@ lsmod | grep virtio
 # 如果使用virt-manager，还要到虚拟机详情里面的CPU设置那里设置host-passthrough
 cat /sys/module/kvm_intel/parameters/nested
 ```
-
-##### Libvirt
-
-Libvirt 是提供了一种便捷方式来管理虚拟机和虚拟化功能的软件集合，例如存储和网络接口管理
-
-它包括一个长期稳定的C API、一个守护线程（libvirtd）和一个命令行工具（virsh）
 
 #### 安装VirtualBox
 
