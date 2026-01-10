@@ -3665,10 +3665,17 @@ sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
 # -p：显示进度
 sudo qemu-img convert -O qcow2 -p /path/to/active.qcow2 /path/to/target.qcow2
 
-# 如果有快照，还要复制快照文件
-# 然后删除所有快照文件里的<domain>...</domain>整段
-cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
+# 必须复制原虚拟机的，然后在新建虚拟机前
+# 将其复制到/var/lib/libvirt/qemu/nvram/新虚拟机名称_VARS.fd
+# 不然新建虚拟机时，virt-manager生成的是一个错误的，导致启动引导失败（想骂人！）
+# failed to load Boot0002 "UEFI Misc Device" from t...: Not found
+sudo cp /var/lib/libvirt/qemu/nvram/虚拟机名称_VARS.fd /path/to/target
 
+# 如果有快照，还要复制快照文件
+# 然后将<domain>...</domain>里面的name和uuid改成：
+# <name>新虚拟机名称</name>和<uuid>新虚拟机uuid</uuid>
+# 然后就可以导入了，如果导入还提示必须用原来虚拟机的uuid，就删除所有快照文件里的<domain>...</domain>整段
+sudo cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
 
 # 如果虚拟机使用了TMP，没试过先保留
 #cp -r /var/lib/libvirt/swtpm/虚拟机名称 /path/to/target
@@ -3677,7 +3684,7 @@ cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
 # 创建新虚拟机后默认为：<source file="/path/to/yourvmName.suffix"/>
 <source file="/path/to/虚拟机名称.快照名称"/>
 
-# 导入快照
+# 导入快照(创建新虚拟机并且虚拟系统首次关机后)
 # 需要先删除snapshot.xml里的<domain>...</domain>整段
 virsh snapshot-create 虚拟机名称 快照1.xml --redefine --current
 virsh snapshot-create 虚拟机名称 快照2.xml --redefine --current
@@ -3685,10 +3692,14 @@ virsh snapshot-create 虚拟机名称 快照2.xml --redefine --current
 
 ###### 如果复制后新建虚拟机启动EFI引导失败
 
+新建虚拟机时，virt-manager生成一个错误的/var/lib/libvirt/qemu/nvram/新虚拟机名称_VARS.fd，导致启动引导失败
+
+这时候也可以手动修复引导
+
 ```sh
 # 如果启动报错：failed to load Boot0002 "UEFI Misc Device" from t...: Not found
 # 按下任意键
-# 选择 EFI Internal Shell：新建虚拟机最后一步勾选手动配置然后安装，然后选择具体EFI才会有这个选项
+# 选择 EFI Internal Shell：新建虚拟机最后一步勾选"Customize configuration before install"，然后在Overview->Hypervisor Details->Firmware，选择具体EFI才会有这个选项
 # 进入EFI系统分区（ESP）
 FS0:
 
@@ -3739,7 +3750,8 @@ Libvirt 是提供了一种便捷方式来管理虚拟机和虚拟化功能的软
 sudo virsh list --all --name
 
 # 查看快照链
-sudo qemu-img info --backing-chain 虚拟机名称.快照名称
+sudo qemu-img info --backing-chain 虚拟机名称.快照名称 [| grep "backing file:"
+]
 ```
 
 ##### KVM
