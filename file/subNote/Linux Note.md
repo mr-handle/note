@@ -3672,9 +3672,10 @@ sudo qemu-img convert -O qcow2 -p /path/to/active.qcow2 /path/to/target.qcow2
 sudo cp /var/lib/libvirt/qemu/nvram/虚拟机名称_VARS.fd /path/to/target
 
 # 如果有快照，还要复制快照文件
-# 然后将<domain>...</domain>里面的name和uuid改成：
-# <name>新虚拟机名称</name>和<uuid>新虚拟机uuid</uuid>
-# 然后就可以导入了，如果导入还提示必须用原来虚拟机的uuid，就删除所有快照文件里的<domain>...</domain>整段
+# 如果是ArchLinux，提示必须用新虚拟机的uuid，就将<domain>...</domain>里面的name和uuid改成：
+# <name>新虚拟机名称</name>和<uuid>新虚拟机uuid</uuid>，然后就可以导入了
+# 如果是Ubuntu，导入提示必须用原来虚拟机的uuid，就删除所有快照文件里的<domain>...</domain>整段
+# （想骂人！）
 sudo cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
 
 # 如果虚拟机使用了TMP，没试过先保留
