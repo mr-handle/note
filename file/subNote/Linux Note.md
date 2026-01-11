@@ -227,6 +227,9 @@ cat /etc/passwd
 # 修改用户所属的用户组
 usermod -g 新用户组名称 用户名
 
+# 移除用户组的某个用户
+gpasswd -d 用户名 用户组
+
 # 改变该用户登录的初始目录，该用户要有进入该目录的权限才会成功
 usermod -d 目录 用户名
 ```
@@ -1534,6 +1537,7 @@ sudo apt-get install vim
 |15|`gg`|跳到文档开始行|
 |16|`G`|跳到文档末尾行|
 |17|`/关键字`|按回车开始查找，按`n`查找下一个|
+|18|`Ctrl + Shift + V`|粘贴剪切板的内容|
 
 ## Shell
 
@@ -3746,13 +3750,150 @@ Libvirt 是提供了一种便捷方式来管理虚拟机和虚拟化功能的软
 
 而我们安装的virt-manager就相当于Libvirt的GUI
 
+使用virsh命令需要root权限
+
+###### 存储池（Storage pools）
+
+可以简单理解为存放虚拟机镜像的一个目录
+
+- 操作存储池
+
 ```sh
-# 显示虚拟机名称
-sudo virsh list --all --name
+# 创建存储池
+sudo virsh pool-define-as poolname dir
+
+# 启动存储池
+sudo virsh pool-start     poolname
+sudo virsh pool-autostart poolname
+
+# 删除存储池
+sudo virsh pool-undefine  poolname
+
+# 列出所有存储池
+sudo virsh pool-list --all
+```
+
+- 操作卷（虚拟机镜像）
+
+```sh
+# 创建指定格式和大小的卷
+sudo virsh vol-create-as poolname volumename 128GiB --format aw|bochs|raw|qcow|qcow2|vmdk
+
+# 把volumepath指向的文件内容写入volumename卷中，覆盖卷的内容
+sudo virsh vol-upload  --pool poolname volumename volumepath
+
+# 调整卷大小
+sudo virsh vol-resize  --pool poolname volumename 12GiB
+
+# 删除卷
+sudo virsh vol-delete  --pool poolname volumename
+
+# 列出存储池里面的卷
+sudo virsh vol-list poolname
+
+# 查看卷的详细信息
+sudo virsh vol-dumpxml --pool poolname volumename
+```
+
+###### 域（Domains）
+
+域即虚拟机
+
+```sh
+# 新建虚拟机
+# --vcpus=2,maxvcpus=4：虚拟机启动时使用2个vCPU，允许未来热插拔扩展到最多4个
+# --cpu host：把宿主机CPU的全部特性暴露给虚拟机，让虚拟机使用宿主机的真实CPU指令集
+# --network user：使用qemu user-mode NAT
+# --network network=mynetName,model=virtio：使用自己创建的网络，并且用virtio模型（性能最好）
+# --virt-type kvm：使用KVM加速
+sudo virt-install  \
+  --name 虚拟机名称 \
+  --memory 8192             \
+  --vcpus=2,maxvcpus=4      \
+  --cpu host                \
+  --cdrom /path/to/arch-linux_install.iso \
+  --disk pool=存储池名称,size=128,format=qcow2  \
+  --network user            \
+  --virt-type kvm
+
+# 导入已存在的卷
+sudo virt-install  \
+  --name 虚拟机名称  \
+  --memory 8192 \
+  --disk /path/to/mydisk.qcow2 \
+  --import
+
+# [只]显示虚拟机名称
+sudo virsh list --all [--name]
+```
+
+- 虚拟机操作
+
+```sh
+# 启动虚拟机
+sudo virsh start domain
+
+# 强制关机
+sudo virsh destroy  domain
+
+# 编辑虚拟机定义文件(XML)
+sudo virsh edit domain
+
+# 创建快照
+# --disk-only：只对磁盘做快照，不保存内存状态
+# --atomic：要么所有磁盘快照都成功，要么全部失败
+sudo virsh snapshot-create-as domain snapshotName --disk-only --atomic
+```
+
+###### 快照操作
+
+```sh
+# 将 domain.snapshot1的数据合并到上一层（domain.qcow2)
+# 然后就可以删除domain.snapshot1和snapshot1.xml了
+sudo virsh blockpull --domain domain --path /vms/domain.snapshot1
+
+# 列出虚拟机的所有快照
+sudo virsh snapshot-list domain
 
 # 查看快照链
 sudo qemu-img info --backing-chain 虚拟机名称.快照名称 [| grep "backing file:"
 ]
+```
+
+###### libvirt网络
+
+libvirt的NAT网络不需要像virtualbox那样设置端口映射才能访问，默认就能访问
+
+```sh
+# 列出网络
+sudo virsh -c qemu:///system net-list --all
+
+# dump网络信息，只查看
+sudo virsh -c qemu:///system net-dumpxml 网络名
+```
+
+- 给虚拟机设置静态IP
+
+```sh
+# 编辑网络（要先关停网络）
+# "virsh net-edit 网络名"默认用vi打开，这里强制使用vim
+sudo EDITOR=vim  virsh net-edit 网络名
+
+# 在dhcp块中设置静态ip
+<dhcp>
+    # ...，在<range />后面写就行了
+    <host mac="虚拟机mac" ip="你要定义的静态ip"/>
+</dhcp>
+```
+
+###### 其它操作
+
+```sh
+# 列出system模式的虚拟机
+sudo virsh --connect qemu:///system list --all
+
+# 用virt-manager通过ssh连接远程虚拟机（系统模式），打开虚拟机的图形界面
+sudo virt-manager --connect qemu+ssh://username@host/system domain
 ```
 
 ##### KVM
