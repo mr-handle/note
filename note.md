@@ -13591,6 +13591,7 @@ Elastic Stack（ELK Stack）：包括Elasticsearch、Kibana、Beats和Logstash�
 ### 安装elasticsearch
 
 - 下载tar.gz文件并解压到指定目录
+
 - 修改conf/elasticsearch.yml文件
 
 ```yaml
@@ -13602,8 +13603,9 @@ xpack.security.enabled: false
 ```sh
 # 创建elasticsearch用户，然后根据提示指定密码
 useradd elasticsearch
+
 # 将elasticsearch的根目录权限赋给用户
-chown -R elasticsearch yourpath/elasticsearch-8.15.3
+chown -R elasticsearch /path/to/elasticsearch-xxx
 
 # 切到elasticsearch用户
 su elasticsearch
@@ -13613,7 +13615,8 @@ su elasticsearch
 
 ```sh
 # 先进入elasticsearch的bin目录
-cd yourpath/elasticsearch-8.15.3/bin
+cd yourpath/elasticsearch-xxx/bin
+
 # 启动elasticsearch
 ./elasticsearch
 ```

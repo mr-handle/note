@@ -1324,10 +1324,14 @@ ssh是目前较可靠，专为远程登录会话和其它网络服务提供安�
 
 几乎所有的Unix/Linux都可以运行ssh，要使用ssh服务，就要安装相应的服务器和客户端
 
+- 安装ssh
+
 ```sh
-# 安装ssh
 # ubuntu，openssh-server实际上包含了服务器和客户端
 sudo apt-get install openssh-server
+
+# archlinux
+sudo pacman -S openssh
 
 # 启动sshd，作为服务器，作为客户端不需要
 sudo systemctl start sshd
@@ -2012,6 +2016,12 @@ find /home/test -name "*.*" | xargs wc -l
 
 # 备份/home/handle目录到/home/test下，按备份时间生成备份包
 tar zcvf /home/test/handle-`date +%Y-%m-%d_%H%M%S`.tar.gz /home/handle
+
+# 判断有效用户id是否为root
+if [[ $EUID -ne 0 ]]; then
+    echo "Please run as root"
+    exit 1
+fi
 ```
 
 ## 备份和恢复
@@ -2290,6 +2300,9 @@ sudo apt-get update
 
 #### apt常用命令
 
+- apt：交互式常用，命令可能会变化
+- apt-get/apt-cache：脚本、自动化、长期兼容性使用
+
 ```sh
 # 更新源
 sudo apt-get update
@@ -2389,13 +2402,24 @@ pactree -d1 pinta
 
 ### .AppImage软件包
 
-下载.AppImage格式的软件包时，第一次先通过终端启动
+下载.AppImage格式的软件包后，先赋予该软件包执行权限，第一次先通过终端启动
 
 如果运行异常，根据终端提示安装相应的依赖就可以了
 
 ```sh
 # 比如有些AppImage软件包是需要fuse2的
 sudo pacman -S fuse2
+```
+
+- 复制软件包里面的图标文件
+
+```sh
+# 执行这个命令后会输出一个挂载路径，如：/tmp/.mount_xxxxx
+/path/to/file.AppImage --appimage-mount
+
+# 然后新开一个终端并进入这个路径，找到图标文件然后复制到一个可以找得到的路径下
+# 最后关闭这个终端，以及在最开始的那个终端Ctrl+C，结束挂载
+cd /tmp/.mount_xxxxx
 ```
 
 ### .run软件包
@@ -2683,7 +2707,13 @@ pacstrap通常只用来安装基础系统包，安装完之后，可以用genfst
 
 ```sh
 # base，linux，linux-firmware分别是基础包组，linux内核和驱动程序
-# Arch Linux 官方提供了 linux，linux-lts，linux-zen，linux-hardened内核，但是对于初学者，只推荐使用linux内核
+# Arch Linux官方提供了linux，linux-lts，linux-zen，linux-hardened内核包，但是对于初学者，只推荐使用linux内核
+# linux：主线稳定版，更新快，更新出问题有可能回归更新，整体性能优秀
+# linux-lts：长期支持版，稳定性最好
+# linux-zen：桌面优化版，游戏表现最好，能有更丝滑的交互体验，但是游戏表现没提升多少，特别是吃显卡的游戏，总体比linux包好一丢丢
+# linux-hardened：安全强化版，安全性最高
+# 注意：如果后期要安装headers包，需要根据安装的内核包选择对应的headers包进行安装
+# 如linux包选择linux-headers，linux-lts包选择linux-lts-headers
 pacstrap -K /mnt base linux linux-firmware
 ```
 
@@ -3077,7 +3107,9 @@ sudo pacman -S mesa libva-intel-driver vulkan-intel
 GTX 1060显卡驱动已经被老黄归为Legacy, supported，需要自己编译安装了
 
 ```sh
-# 安装headers，如果是linux内核就安装linux-headers
+# 安装headers
+# 如果是linux包就安装linux-headers
+# 如果是linux-lts包安装linux-lts-headers（每个内核包都有不同的headers包名）
 sudo pacman -S linux-headers
 
 # 安装显卡驱动，如果内核有更新了，header也会更新，这时候显卡驱动也得更新了
@@ -3589,7 +3621,9 @@ sudo pacman -S swtpm
 # 作为默认的NAT/DHCP，不安装启动NAT网络的时候会报错
 sudo pacman -S dnsmasq
 
-# ssh远程管理的工具
+# openbsd-netcat是一个极简但强大的网络调试与数据转发工具，
+# 能建立 TCP/UDP 连接、监听端口、做端口转发、做管道式数据传输，是 SSH 的辅助工具
+# 但是笔者目前没用到...
 sudo pacman -S openbsd-netcat 
 
 # 通过libvirt管理KVM/QEMU（虚拟机）的GUI
@@ -3927,9 +3961,12 @@ cat /sys/module/kvm_intel/parameters/nested
 十分不推荐自己安装.run的软件包
 
 ```sh
-# 然后根据提示选择virtualbox-host-modules-arch
+# 然后根据提示选择
+# 如果用的是linux包，就选择virtualbox-host-modules-arch
 # 这个包是专门为Arch官方的默认内核linux编译好的VirtualBox内核模块
 # 安装它后无需自己编译，也不需要额外安装linux-headers
+# 如果用的是非linux包（如linux-lts），就选择virtualbox-guest-dkms
+# 并且还要安装linux-lts-headers（每个内核包都有不同的headers包名）
 sudo pacman -S virtualbox
 
 # 如果还需要虚拟机增强功能（共享剪贴板、共享文件夹等）
