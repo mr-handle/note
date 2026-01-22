@@ -10012,11 +10012,15 @@ java -jar [选项] [参数] <jar文件名>
 
 ## Spring Security
 
+Spring Security提供3大功能：认证、授权和防御常见攻击
+
 认证 (Authentication)： 是验证用户的身份的凭据（例如用户名/用户ID和密码），通过这个凭据，系统得以知道用户是谁
 
 授权 (Authorization)： 发生在认证之后，授予了什么权限，有权限干什么
 
 ### 身份验证方案
+
+Session-Cookie + OAuth2
 
 #### Session-Cookie方案
 
@@ -10028,11 +10032,18 @@ java -jar [选项] [参数] <jar文件名>
 
 如果客户端禁用了Cookie，可以对SessionID进行一次加密，然后通过放到请求参数或者请求体的方式传给后端
 
-- Cookie无法防止CSRF（Cross Site Request Forgery，跨站请求伪造）攻击，而Token可以
+- Cookie无法防止CSRF（跨站请求伪造）攻击，而Token可以
     - 如果点击了非法链接，会拿到Cookie干坏事
     - Token存放在浏览器的localStorage，非法链接拿不到这个Token
 
 - 无论Cookie还是Token都无法避免XSS（Cross Site Scripting，跨站脚本攻击，为了跟层叠样式表（Cascading Style Sheets，CSS）的缩写区别）攻击
+
+#### OAuth2（Opaque Token）
+
+OAuth2由3个部分组成：
+    - OAuth2 Resource Server（也就是后端业务微服务）
+    - OAuth2 Client（前端+后端共同完成获取token，返回前端sessionid的整个登录流程，先这么理解吧）
+    - OAuth2 Authorization Server（授权服务器，可以当成一个微服务）
 
 ### Spring Session
 
@@ -10152,6 +10163,447 @@ public void userInfo() {
     Object credentials = authentication.getCredentials();
     Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 }
+```
+
+### 身份认证
+
+#### PasswordEncoder
+
+- PasswordEncoder接口有三个方法
+
+```java
+public interface PasswordEncoder {
+    String encode(CharSequence rawPassword);
+
+    boolean matches(CharSequence rawPassword, String encodedPassword);
+
+    default boolean upgradeEncoding(String encodedPassword) {
+        return false;
+    }
+}
+```
+
+- 密码保存
+
+```java
+// 创建默认的DelegatingPasswordEncoder
+PasswordEncoder passwordEncoder =
+    PasswordEncoderFactories.createDelegatingPasswordEncoder();
+
+// 自定义DelegatingPasswordEncoder
+String idForEncode = "bcrypt";
+Map encoders = new HashMap<>();
+encoders.put(idForEncode, new BCryptPasswordEncoder());
+encoders.put("noop", NoOpPasswordEncoder.getInstance());
+encoders.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_5());
+encoders.put("pbkdf2@SpringSecurity_v5_8", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+encoders.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v4_1());
+encoders.put("scrypt@SpringSecurity_v5_8", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
+encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_2());
+encoders.put("argon2@SpringSecurity_v5_8", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+encoders.put("sha256", new StandardPasswordEncoder());
+
+PasswordEncoder passwordEncoder =
+    new DelegatingPasswordEncoder(idForEncode, encoders);
+
+// 设置默认PasswordEncoder
+DelegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(PasswordEncoder);
+
+// 编码密码
+UserDetails user = User.withDefaultPasswordEncoder()
+    .username("user")
+    .password("password")
+    .roles("user")
+    .build();
+System.out.println(user.getPassword());
+// {bcrypt}$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG
+
+// 复用builder编码多个用户的密码
+UserBuilder users = User.withDefaultPasswordEncoder();
+UserDetails user = users
+    .username("user")
+    .password("password")
+    .roles("USER")
+    .build();
+UserDetails admin = users
+    .username("admin")
+    .password("password")
+    .roles("USER","ADMIN")
+    .build();
+
+// 上面的编码方式密码还是暴露在内存和字节码里面
+// 为此可以 Encode with Spring Boot CLI
+spring encodepassword password
+{bcrypt}$2a$10$X5wFBtLrL/kHcmrOGGTrGufsBX8CJ0WpQpF3pgeuxBB/H73BK1DW6
+```
+
+- 密码校验，需要调整参数让校验时间大约1秒左右
+
+```java
+// Create an encoder with strength 16
+BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(16);
+String result = encoder.encode("myPassword");
+assertTrue(encoder.matches("myPassword", result));
+
+// Argon2是the winner of the Password Hashing Competition，它需要消耗大内存
+// 依赖BouncyCastle库
+// Create an encoder with all the defaults
+Argon2PasswordEncoder encoder = Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+String result = encoder.encode("myPassword");
+assertTrue(encoder.matches("myPassword", result));
+
+// Pbkdf2 is a good choice when FIPS certification is required
+// Create an encoder with all the defaults
+Pbkdf2PasswordEncoder encoder = Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+String result = encoder.encode("myPassword");
+assertTrue(encoder.matches("myPassword", result));
+
+// SCrypt也需要消耗大内存
+// Create an encoder with all the defaults
+SCryptPasswordEncoder encoder = SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8();
+String result = encoder.encode("myPassword");
+assertTrue(encoder.matches("myPassword", result));
+
+// 以下是Password4j-based Password Encoders
+// Spring Security 7.0介绍了可选的基于Password4j库的密码编码器，它们都是线程安全的
+// 这些编码器中的流行编码器提供了额外的操作，当你需要指定配置或充分利用Password4j的优化时它们更加有用
+
+// 官方推荐新的应用用Argon2
+// 默认配置的Argon2Password4jPasswordEncoder，编码后的密码包含了salt
+PasswordEncoder encoder = new Argon2Password4jPasswordEncoder();
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// 自定义配置的Argon2Password4jPasswordEncoder，编码后的密码包含了salt
+Argon2Function argon2Fn = Argon2Function.getInstance(65536, 3, 4, 32,
+    Argon2.ID);
+PasswordEncoder encoder = new Argon2Password4jPasswordEncoder(argon2Fn);
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// 默认配置的BCryptPasswordEncoder，编码后的密码包含了salt
+PasswordEncoder encoder = new BCryptPasswordEncoder();
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// 自定义配置的BCryptPasswordEncoder，编码后的密码包含了salt
+BcryptFunction bcryptFn = BcryptFunction.getInstance(12);
+PasswordEncoder encoder = new BcryptPassword4jPasswordEncoder(bcryptFn);
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// ScryptPassword4jPasswordEncoder旨在抵御硬件暴力攻击，编码后的密码包含了salt
+// 默认配置的ScryptPassword4jPasswordEncoder
+PasswordEncoder encoder = new ScryptPassword4jPasswordEncoder();
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// 自定义配置的ScryptPassword4jPasswordEncoder
+ScryptFunction scryptFn = ScryptFunction.getInstance(32768, 8, 1, 32);
+PasswordEncoder encoder = new ScryptPassword4jPasswordEncoder(scryptFn);
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// PBKDF2是一个密钥派生函数，用于抵御字典攻击和暴力破解攻击，使其计算成本很高
+// 官网说编码后的密码不包含salt
+// 但是又说编码后的格式为{salt}:{hash}， both salt and hash are Base64 encoded
+// 等使用的时候再验证一下吧
+// 默认配置的Pbkdf2Password4jPasswordEncoder
+PasswordEncoder encoder = new Pbkdf2Password4jPasswordEncoder();
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// 自定义配置的Pbkdf2Password4jPasswordEncoder
+PBKDF2Function pbkdf2Fn = PBKDF2Function.getInstance(Hmac.SHA256, 100000, 256);
+PasswordEncoder encoder = new Pbkdf2Password4jPasswordEncoder(pbkdf2Fn);
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// BalloonHashingPassword4jPasswordEncoder旨在抵抗时间-内存权衡攻击和侧信道攻击
+// 官网说编码后的密码不包含salt
+// 但是又说编码后的格式为{salt}:{hash}， both salt and hash are Base64 encoded
+// 等使用的时候再验证一下吧
+// 默认配置的BalloonHashingPassword4jPasswordEncoder
+PasswordEncoder encoder = new BalloonHashingPassword4jPasswordEncoder();
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+
+// 自定义配置的BalloonHashingPassword4jPasswordEncoder
+BalloonHashingFunction ballooningHashingFn =
+ BalloonHashingFunction.getInstance("SHA-256", 1024, 3, 4, 3);
+PasswordEncoder encoder = new BalloonHashingPassword4jPasswordEncoder(ballooningHashingFn);
+String result = encoder.encode("myPassword");
+assertThat(encoder.matches("myPassword", result)).isTrue();
+```
+
+- 密码保存格式
+
+```sh
+# id：编码password的PasswordEncoder标识
+# encodedPassword：原始密码编码后得到的密码
+{id}encodedPassword
+
+# 例
+{sha256}97cde38028ad898ebc02e690819fa220e88c62e0699403e94fff291cfffaf8410849f27605abcbc0
+```
+
+#### 密码存储配置
+
+Spring Security 默认使用 DelegatingPasswordEncoder，但是开发者通过Spring bean可以自定义PasswordEncoder
+
+```java
+@Bean
+public static NoOpPasswordEncoder passwordEncoder() {
+    return NoOpPasswordEncoder.getInstance();
+}
+```
+
+#### 密码修改配置
+
+```java
+// 导航/.well-known/change-password将重定向到/change-password
+http
+    .passwordManagement(Customizer.withDefaults())
+
+// 也可以自定义，导航/.well-known/change-password将重定向到/update-password
+http
+    .passwordManagement((management) -> management
+        .changePasswordPage("/update-password")
+    )
+```
+
+#### 密码强度检测
+
+可以使用Spring Security 的DaoAuthenticationProvider
+
+也可以使用Have I Been Pwned API的CompromisedPasswordChecker（需要自己提供一个bean：HaveIBeenPwnedRestApiPasswordChecker）
+
+当用户输入的密码较弱时，可以通过AuthenticationFailureHandler处理CompromisedPasswordException来执行自定义的逻辑，比如重定向到/reset-password
+
+```java
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        .authorizeHttpRequests(authorize -> authorize
+            .anyRequest().authenticated()
+    )
+    .formLogin((login) -> login
+        .failureHandler(new CompromisedPasswordAuthenticationFailureHandler())
+    );
+    return http.build();
+}
+
+@Bean
+public CompromisedPasswordChecker compromisedPasswordChecker() {
+    return new HaveIBeenPwnedRestApiPasswordChecker();
+}
+
+static class CompromisedPasswordAuthenticationFailureHandler implements AuthenticationFailureHandler {
+
+    private final SimpleUrlAuthenticationFailureHandler defaultFailureHandler = new SimpleUrlAuthenticationFailureHandler(
+   "/login?error");
+
+    private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+
+    @Override
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+        AuthenticationException exception) throws IOException, ServletException {
+        if (exception instanceof CompromisedPasswordException) {
+            this.redirectStrategy.sendRedirect(request, response, "/reset-password");
+            return;
+        }
+        this.defaultFailureHandler.onAuthenticationFailure(request, response, exception);
+    }
+
+}
+```
+
+### 授权
+
+Spring Security提供了基于请求的授权和基于方法的授权两种
+
+### 防范漏洞利用
+
+#### CSRF
+
+Cross Site Request Forgery，跨站点请求伪造
+
+浏览器有一个机制：只要访问某个域名，浏览器就会自动附带该域名的Cookie（如里面包含了sessionId）
+
+比如你登录了bank.com，但是没有登出
+
+然后浏览恶意页面evil.com，这个页面的表单内容模仿了bank.com的转钱表单的内容（或者它就是一个让你以为是bank.com的钓鱼网站），表单提交将发请求到bank.com，然后引诱你点击
+
+不幸的是你点击了提交（甚至是不用你点击直接js脚本自动完成了），浏览器看到请求目标是bank.com，就自动带上bank.com的Cookie了，然后你账户的钱没了
+
+这就是CSRF，一句话概括就是CSRF让你的浏览器带着你的Cookie去做你没打算做的事
+
+Spring提供了两种机制来防范：Synchronizer Token Pattern和Specifying the SameSite Attribute on your session cookie
+
+这两种机制都要求前提是Safe Methods be Read-only： HTTP GET, HEAD, OPTIONS, and TRACE methods should not change the state of the application
+
+##### Synchronizer Token Pattern
+
+由于浏览器的同源策略（Same-Origin Policy）规定，跨站请求不能读取hidden input和设置自定义Header
+
+因此对于改变应用状态的请求，可以生成一个随机的CSRF Token，放在HTTP parameter或HTTP header中
+
+```html
+<!-- hidden input，随表单一起提交 -->
+<input type="hidden"
+ name="_csrf"
+ value="4bfd1575-3ad1-4d21-96c7-4ef2d9f86721"/>
+
+<!-- 设置header，随请求一起提交，推荐 -->
+X-CSRF-Token: 4bfd1575-3ad1-4d21-96c7-4ef2d9f86721
+```
+
+##### Specifying the SameSite Attribute on your session cookie
+
+Spring Security不直接控制session cookie的创建，也就是不对SameSite attribute提供支持
+
+可以通过Spring Session设置SameSite attribute
+
+- SameSite有两种属性
+    - Strict：任何跨站请求都不带Cookie
+    - Lax：top-level navigations and the method is read-only除外，其它跨站请求都不带Cookie
+
+```sh
+Set-Cookie: JSESSIONID=randomid; Domain=bank.example.com; Secure; HttpOnly; SameSite=Lax
+```
+
+#### HTTP Headers
+
+##### Default Security HTTP Response Headers
+
+```sh
+# Spring Security默认禁止缓存
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+
+# Spring Security默认禁止content type嗅探，这时候需要手动指定content type
+X-Content-Type-Options: nosniff
+
+# 将站点标记为HSTS主机的一种方法是将主机预加载到浏览器中
+# 另一种方法就是添加Strict-Transport-Security到响应头
+# max-age=31536000，命令浏览器一年内都将域名作为HSTS主机对待
+# includeSubDomains：也将子域名域名作为HSTS主机对待
+# preload：命令浏览器将其作为HSTS主机预加载
+Strict-Transport-Security: max-age=31536000 ; includeSubDomains ; preload
+# 禁用在iframe内渲染页面
+X-Frame-Options: DENY
+
+# 有些浏览器内置了过滤反射XSS攻击的支持
+# 该过滤器在主流浏览器中已被弃用，目前OWASP的建议是显式地将报头设置为0
+X-XSS-Protection: 0
+```
+
+##### Content Security Policy (CSP)
+
+```sh
+# 当试图从非script-src声明的地址载脚本时，将会被user-agent阻止
+# 如果一个web应用程序违反了声明的安全策略，将指示user-agent向report-uri指定的URL发送违反报告
+Content-Security-Policy: script-src https://trustedscripts.example.com; report-uri /csp-report-endpoint/
+
+# 只发送违反报告，不阻止加载脚本，通常在实验或开发场景使用
+Content-Security-Policy-Report-Only: script-src 'self' https://trustedscripts.example.com; report-uri /csp-report-endpoint/
+```
+
+##### Referrer Policy
+
+```sh
+# 指示浏览器让目的地知道用户以前所在的源
+Referrer-Policy: same-origin
+```
+
+##### Feature Policy
+
+```sh
+# Feature Policy是一种允许web开发人员选择性地启用、禁用和修改浏览器中某些api和web特性的行为的机制
+Feature-Policy: geolocation 'self'
+```
+
+##### Permissions Policy
+
+```sh
+# Permissions Policy是一种允许web开发人员选择性地启用、禁用和修改浏览器中某些api和web特性的行为的机制
+# 这描述感觉是官方复制粘贴的，具体应该跟Feature Policy有点类似
+Permissions-Policy: geolocation=(self)
+```
+
+###### Clear Site Data
+
+```sh
+# 任何浏览器端数据（cookie，本地存储等）都可以在HTTP响应包含以下header信息时被删除
+# 这是在注销时执行的一个很好的清理操作
+Clear-Site-Data: "cache", "cookies", "storage", "executionContexts"
+```
+
+#### HTTP Requests
+
+所有基于http的通信，包括静态资源，都应该使用TLS来保护
+
+作为一个框架，Spring Security不处理HTTP连接，因此不直接提供对HTTPS的支持
+
+但是，它确实提供了许多有助于使用HTTPS的特性
+
+##### Redirect to HTTPS
+
+##### Strict Transport Security
+
+Spring Security默认开启了对Strict Transport Security的支持
+
+##### Proxy Server Configuration
+
+spring boot的开发者可以用server.forward-headers-strategy属性进行配置
+
+### 多线程支持
+
+```java
+SecurityContext context = SecurityContextHolder.createEmptyContext();
+Authentication authentication =
+    UsernamePasswordAuthenticationToken.authenticated("user","doesnotmatter", AuthorityUtils.createAuthorityList("ROLE_USER"));
+context.setAuthentication(authentication);
+
+SimpleAsyncTaskExecutor delegateExecutor =
+    new SimpleAsyncTaskExecutor();
+DelegatingSecurityContextExecutor executor =
+    new DelegatingSecurityContextExecutor(delegateExecutor, context);
+
+Runnable originalRunnable = new Runnable() {
+    public void run() {
+        // invoke secured service
+    }
+};
+
+executor.execute(originalRunnable);
+```
+
+### Jackson 3 support
+
+```java
+ClassLoader loader = getClass().getClassLoader();
+JsonMapper mapper = JsonMapper.builder()
+        .addModules(SecurityJacksonModules.getModules(loader))
+        .build();
+
+// ... use JsonMapper as normally ...
+SecurityContext context = new SecurityContextImpl();
+// ...
+String json = mapper.writeValueAsString(context);
+
+```
+
+- 自定义类校验处理
+
+```java
+ClassLoader loader = getClass().getClassLoader();
+BasicPolymorphicTypeValidator.Builder builder = BasicPolymorphicTypeValidator.builder()
+        .allowIfSubType(MyCustomType.class);
+JsonMapper mapper = JsonMapper.builder()
+        .addModules(SecurityJacksonModules.getModules(loader, builder))
+        .build();
 ```
 
 ## Spring Cloud
@@ -11594,6 +12046,8 @@ seata.data-source-proxy-mode=AT
 
 - 在需要全局事务处理的控制器类、业务类实现方法上加@GlobalTransactional注解
 
+## Spring Data
+
 ## Jackson
 
 ### 常规使用
@@ -12869,6 +13323,113 @@ docker image ls -f dangling=true
 docker image prune
 ```
 
+## Kubernetes
+
+Kubernetes是谷歌开源的容器编排引擎，用来管理容器化的应用程序和服务，如部署、扩展、管理等
+
+Kubernetes提供了容器编排的功能，可以通过配置文件来定义应用程序的部署方式
+
+让容器的创建、维护和管理变得更加简单和高效
+
+Kubernetes也提供了很多高可用的特性，比如自动重启、自动重建、自我修复等
+
+还有可扩展性，让系统可以根据负载的变化来动态地扩展或缩减系统的资源，从而提高系统的性能和资源的利用率
+
+还有其它如灾难恢复、弹性伸缩等，这些特性都可以帮助提高应用程序的性能、可用性和稳定性
+
+### Kubernetes组件
+
+#### node（节点）
+
+一个节点就是一个物理机或虚拟机，在一个节点上，可以运行一个或多个pod
+
+#### pod
+
+pod是Kubernetes的最小调度单元
+
+一个pod就是一个或多个应用容器的组合
+
+pod创建了一个容器的运行环境，在这个环境中，容器间可以共享一些资源
+
+比如网络、存储以及一些运行时配置等
+
+一般情况下，一个pod中只运行一个容器
+
+#### srvice（服务）
+
+将一组pod封装成一个服务，这个服务可以通过一个统一的入口来访问
+
+#### ingress
+
+用来管理从集群外部访问集群内部服务的入口和方式
+
+可以通过ingress配置不同的转发规则
+
+从而根据不同的规则，来访问集群内部不同的service以及service所对应的后端pod
+
+还可以通过ingress来配置域名，这样就可以将原本使用ip和端口的方式转换成使用域名的方式来访问service了
+
+另外ingress还可以配置其它的功能，如负载均衡、SSL证书等
+
+#### ConfigMap
+
+将一些配置信息封装起来，然后就可以在应用程序中读取和使用了
+
+有了ConfigMap，就可以将配置信息和应用程序的镜像内容分离开来
+
+这样就可以保持容器化应用程序的可移植性
+
+#### secret
+
+ConfigMap的配置信息都是明文的，如果配置信息包含一些敏感信息如账号密码，就不建议将其存储在ConfigMap中，secret就是为了解决这个问题的
+
+secret可以将一些敏感信息封装起来，然后就可以在应用程序中读取和使用了
+
+但是secret也只是做了一层Base64的编码而已，还需要配合Kubernetes的其它手段来提高安全性
+
+如user、c.role、sa
+
+#### volume
+
+将持久化存储的资源挂载到集群中的本地磁盘上或者集群外部的远程存储上
+
+#### Deplyment
+
+定义和管理应用程序的副本数量，以及应用程序的更新策略
+
+可以简化应用程序的部署和更新操作
+
+#### StatefulSet
+
+和Deplyment类似，也提供了定义和管理应用程序副本数量、动态扩容缩容等功能
+
+还保证了每个副本都有自己稳定的网络标识符和持久化存储
+
+因此，像数据库、缓存、消息队列等这些有状态的应用，以及一些保留了会话状态的应用程序，一般都使用StatefulSet
+
+对于数据库，更好的方案是从Kubernetes分离出来，单独部署
+
+### Kubernetes架构
+
+Kubernetes是典型的master-worker架构
+
+master节点负责管理整个集群，worker节点负责运行应用程序和服务
+
+worker节点为了能够对外提供服务，每个node都会包含3个组件：kubelet、kube-proxy和container-runtime（容器运行时环境）
+
+- kubelet
+    - 负责管理和维护每个节点上的pod，并确保它们按照预期运行
+    - 也会定期从api-server组件接收新的或者修改后的pod规范，
+    - 同时它也会监控工作节点的运行情况，然后将这些信息汇报给api-server
+
+- kube-proxy
+    - 负责为pod对象提供网络代理和负载均衡服务
+    - 它会在每个node上启动一个网络代理，使发往service的流量以一种高效的方式路由到正确的pod中
+
+- container-runtime可以是Docker-Engine、Containerd、CRI-O、Mirantis Container Runtime
+
+master节点包含4个组件：kube-apiserver、etcd、ControllerManager和scheduler
+
 ## 消息队列
 
 ### Pulsar
@@ -13645,6 +14206,42 @@ Elastic Stack（ELK Stack）：包括Elasticsearch、Kibana、Beats和Logstash�
 
 如果是副本，还包含从主分片复制数据的过程，这个过程是由master节点完成的
 
+一般分片数不超过节点数的3倍，可参考：节点数<=主分片数*(副本数+1)
+
+#### 评分机制
+
+`得分 = boost * idf * tf`
+
+boost：权重系数，默认2.2
+
+##### TF（词频）
+
+Term Frequency：搜索文本中的各个词条（term）在查询文本中出现了多少次，出现次数越多，就越相关，得分越高
+
+`tf = freq / (freq + k1 * (1 - b + b * dl / avgdl))`
+
+freq：关键词在当前文档中出现的次数
+
+k1：关键词参数，默认1.2
+
+b：关键词长度系数参数，默认0.75
+
+dl：分词个数
+
+avgdl：fields / documents，所有分词除以所有的文档数
+
+##### IDF（逆文档频率）
+
+Inverse Document Frequency：搜索文本中的各个词条（term）在整个索引的所有文档中出现了多少次，出现的次数越多，说明越不重要，也就越不相关，得分越低
+
+`idf = log(1 + (N -n + 0.5) / (n + 0.5))`
+
+log：e的对数
+
+N：文档的总字段数
+
+n：文档包含的词条数
+
 ### 安装elasticsearch
 
 以elasticsearch 9.x为例
@@ -13711,7 +14308,8 @@ http.port: 9200
 # 全新集群第一次启动时用来选举初始master的引导名单
 # 初始化一个新的集群时需要此配置来选举master
 # 第一次启动集群成功后立刻删掉，不然如果该机器宕机重启后将出现问题
-cluster.initial_master_nodes:["node-1", "node-2", "node-3"]
+# 貌似8.x后面部署集群不需要了
+#cluster.initial_master_nodes:["node-1", "node-2", "node-3"]
 # 节点发现，默认用9300端口通信
 discovery.seed_hosts: ["10.0.2.15:9300", "10.0.2.16:9300", "10.0.2.17:9300"]
 ```
@@ -13813,6 +14411,128 @@ System.out.println(createIndexResponse.acknowledged());
 // 查询index
 GetIndexResponse getIndexResponse = elasticsearchClient.indices().get(c -> c.index("test-index"));
 System.out.println(getIndexResponse.toString());
+```
+
+### SpringData集成
+
+官网：<https://spring.io/projects/spring-data-elasticsearch>
+
+### Kibana
+
+Kibana 是一个用户界面，让你对es数据进行可视化的各种操作
+
+下载：<https://www.elastic.co/cn/downloads/kibana>，然后解压，以9.x版本为例
+
+```sh
+# 将kibana目录和它的所有子目录/文件的权限赋给elasticsearch
+chown -R elasticsearch:elasticsearch /path/to/kibana-xxx
+```
+
+- 自动生成es的kibana_system用户密码
+
+```sh
+elasticsearch/bin/elasticsearch-reset-password -u kibana_system
+```
+
+- 编辑配置文件/path/to/kibana/config/kibana.yml
+
+```yaml
+server.port: 5601
+server.host: "ip"
+# es节点的ip和端口
+elasticsearch.hosts: ["https://ip:port"]
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "..."
+elasticsearch.ssl.verificationMode: none
+```
+
+- 启动
+
+```sh
+su elasticsearch
+
+/path/to/kibana/bin/kibana
+```
+
+- 访问<http://10.0.2.15:5601>，然后输入elastic和密码就可以了
+
+### EQL
+
+Event Query Language，事件查询语言，是一种基于事件的时间序列数据（如日志、指标和跟踪）的查询语言
+
+要运行EQL搜索，搜索到的数据流或索引必须包含时间戳和事件类别字段
+
+### ES的SQL
+
+```json
+// 查询所有索引
+GET _sql?format=txt
+{
+    "query": """
+        show tables
+    """
+}
+
+// 查询指定索引
+GET _sql?format=txt
+{
+    "query": """
+        show tables like 'test%'
+    """
+}
+
+// 查询索引结构，索引有特殊符号要用引号括住
+GET _sql?format=txt
+{
+    "query": """
+        describe "indexName"
+    """
+}
+
+// 查询索引的文档数据
+GET _sql?format=txt
+{
+    "query": """
+        select * from "indexName" limit 5
+    """
+}
+
+// rlike，r表示正则
+GET _sql?format=txt
+{
+    "query": """
+        select * from "indexName" where name rlike 'ha*le'
+    """
+}
+```
+
+#### 游标（cursor）
+
+游标是系统为用户开设的一个数据缓冲区，存储sql语句的执行结果
+
+每个游标区都有一个名字，用户可以用sql语句逐一从游标中获取记录，并赋给主变量，交由主语言进一步处理
+
+```json
+// 第一次查询写法，查询结果中有超过1条数据时只显示一条并且末尾包含游标
+GET _sql?format=json
+{
+    "query": """
+        select * from "indexName"
+    """,
+    "fetch_size": 1
+}
+// 然后可以复制第一次查询结果里面的游标，执行后就可以继续查看剩余的查询结果
+// 如果执行后无结果，说明数据已经读取完毕，再次执行会返回错误结果
+GET _sql?format=json
+{
+    "cursor": ...
+}
+
+// 最后关闭缓冲区
+POST _sql/close
+{
+    "cursor": ...
+}
 ```
 
 ## git
