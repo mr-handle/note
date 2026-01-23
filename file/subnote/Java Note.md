@@ -10606,6 +10606,272 @@ JsonMapper mapper = JsonMapper.builder()
         .build();
 ```
 
+### Spring Security体系结构
+
+![Spring Security架构](/images/Spring%20Security架构.png)
+
+- 如果想要让Spring Security忽略某些请求，可以定义一个没有没有Filter的SecurityFilterChain
+
+- 一般使用HttpSecurity声明过滤器实例
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            // CsrfFilter
+            .csrf(Customizer.withDefaults())
+            // BasicAuthenticationFilter
+            .httpBasic(Customizer.withDefaults())
+            // UsernamePasswordAuthenticationFilter
+            .formLogin(Customizer.withDefaults())
+            // AuthorizationFilter
+            .authorizeHttpRequests((authorize) -> authorize
+                .anyRequest().authenticated()
+            );
+
+        return http.build();
+    }
+
+}
+```
+
+```properties
+# 打印请求调用的过滤器
+logging.level.org.springframework.security=trace
+
+# 打印DefaultSecurityFilterChain的过滤器
+logging.level.o.s.s.web.DefaultSecurityFilterChain=debug
+```
+
+#### 将过滤器添加到过滤器链中
+
+- HttpSecurity有三个方法可以添加过滤器
+
+```java
+// adds your filter before another filter
+addFilterBefore(Filter, Class<?>) 
+
+// adds your filter after another filter
+addFilterAfter(Filter, Class<?>) 
+
+// replaces another filter with your filter
+addFilterAt(Filter, Class<?>) 
+```
+
+- 为了确定自定义过滤器在过滤器链中的位置，可以考虑以下几个关键的事件
+    - 1.SecurityContext is loaded from the session
+    - 2.Request is protected from common exploits; secure headers, CORS, CSRF
+    - 3.Request is authenticated
+    - 4.Request is authorized
+- 参考以下经验
+
+|If your filter is a(n)|Then place it after|As these events have already occurred|
+|:-|:-|:-|
+|exploit protection filter|SecurityContextHolderFilter|1|
+|authentication filter|LogoutFilter|1, 2|
+|authorization filter|AnonymousAuthenticationFilter|1, 2, 3|
+
+##### 创建过滤器
+
+除了自己写一个过滤器实现类，还可以扩展OncePerRequestFilter
+
+OncePerRequestFilter是每个请求只调用一次的过滤器的基类
+
+它提供了一个带有HttpServletRequest和HttpServletResponse参数的doFilterInternal方法
+
+###### 普通方式创建过滤器
+
+```java
+import java.io.IOException;
+
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.security.access.AccessDeniedException;
+
+public class TenantFilter implements Filter {
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest request = (HttpServletRequest) servletRequest;
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
+
+        String tenantId = request.getHeader("X-Tenant-Id"); (1)
+        boolean hasAccess = isUserAllowed(tenantId); (2)
+        if (hasAccess) {
+            filterChain.doFilter(request, response); (3)
+            return;
+        }
+        throw new AccessDeniedException("Access denied"); (4)
+    }
+
+}
+```
+
+###### 以spring bean的方式创建过滤器
+
+当你将过滤器声明为一个spring bean时，spring boot会自动注册它
+
+这将导致这个过滤器会以不同的顺序被调用两次，一次是容器调用，另一次是Spring Security调用
+
+因此，过滤器一般不作为spring bean
+
+如果仍然要将过滤器定义成spring bean，你需要通过声明一个FilterRegistrationBean bean， 并且设置它的enabled属性为false来告诉Spring Boot，不要用容器注册它
+
+```java
+@Bean
+public FilterRegistrationBean<TenantFilter> tenantFilterRegistration(TenantFilter filter) {
+    FilterRegistrationBean<TenantFilter> registration = new FilterRegistrationBean<>(filter);
+    registration.setEnabled(false);
+    return registration;
+}
+```
+
+##### 添加到过滤器链（SecurityFilterChain）
+
+AnonymousAuthenticationFilter是过滤器链中，身份认证的最后一个过滤器
+
+```java
+@Bean
+SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        // ...
+        .addFilterAfter(new TenantFilter(), AnonymousAuthenticationFilter.class);
+    return http.build();
+}
+```
+
+##### 对Spring Security的过滤器进行自定义
+
+```java
+@Bean
+SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    BasicAuthenticationFilter basic = new BasicAuthenticationFilter();
+    // ... configure
+
+    http
+    // 如果过滤器被添加两次，将会抛出异常，比如这里BasicAuthenticationFilter被添加了两次
+    .httpBasic(Customizer.withDefaults())
+    // ... on no! BasicAuthenticationFilter is added twice!
+    .addFilterAt(basic, BasicAuthenticationFilter.class);
+
+    return http.build();
+}
+```
+
+- 在无法重新配置HttpSecurity以不添加特定过滤器的情况下，通常可以通过调用其DSL的disable方法来禁用Spring Security过滤器
+
+```java
+.httpBasic((basic) -> basic.disable())
+```
+
+#### 处理安全异常
+
+![ExceptionTranslationFilter](/images/ExceptionTranslationFilter.png)
+
+##### ExceptionTranslationFilter
+
+ExceptionTranslationFilter允许转化AccessDeniedException和AuthenticationException 到http响应中
+
+- ExceptionTranslationFilter的逻辑如下
+
+```java
+try {
+    filterChain.doFilter(request, response);
+} catch (AccessDeniedException | AuthenticationException ex) {
+    if (!authenticated || ex instanceof AuthenticationException) {
+    startAuthentication();
+    } else {
+    accessDenied();
+    }
+}
+```
+
+如果不抛出AccessDeniedException或AuthenticationException异常, ExceptionTranslationFilter将不做任何事情
+
+##### RequestCache
+
+当一个获取资源的请求需要身份认证，但是还没进行身份认证时，就需要先保存请求信息，等身份认证通过后重新请求
+
+在Spring Security中，通过使用RequestCache的实现来完成这一功能
+
+ExceptionTranslationFilter检测到AuthenticationException后，在将用户重定向到登录端点之前，用RequestCache保存请求信息
+
+身份认证后，RequestCacheAwareFilter使用RequestCache获取请求信息，重新请求
+
+默认使用HttpSessionRequestCache
+
+```java
+// 自定义RequestCache，当参数continue存在时，才检测HttpSession来保存请求信息
+@Bean
+DefaultSecurityFilterChain springSecurity(HttpSecurity http) throws Exception {
+    HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+    requestCache.setMatchingRequestParameterName("continue");
+    http
+    // ...
+    .requestCache((cache) -> cache
+    .requestCache(requestCache)
+    );
+    return http.build();
+}
+```
+
+##### 禁止保存请求
+
+不希望在会话中存储用户未经身份验证的请求的原因有很多
+
+您可能希望将该存储空间卸载到用户的浏览器上，或者将其存储在数据库中
+
+或者您可能希望关闭此功能，因为您总是希望将用户重定向到主页，而不是他们在登录前试图访问的页面
+
+可以通过NullRequestCache实现禁止保存请求
+
+```java
+@Bean
+SecurityFilterChain springSecurity(HttpSecurity http) throws Exception {
+    RequestCache nullRequestCache = new NullRequestCache();
+    http
+        // ...
+        .requestCache((cache) -> cache
+            .requestCache(nullRequestCache)
+        );
+    return http.build();
+}
+```
+
+#### 记录日志
+
+Spring Security在debug和trace日志级别，对所有安全相关的事件提供了全面的日志记录
+
+可以通过添加如下配置来记录所有的安全事件
+
+```properties
+logging.level.org.springframework.security=TRACE
+```
+
+```xml
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- ... -->
+    </appender>
+    <!-- ... -->
+    <logger name="org.springframework.security" level="trace" additivity="false">
+        <appender-ref ref="Console" />
+    </logger>
+</configuration>
+```
+
+### 身份认证体系结构
+
 ## Spring Cloud
 
 ### Spring Cloud 组件
