@@ -10872,6 +10872,261 @@ logging.level.org.springframework.security=TRACE
 
 ### 身份认证体系结构
 
+#### SecurityContextHolder
+
+![SecurityContextHolder](/images/SecurityContextHolder.png)
+
+SecurityContextHolder是Spring Security存储身份验证详细信息的地方
+
+Spring Security并不关心SecurityContextHolder是如何填充的
+
+如果SecurityContextHolder包含值，则使用该值作为当前认证的用户
+
+- 指示用户已经过身份验证的最简单方法是直接设置SecurityContextHolder
+
+```java
+// 为了避免多线程之间的竞争，你应该创建一个新的SecurityContext
+// 而不是使用SecurityContextHolder.getContext().setAuthentication(authentication)
+SecurityContext context = SecurityContextHolder.createEmptyContext();
+// 这里用简单的TestingAuthenticationToken做例子
+// 生产场景更加通用的是UsernamePasswordAuthenticationToken(userDetails, password, authorities)
+Authentication authentication =
+    new TestingAuthenticationToken("username", "password", "ROLE_USER");
+context.setAuthentication(authentication);
+
+SecurityContextHolder.setContext(context);
+```
+
+- 通过访问SecurityContextHolder获取有关已验证主体的信息
+
+```java
+SecurityContext context = SecurityContextHolder.getContext();
+Authentication authentication = context.getAuthentication();
+String username = authentication.getName();
+Object principal = authentication.getPrincipal();
+Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+```
+
+SecurityContextHolder使用ThreadLocal来存储身份认证信息
+
+你还可以通过配置SecurityContextHolder的策略决定它的存储方式
+    - 对于独立应用程序，你可能使用SecurityContextHolder.MODE_GLOBAL
+    - 对于其它应用程序，你可能想让子线程拥有同样的身份认证信息，使用SecurityContextHolder.MODE_INHERITABLETHREADLOCAL
+    -默认 SecurityContextHolder.MODE_THREADLOCAL
+有两种方式设置策略的方法：设置系统属性和使用SecurityContextHolder的静态方法
+
+#### SecurityContext
+
+可以从SecurityContextHolder获得SecurityContext，它包含了一个Authentication对象
+
+#### Authentication
+
+- 在Spring Security中，Authentication接口有两个主要用途
+    - 作为AuthenticationManager的输入，以给出用户提供的身份验证凭据。在此场景中使用时，isAuthenticated（）返回false
+    - 表示当前经过身份验证的用户，可以从SecurityContext获得它
+
+- Authentication包含
+    - principal：表示用户，当使用username/password进行身份验证时，通常是UserDetails的一个实例
+    - credentials：通常是密码，在许多情况下，在用户通过身份验证后清除该属性，以确保它不会泄露
+    - authorities：GrantedAuthority实例是授予用户的高级权限，如角色和范围
+
+它还配备了一个AdditionalRequiredFactorsBuilder，允许您修改现有的身份验证实例，并可能将其与另一个实例合并
+
+这在从一个身份验证步骤（如表单登录）获取授权并将其应用于另一个验证步骤（如一次性令牌登录）的场景中非常有用，如下例
+
+```java
+Authentication lastestResult = authenticationManager.authenticate(authenticationRequest);
+Authentication previousResult = SecurityContextHolder.getContext().getAuthentication();
+if (previousResult != null && previousResult.isAuthenticated()) {
+    lastestResult = lastestResult.toBuilder()
+    .authorities((a) -> a.addAll(previous.getAuthorities()))
+    .build();
+}
+```
+
+#### GrantedAuthority
+
+GrantedAuthority实例是授予用户的高级权限，如角色和范围
+
+你可以通过Authentication.getAuthorities()方法获得GrantedAuthority实例
+
+此方法提供了GrantedAuthority对象的集合
+
+毫无疑问，GrantedAuthority是授予主体的权限，这些权限通常是"角色",如ROLE_ADMINISTRATOR或ROLE_HR_SUPERVISOR
+
+这些角色后面为web授权、方法授权和域对象授权配置的
+
+Spring Security的其他部分解释这些权限并期望它们存在
+
+当使用基于用户名/密码的身份验证时，GrantedAuthority实例通常由UserDetailsService加载
+
+通常，GrantedAuthority对象是应用程序范围的权限，它们并不特定于给定的域对象
+
+因此，您不太可能使用GrantedAuthority来表示对Employee对象号54的权限
+
+因为如果有数千个这样的权限，您将很快耗尽内存（或者，至少会导致应用程序花费很长时间来验证用户）
+
+当然，Spring Security是专门为处理这一常见需求而设计的，但是您应该使用项目的域对象安全功能来实现这一目的
+
+#### AuthenticationManager
+
+AuthenticationManager是定义Spring Security的过滤器如何执行身份验证的API
+
+Authentication是由调用AuthenticationManager的控制器（即Spring Security的Filters实例）返回，然后设置到SecurityContextHolder的身份验证
+
+如果你没有集成Spring Security的Filters实例，你可以直接设置SecurityContextHolder，而不需要使用AuthenticationManager
+
+虽然AuthenticationManager的实现可以是任何东西，但最常见的实现是ProviderManager
+
+##### Customize the AuthenticationManager
+
+两种自定义方式
+
+###### Configure global AuthenticationManagerBuilder
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    // ...
+    return http.build();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+    // Return a UserDetailsService that caches users
+    // ...
+    }
+
+    @Autowired
+    public void configure(AuthenticationManagerBuilder builder) {
+    builder.eraseCredentials(false);
+    }
+
+}
+```
+
+###### Configure local AuthenticationManager for Spring Security
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+    .authorizeHttpRequests((authorize) -> authorize
+        .anyRequest().authenticated()
+    )
+    .httpBasic(Customizer.withDefaults())
+    .formLogin(Customizer.withDefaults())
+    .authenticationManager(authenticationManager());
+
+    return http.build();
+    }
+
+    private AuthenticationManager authenticationManager() {
+    DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsService());
+    authenticationProvider.setPasswordEncoder(passwordEncoder());
+
+    ProviderManager providerManager = new ProviderManager(authenticationProvider);
+    providerManager.setEraseCredentialsAfterAuthentication(false);
+
+    return providerManager;
+    }
+
+    private UserDetailsService userDetailsService() {
+    UserDetails userDetails = User.withDefaultPasswordEncoder()
+    .username("user")
+    .password("password")
+    .roles("USER")
+    .build();
+
+    return new InMemoryUserDetailsManager(userDetails);
+    }
+
+    private PasswordEncoder passwordEncoder() {
+    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+}
+```
+
+#### ProviderManager
+
+![ProviderManager](/images/ProviderManager.png)
+
+ProviderManager是AuthenticationManager最常用的实现
+
+ProviderManager委托给一系列的AuthenticationProvider实例
+
+每个AuthenticationProvider都有机会表明身份验证应该是成功的、失败的，或者表明它不能做出决定，并允许下游的AuthenticationProvider做出决定
+
+如果配置的AuthenticationProvider实例都不能进行身份验证，则身份验证失败，并产生一个ProviderNotFoundException，这是一个特殊的AuthenticationException，表明ProviderManager没有配置为支持传递给它的Authentication类型
+
+默认情况下，ProviderManager尝试从成功的身份验证请求返回的Authentication对象中清除任何敏感凭据信息
+
+这可以防止信息（如密码）在HttpSession中保留的时间超过所需的时间
+
+你可以复制这些敏感信息对象或禁用ProviderManager的eraseCredentialsAfterAuthentication属性来避免清理带来的影响
+
+没有为UserDetails使用缓存机制的应用程序应该特别考虑实现CredentialsContainer
+
+这种方法有助于降低与在内存中保留敏感信息相关的风险，这些信息可能容易受到内存转储等攻击向量的攻击
+
+但是编写自己的AuthenticationProvider实现的用户应该在那里创建并返回一个适当的Authentication对象，减去任何敏感数据，而不是使用这个接口
+
+```java
+public class MyUserDetails implements UserDetails, CredentialsContainer {
+
+    private String username;
+
+    private String password;
+
+    // UserDetails implementation...
+
+    @Override
+    public void eraseCredentials() {
+        this.password = null; // Securely dereference the password field
+    }
+
+}
+```
+
+#### AuthenticationProvider
+
+您可以将多个AuthenticationProvider实例注入到ProviderManager中
+
+每个AuthenticationProvider执行特定类型的身份验证
+
+例如，DaoAuthenticationProvider支持基于用户名/密码的身份验证，而JwtAuthenticationProvider支持验证JWT令牌
+
+#### Request Credentials with AuthenticationEntryPoint
+
+AuthenticationEntryPoint用于发送从客户端请求凭据的HTTP响应
+
+有时，客户机主动包含凭据（如用户名和密码）来请求资源
+
+在这些情况下，Spring Security不需要提供从客户机请求凭据的HTTP响应，因为它们已经包含在内
+
+在其他情况下，客户端向未授权访问的资源发出未经身份验证的请求
+
+在这种情况下，使用AuthenticationEntryPoint的实现从客户端请求凭据
+
+AuthenticationEntryPoint实现可能会执行重定向到登录页面（LoginUrlAuthenticationEntryPoint）、使用WWW-Authenticate响应头（BasicAuthenticationEntryPoint）或采取其他操作
+
+#### AbstractAuthenticationProcessingFilter
+
+![AbstractAuthenticationProcessingFilter](/images/AbstractAuthenticationProcessingFilter.png)
+
+authenticationprocessingfilter用作验证用户凭据的基本过滤器。在对凭证进行身份验证之前，Spring Security通常通过使用AuthenticationEntryPoint请求凭证
+
+接下来，AbstractAuthenticationProcessingFilter可以对提交给它的任何身份验证请求进行身份验证
+
 ## Spring Cloud
 
 ### Spring Cloud 组件
