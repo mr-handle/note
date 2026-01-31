@@ -3163,7 +3163,7 @@ export PATH=$PATH:${YAY_HOME}
 yay --version
 ```
 
-- 4.安装base-devel
+- 4.安装base-devel和git
 
 ```sh
 # base-devel是使用yay -S 包名 构建AUR包时用到的依赖
@@ -3174,6 +3174,18 @@ sudo pacman -S --needed base-devel
 # yay → 用 git clone 从AUR下载 PKGBUILD → 编译 → 安装
 sudo pacman -S git
 ```
+
+- 当用yay安装AUR包很慢时
+    - 用梯子
+    - 用梯子还是很慢时
+        - 进入构建缓存目录（存放PKGBUILD及临时构建文件）`~/.cache/yay/包名`
+        - 方法1
+            - 打开PKGBUILD文件，修改卡住的文件的下载地址（如果有其他的下载地址）
+            - 查看修改后的下载地址对应的文件的哈希码跟PKGBUILD文件里面的哈希码是否一致，如果不一致将其替换为前者的哈希码
+        - 方法2
+            - 通过浏览器或其他工具下载卡住的文件，然后放到这个目录下
+            - 打开PKGBUILD文件，查看手动下载好文件的哈希码跟PKGBUILD文件里面的哈希码是否一致，如果不一致将其替换为前者的哈希码
+        - 重新执行安装，程序会自动跳过已下载的文件，继续构建流程
 
 ##### 安装火狐浏览器
 
