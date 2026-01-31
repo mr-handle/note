@@ -2592,6 +2592,8 @@ WebUI/index.html
 
 - 如果提示安全引导违规，关闭BIOS的安全启动模式，保存重启，不要按ESC，因为会弹出一个确认是否真的要关闭安全引导的交互，选确认
 
+- 启动的时候，手动选择UEFIxxx的引导选项，默认自动进来的话不是以UEFI模式启动的
+
 #### 设置终端键盘布局和字体（可选）
 
 ```sh
@@ -2735,13 +2737,9 @@ swapon /dev/swap_partition
 ```sh
 # 用vim或nano编辑文件/etc/pacman.d/mirrorlist
 vim /etc/pacman.d/mirrorlist
-nano /etc/pacman.d/mirrorlist
 
-# 在文件中加上如下国内镜像源，一般加一个就行了，加在文件中的Server行前面
-Server = https://mirrors.bfsu.edu.cn/archlinux/$repo/os/$arch
-Server = https://mirrors.sjtug.sjtu.edu.cn/archlinux/$repo/os/$arch
+# 在文件中查询国内镜像源，并复制该行，粘贴到文件其他源的最前面
 Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
-Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
 ```
 
 ##### 用pacstrap安装基础系统包
@@ -2850,6 +2848,15 @@ pacman -S networkmanager
 
 # 设置网络管理器开机启动
 systemctl enable NetworkManager
+
+# 安装防火墙
+sudo pacman -S firewalld
+
+# 设置防火墙开机自启动
+sudo systemctl enable firewalld
+
+# 启动防火墙
+sudo systemctl start firewalld
 ```
 
 ##### Initramfs（了解）
@@ -2976,6 +2983,42 @@ nmcli connection show --active
 nmcli connection modify "上面列出的Wifi的SSID" connection.autoconnect yes
 ```
 
+#### 安装中文字体
+
+Monospace：等宽，一个汉字=两个ASCII字母的宽度，全宽字符：宽度等于一个汉字的宽度，半宽字符：宽度等于半个汉字的宽度
+
+Serif：有衬线，笔画末端有小装饰线
+
+Sans-serif：无衬线，笔画末端没有装饰，线条简洁
+
+![衬线和无衬线对比图](/images/Sans-Serif.png)
+
+- 安装谷歌版的思源黑体（等比例/等宽）
+
+```sh
+# noto-fonts-cjk：谷歌版的思源黑体，覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
+# 不安装中文会乱码，装一个够了，不够用再找别的字体
+sudo pacman -S noto-fonts-cjk
+
+# 包含更多的汉字特别是生僻字和繁体字（据说是unicode包含的全部汉字），根据需要安装
+# 笔者建议安装，因为fcitx5的候选字就有很多是生僻字的，不安装的话会显示为相应的unicode码
+sudo pacman -S ttf-hanazono
+
+# 然后用来刷新和重建系统的字体缓存（只能刷新部分字体缓存，如fcitx5的候选字就不会马上生效，需要重启才行）
+# fc-cache：Fontconfig
+# -f (force)：强制刷新，即使缓存已经存在也会重新生成
+# -v (verbose)：详细模式，会在终端输出扫描过程和结果，方便确认哪些字体被识别
+fc-cache -fv
+```
+
+- 系统字体设置
+
+字体大小跟系统默认一样，除了Fixed width设置为"Noto Sans Mono CJK SC"，其它都用"Noto Sans CJK SC"，
+
+特别是General那里，一定要设置，不然有些中字会显示半宽，特别别扭
+
+![系统字体设置](/images/system-fonts.png)
+
 #### 安装桌面环境（KDE）
 
 KDE：<https://wiki.archlinux.org/title/KDE>
@@ -3014,7 +3057,8 @@ sudo pacman -S kde-gtk-config
 # plasma-pa，音量控制器，并且在任务栏显示托盘小喇叭
 # plasma-systemmonitor，系统监视器，类似Windows的任务管理器
 # kscreen，显示设置，如设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
-sudo pacman -S plasma-nm plasma-pa plasma-systemmonitor kscreen
+# plasma-firewall，防火墙控制面板
+sudo pacman -S plasma-nm plasma-pa plasma-systemmonitor kscreen plasma-firewall
 ```
 
 - 只安装kde-applications的部分应用
@@ -3090,91 +3134,6 @@ EDITOR=vim visudo
 usermod -aG wheel handle
 ```
 
-##### 安装声音驱动
-
-ALSA(Advanced Linux Sound Architecture)驱动作为linux内核的一部分，已经作为依赖安装了
-
-台式机无需再安装高级的声音驱动
-
-笔记本电脑如果没有声音，参考官网进行安装：<https://wiki.archlinux.org/title/General_recommendations#Sound_system>
-
-##### 安装显卡驱动
-
-- 先启用 multilib 仓库，它是Arch官方提供的32位兼容库仓库，Steam、Wine、某些游戏需要它,Steam的软件包也在这个仓库里面
-
-```sh
-# 编辑/etc/pacman.conf配置文件
-sudo vim /etc/pacman.conf
-
-# 找到这两行，取消注释，保存退出
-#[multilib]
-#Include = /etc/pacman.d/mirrorlist
-```
-
-- 根据显卡类型安装显卡驱动
-
-```sh
-# 这一步可能还要摸索，笔者装了英特尔和英伟达的后，重启黑屏了，然后切换tty又装了optimus-manager，然后重启又正常了
-
-# 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
-
-# 根据执行结果去网站找到对应的显卡代码：https://nouveau.freedesktop.org/CodeNames.html
-# 到安装教程官网，根据显卡代码安装对应的显卡驱动：https://wiki.archlinux.org/title/NVIDIA
-lspci -k -d ::03xx
-
-# NVIDIA（闭源）
-# 新版显卡的驱动已经从nvidia改成nvidia-open了
-# nvidia-open：NVIDIA内核模块
-# nvidia-utils：NVIDIA驱动工具，安装nvidia-open时会将nvidia-utils作为依赖进行安装
-# lib32-nvidia-utils：NVIDIA驱动工具（32位）（可选）,Steam需要用到，笔者建议安装具体的软件的时候再根据交互提示选择安装
-# nvidia-settings：NVIDIA图形驱动程序配置工具（可选）
-sudo pacman -S nvidia-open lib32-nvidia-utils nvidia-settings
-
-# 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
-# 从nvidia-utils 560.35.03-5起,默认已经启用DRM
-# 对于老版本的驱动，设置modeset=1
-# 先确认，输出应该为Y
-# 但是笔者安装玩驱动后执行此命令提示没有这个文件或目录，重启也正常显示
-cat /sys/module/nvidia_drm/parameters/modeset
-
-# AMD（开源）
-# 官网教程：https://wiki.archlinux.org/title/Xorg#AMD
-sudo pacman -S xf86-video-amdgpu mesa
-
-# Intel（开源）
-# 官网教程：https://wiki.archlinux.org/title/Intel_graphics
-# mesa OpenGL 支持
-# libva-intel-driver 视频加速（VA-API）
-# vulkan-intel Vulkan 支持（如游戏、图形加速）
-sudo pacman -S mesa libva-intel-driver vulkan-intel
-```
-
-###### 安装GTX 1060显卡驱动
-
-GTX 1060显卡驱动已经被老黄归为Legacy, supported，需要自己编译安装了
-
-```sh
-# 安装headers
-# 如果是linux包就安装linux-headers
-# 如果是linux-lts包安装linux-lts-headers（每个内核包都有不同的headers包名）
-sudo pacman -S linux-headers
-
-# 安装显卡驱动，如果内核有更新了，header也会更新，这时候显卡驱动也得更新了
-yay -S nvidia-580xx-dkms
-
-# 使dkms命令生效
-source /usr/share/bash-completion/completions/dkms
-
-# 将可以看到刚刚安装的显卡驱动
-dkms status
-
-# 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
-# 从nvidia-utils 560.35.03-5起,默认已经启用DRM
-# 对于老版本的驱动，设置modeset=1
-# 先确认，输出应该为Y
-sudo cat /sys/module/nvidia_drm/parameters/modeset
-```
-
 ##### 安装yay
 
 AUR（Arch User Repository）是Arch Linux社区维护的一个用户贡献的包脚本仓库
@@ -3210,74 +3169,11 @@ yay --version
 # base-devel是使用yay -S 包名 构建AUR包时用到的依赖
 # 它包含了常见的编译工具和脚本，如make、gcc等
 sudo pacman -S --needed base-devel
+
+# 还要安装git
+# yay → 用 git clone 从AUR下载 PKGBUILD → 编译 → 安装
+sudo pacman -S git
 ```
-
-##### 安装切换显卡工具
-
-对于笔记本，安装完对应的显卡驱动后，还要安装切换显卡工具
-
-笔者建议就是直接切换用独显或核显
-
-```sh
-# 安装完重启
-yay -S optimus-manager
-
-# 命令行切换显卡，nvidia, integrated, hybrid，分别为独显、集显和混合模式
-# 切换到 Nvidia GPU
-optimus-manager --switch nvidia
-```
-
-##### 安装防火墙
-
-```sh
-# 防火墙工具
-sudo pacman -S firewalld
-
-# 防火墙控制面板
-sudo pacman -S plasma-firewall
-
-# 启动防火墙
-sudo systemctl start firewalld
-
-# 设置防火墙开机自启动
-sudo systemctl enable firewalld
-```
-
-##### 安装中文字体
-
-Monospace：等宽，一个汉字=两个ASCII字母的宽度，全宽字符：宽度等于一个汉字的宽度，半宽字符：宽度等于半个汉字的宽度
-
-Serif：有衬线，笔画末端有小装饰线
-
-Sans-serif：无衬线，笔画末端没有装饰，线条简洁
-
-![衬线和无衬线对比图](/images/Sans-Serif.png)
-
-- 安装谷歌版的思源黑体（等比例/等宽）
-
-```sh
-# noto-fonts-cjk：谷歌版的思源黑体，覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
-# 不安装中文会乱码，装一个够了，不够用再找别的字体
-sudo pacman -S noto-fonts-cjk
-
-# 包含更多的汉字特别是生僻字和繁体字（据说是unicode包含的全部汉字），根据需要安装
-# 笔者建议安装，因为fcitx5的候选字就有很多是生僻字的，不安装的话会显示为相应的unicode码
-sudo pacman -S ttf-hanazono
-
-# 然后用来刷新和重建系统的字体缓存（只能刷新部分字体缓存，如fcitx5的候选字就不会马上生效，需要重启才行）
-# fc-cache：Fontconfig
-# -f (force)：强制刷新，即使缓存已经存在也会重新生成
-# -v (verbose)：详细模式，会在终端输出扫描过程和结果，方便确认哪些字体被识别
-fc-cache -fv
-```
-
-- 系统字体设置
-
-字体大小跟系统默认一样，除了Fixed width设置为"Noto Sans Mono CJK SC"，其它都用"Noto Sans CJK SC"，
-
-特别是General那里，一定要设置，不然有些中字会显示半宽，特别别扭
-
-![系统字体设置](/images/system-fonts.png)
 
 ##### 安装火狐浏览器
 
@@ -3525,7 +3421,107 @@ cat /etc/pam.d/sddm
 sudo pacman -S kwalletmanager
 ```
 
-### 安装其它常用软件
+##### 安装声音驱动
+
+ALSA(Advanced Linux Sound Architecture)驱动作为linux内核的一部分，已经作为依赖安装了
+
+台式机无需再安装高级的声音驱动
+
+笔记本电脑如果没有声音，参考官网进行安装：<https://wiki.archlinux.org/title/General_recommendations#Sound_system>
+
+##### 安装显卡驱动
+
+- 先启用 multilib 仓库，它是Arch官方提供的32位兼容库仓库，Steam、Wine、某些游戏需要它,Steam的软件包也在这个仓库里面
+
+```sh
+# 编辑/etc/pacman.conf配置文件
+sudo vim /etc/pacman.conf
+
+# 找到这两行，取消注释，保存退出
+#[multilib]
+#Include = /etc/pacman.d/mirrorlist
+```
+
+- 根据显卡类型安装显卡驱动
+
+```sh
+# 这一步可能还要摸索，笔者装了英特尔和英伟达的后，重启黑屏了，然后切换tty又装了optimus-manager，然后重启又正常了
+
+# 安装 GPU 驱动（根据显卡选择，虚拟机可以不用执行）
+
+# 根据执行结果去网站找到对应的显卡代码：https://nouveau.freedesktop.org/CodeNames.html
+# 到安装教程官网，根据显卡代码安装对应的显卡驱动：https://wiki.archlinux.org/title/NVIDIA
+lspci -k -d ::03xx
+
+# NVIDIA（闭源）
+# 新版显卡的驱动已经从nvidia改成nvidia-open了
+# nvidia-open：NVIDIA内核模块
+# nvidia-utils：NVIDIA驱动工具，安装nvidia-open时会将nvidia-utils作为依赖进行安装
+# lib32-nvidia-utils：NVIDIA驱动工具（32位）（可选）,Steam需要用到，笔者建议安装具体的软件的时候再根据交互提示选择安装
+# nvidia-settings：NVIDIA图形驱动程序配置工具（可选）
+sudo pacman -S nvidia-open lib32-nvidia-utils nvidia-settings
+
+# 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
+# 从nvidia-utils 560.35.03-5起,默认已经启用DRM
+# 对于老版本的驱动，设置modeset=1
+# 先确认，输出应该为Y
+# 但是笔者安装玩驱动后执行此命令提示没有这个文件或目录，重启也正常显示
+cat /sys/module/nvidia_drm/parameters/modeset
+
+# AMD（开源）
+# 官网教程：https://wiki.archlinux.org/title/Xorg#AMD
+sudo pacman -S xf86-video-amdgpu mesa
+
+# Intel（开源）
+# 官网教程：https://wiki.archlinux.org/title/Intel_graphics
+# mesa OpenGL 支持
+# libva-intel-driver 视频加速（VA-API）
+# vulkan-intel Vulkan 支持（如游戏、图形加速）
+sudo pacman -S mesa libva-intel-driver vulkan-intel
+```
+
+###### 安装GTX 1060显卡驱动
+
+GTX 1060显卡驱动已经被老黄归为Legacy, supported，需要自己编译安装了
+
+```sh
+# 安装headers
+# 如果是linux包就安装linux-headers
+# 如果是linux-lts包安装linux-lts-headers（每个内核包都有不同的headers包名）
+sudo pacman -S linux-headers
+
+# 安装显卡驱动，如果内核有更新了，header也会更新，这时候显卡驱动也得更新了
+yay -S nvidia-580xx-dkms
+
+# 使dkms命令生效
+source /usr/share/bash-completion/completions/dkms
+
+# 将可以看到刚刚安装的显卡驱动
+dkms status
+
+# 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
+# 从nvidia-utils 560.35.03-5起,默认已经启用DRM
+# 对于老版本的驱动，设置modeset=1
+# 先确认，输出应该为Y
+sudo cat /sys/module/nvidia_drm/parameters/modeset
+```
+
+###### 安装切换显卡工具
+
+对于笔记本，安装完对应的显卡驱动后，还要安装切换显卡工具
+
+笔者建议就是直接切换用独显或核显
+
+```sh
+# 安装完重启
+yay -S optimus-manager
+
+# 命令行切换显卡，nvidia, integrated, hybrid，分别为独显、集显和混合模式
+# 切换到 Nvidia GPU
+optimus-manager --switch nvidia
+```
+
+##### 安装其它常用软件
 
 ```sh
 # 压缩/解压软件ark
@@ -3571,7 +3567,7 @@ sudo pacman -S clamtk
 sudo pacman -S firejail
 ```
 
-#### 安装steam
+##### 安装steam
 
 ```sh
 # 需要启用multilib仓库
@@ -3658,8 +3654,11 @@ qemu还能运行virtualbox的vdi文件，但是长期来看用qemu-img转成raw�
 # qemu-full：完全版
 sudo pacman -S qemu-full
 
-# 管理KVM/QEMU（虚拟机）
-sudo pacman -S libvirt
+# libvirt通过命令行管理KVM/QEMU（虚拟机）
+# virt-manager是通过libvirt管理KVM/QEMU（虚拟机）的GUI
+# virt-manager->libvirt-glib->libvirt
+# 安装了virt-manager不用单独安装libvirt
+sudo pacman -S virt-manager
 
 # win11要求TPM2.0，需要安装swtpm进行模拟
 sudo pacman -S swtpm
@@ -3672,11 +3671,6 @@ sudo pacman -S dnsmasq
 # 能建立 TCP/UDP 连接、监听端口、做端口转发、做管道式数据传输，是 SSH 的辅助工具
 # 但是笔者目前没用到...
 sudo pacman -S openbsd-netcat 
-
-# 通过libvirt管理KVM/QEMU（虚拟机）的GUI
-# virt-manager->libvirt-glib->libvirt
-# 安装了virt-manager不用单独安装libvirt
-sudo pacman -S virt-manager
 
 # 设置身份验证
 # 如果Arch Linux用户已经加入到wheel用户组了就可以跳过，会在启动virt-manager的时候提示输入密码
