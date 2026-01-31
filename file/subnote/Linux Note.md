@@ -2402,7 +2402,8 @@ sudo apt-cache rdepends 包名
 sudo pacman -Syu
 
 # 从远程仓库拉取软件安装
-sudo pacman -S 包名
+# --noconfirm：静默安装，不询问
+sudo pacman -S 包名 [--noconfirm]
 
 # 安装本地.pkg.tar.zst安装包或.pacman安装包
 sudo pacman -U /path/to/pkg.tar.zst安装包或.pacman安装包
@@ -3942,8 +3943,7 @@ sudo virsh blockpull --domain domain --path /vms/domain.snapshot1
 sudo virsh snapshot-list domain
 
 # 查看快照链
-sudo qemu-img info --backing-chain 虚拟机名称.快照名称 [| grep "backing file:"
-]
+sudo qemu-img info --backing-chain 虚拟机名称.快照名称 [| grep "backing file:"]
 ```
 
 ###### libvirt网络
@@ -4019,6 +4019,7 @@ cat /sys/module/kvm_intel/parameters/nested
 # 安装它后无需自己编译，也不需要额外安装linux-headers
 # 如果用的是非linux包（如linux-lts），就选择virtualbox-guest-dkms
 # 并且还要安装linux-lts-headers（每个内核包都有不同的headers包名）
+# 安装完后如果运行虚拟系统出问题先重启看看
 sudo pacman -S virtualbox
 
 # 如果还需要虚拟机增强功能（共享剪贴板、共享文件夹等）
