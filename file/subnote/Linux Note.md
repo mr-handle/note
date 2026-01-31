@@ -2983,6 +2983,20 @@ nmcli connection show --active
 nmcli connection modify "上面列出的Wifi的SSID" connection.autoconnect yes
 ```
 
+##### 安装usb_modeswitch
+
+如果用usb网卡，遇到了插拔后usb网卡无法识别
+
+或者关机然后断电，再通电开机，进入桌面后发现usb网卡无法识别的情况
+
+笔者安装usb_modeswitch后usb网卡就能正常自动识别了
+
+```sh
+sudo pacman -S usb_modeswitch
+```
+
+另一种办法是手动切换为网卡模式，参考：<https://wiki.archlinux.org/title/ZTE_MF110/MF190#Switch_from_CD_mode_to_modem_mode_on_the_device>
+
 #### 安装中文字体
 
 Monospace：等宽，一个汉字=两个ASCII字母的宽度，全宽字符：宽度等于一个汉字的宽度，半宽字符：宽度等于半个汉字的宽度
@@ -3392,20 +3406,6 @@ ibus-setup
 # 然后在系统设置KeyBoard，找到virtual keyboard，选择IBus Wayland，然后应用就可以了
 ```
 
-##### 安装usb_modeswitch
-
-如果用usb网卡，遇到了插拔后usb网卡无法识别
-
-或者关机然后断电，再通电开机，进入桌面后发现usb网卡无法识别的情况
-
-笔者安装usb_modeswitch后usb网卡就能正常自动识别了
-
-```sh
-sudo pacman -S usb_modeswitch
-```
-
-另一种办法是手动切换为网卡模式，参考：<https://wiki.archlinux.org/title/ZTE_MF110/MF190#Switch_from_CD_mode_to_modem_mode_on_the_device>
-
 ##### KWallet
 
 - kwallet-pam
@@ -3476,9 +3476,8 @@ sudo pacman -S nvidia-open lib32-nvidia-utils nvidia-settings
 # 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
 # 从nvidia-utils 560.35.03-5起,默认已经启用DRM
 # 对于老版本的驱动，设置modeset=1
-# 先确认，输出应该为Y
-# 但是笔者安装玩驱动后执行此命令提示没有这个文件或目录，重启也正常显示
-cat /sys/module/nvidia_drm/parameters/modeset
+# 可以执行如下命令确认，输出应该为Y
+sudo cat /sys/module/nvidia_drm/parameters/modeset
 
 # AMD（开源）
 # 官网教程：https://wiki.archlinux.org/title/Xorg#AMD
@@ -4226,7 +4225,7 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 sudo vim /etc/mkinitcpio.conf
 
 # 重新生成 initramfs
-mkinitcpio -P
+sudo mkinitcpio -P
 ```
 
 ### 目录/文件备份
