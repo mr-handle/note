@@ -2318,7 +2318,11 @@ yum list kernel -q
 - 查看系统版本信息
 
 ```sh
+# 简要信息
 lsb_release -a
+
+# 详细信息
+cat /etc/os-release
 ```
 
 ### apt包管理器
@@ -2386,6 +2390,9 @@ sudo apt-cache depends 包名
 
 # 查看该包被哪些包依赖
 sudo apt-cache rdepends 包名
+
+# 查看手动安装的包
+apt list --manual-installed
 ```
 
 ## Arch Linux
