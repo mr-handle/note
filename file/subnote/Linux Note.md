@@ -391,6 +391,22 @@ rm [-rf] 文件/目录
 mv 源目录/文件 目的目录/文件
 ```
 
+#### rsync复制文件
+
+```sh
+# archlinux安装rsync 
+sudo pacman -S rsync
+
+# -a：归档
+# -h：人类可读
+# --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小
+# --info=progress2：复制总体进度
+# 要先创建目的目录，最后源目录记得加/后缀，表示复制目录内容
+# rsync只能复制，不能整理碎片
+sudo mkdir -p /path/to/target
+sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
+```
+
 #### ls查看目录内容
 
 ```sh
@@ -3747,24 +3763,22 @@ sudo systemctl enable spice-vdagentd
     - archlinux启动引导丢失，修复后，系统状态为创建第一个快照那时候的系统
 
 ```sh
-# 如果没有先安装rsync 
-sudo pacman -S rsync
-
-# 如果有外部快照文件用rsync复制
-# -a：归档
-# -h：人类可读
-# --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小
-# --info=progress2：复制总体进度
-# 要先创建目的目录，最后源目录记得加/后缀，表示复制目录内容
-# rsync只能复制，不能整理碎片
-sudo mkdir -p /path/to/target
-sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
-
-# 如果没有快照文件用qemu-img复制，推荐
-# 如果想要保持原来的目录结构就用rsync
-# -O：目标格式，默认raw
+# qemu-img在转换完成后生成的目标文件大小将不再是转换前原文件那样显示的是预定义大小
+# 而是显示为实际占用空间的大小，预定义大小不变
 # -p：显示进度
+# -O：目标格式，默认raw
 sudo qemu-img convert -p -O qcow2 /path/to/active.qcow2 /path/to/target.qcow2
+
+# 如果有外部快照，假设虚拟机文件的生成顺序是：domain.qcow2 -> domain.snapshotname1 -> domain.snapshotname2
+# 转换后的目标文件内容为：domain.qcow2
+sudo qemu-img convert -p -O qcow2 /path/to/domain.qcow2 /path/to/target.qcow2
+
+# 转换后的目标文件内容为：domain.qcow2 + domain.snapshotname1
+sudo qemu-img convert -p -O qcow2 /path/to/domain.snapshotname1 /path/to/target.qcow2
+
+# 转换后的目标文件内容为：domain.qcow2 + domain.snapshotname1 + domain.snapshotname2
+sudo qemu-img convert -p -O qcow2 /path/to/domain.snapshotname2 /path/to/target.qcow2
+
 
 # 查看qcow2文件预定义大小和实际占用空间大小
 sudo qemu-img info ubuntuserver.qcow2
@@ -3784,13 +3798,6 @@ sudo cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
 
 # 如果虚拟机使用了TMP，没试过先保留
 #cp -r /var/lib/libvirt/swtpm/虚拟机名称 /path/to/target
-
-# 当创建过外部快照时，复制后，修改这里恢复原来的系统状态
-# 创建新虚拟机后默认为：<source file="/path/to/yourvmName.suffix"/>
-<source file="/path/to/虚拟机名称.快照名称"/>
-
-
-
 ```
 
 ##### 从虚拟机文件创建新虚拟机并恢复快照
@@ -3842,6 +3849,8 @@ reset
 
 ###### 恢复backing file（如果有外部快照文件）
 
+- 恢复backing file
+
 ```sh
 # 对于有外部快照的虚拟机文件
 # 由于backing file的路径是写死在虚拟机文件里面的，因此复制后要重新rebase
@@ -3852,6 +3861,16 @@ reset
 # 如果不执行rebase，则domain.snapname1和domain.snapname2根本不能使用
 sudo qemu-img rebase -u -F qcow2 -b domain.qcow2 domain.snapname1
 sudo qemu-img rebase -u -F qcow2 -b domain.snapname1 domain.snapname2
+```
+
+- 指定虚拟机文件
+
+```sh
+# 创建新虚拟机后，如果有正确的backing file的外部快照文件
+# 可以指定快照文件名来设置虚拟机的系统状态，相当于恢复到指定快照的系统状态
+# 这对于还没有恢复快照的情况下是很有用的
+# 通过virt-manager的查看虚拟机详情-概览，切到xml，找到<source file="/path/to/虚拟机名称.suffix"/>
+<source file="/path/to/你要指定的虚拟机文件名"/>
 ```
 
 ###### 恢复外部快照（恢复后在virt-manager的快照列表可以看到）
