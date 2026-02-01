@@ -15631,6 +15631,30 @@ update user set host='%' where user='dbadmin';
 flush privileges;
 ```
 
+#### phpmyadmin
+
+phpmyadmin是mysql的数据库管理工具，可以通过浏览器进行操作
+
+- 安装docker版phpmyadmin
+
+```sh
+docker pull phpmyadmin:5.2.3 
+```
+
+- compose.yaml
+
+```yaml
+phpmyadmin:
+    image: phpmyadmin:5.2.3
+    container_name: phpmyadmin
+    ports:
+        - 8080:80
+    environment:
+        PMA_ARBITRARY: 1
+```
+
+- 访问<http://你的ip:8080/>
+
 #### MySQL字符集
 
 - 层级：server（MySQL 实例级别）、database（库级别）、table（表级别）、column（字段级别），优先级从左往右依次增大
@@ -16702,62 +16726,79 @@ BASE：基本可用（Basically Available）、软状态（Soft state）、最�
 
 ##### 修改配置
 
-- 配置文件：[redis.conf](/file/redis/redis.conf)
-
-- daemonize no 改成 daemonize yes
-- protected-mode yes 改成 protected-mode no，不然Java程序连接不上
-- bind 127.0.0.1，表示只能本机访问，需要注释掉或者改成本机的ip地址，不然会影响远程ip连接
-- 去掉对requirepass的注释，并且指定登录密码
-
-- 配置部分注释如下
+- redis7.4配置文件：[redis.conf](/file/redis/redis.conf)，其它版本可以去源码仓库那里下载
 
 ```conf
-# 绑定可以连redis数据库的ip，多个ip用空格隔开
-bind 127.0.0.1 192.168.31.8
+# "bind 127.0.0.1 -::1"表示只能本机访问
+# 监听所有网卡这样写：bind 0.0.0.0，它会监听包括127.0.0.1的所有网卡
+# 远程连接需要指定本机（某个网卡）的ip地址
+bind 127.0.0.1 10.0.2.15
 
+# 开启保护模式，默认
+protected-mode yes
 
-# daemonize:yes:redis采用的是单进程多线程的模式。当redis.conf中选项daemonize设置成yes时，代表开启守护进程模式。在该模式下，redis会在后台运行，并将进程pid号写入至redis.conf选项pidfile设置的文件中，此时redis将一直运行，除非手动kill该进程。
-# daemonize:no: 当daemonize选项设置成no时，当前界面将进入redis的命令行界面，exit强制退出或者关闭连接工具(putty,xshell等)都会导致redis进程退出。
-daemonize yes
-
-# daemonize设置为yes时，redis将进程id写入到pidfile指定的文件中
-pidfile /var/run/redis_6379.pid
-
-# 指定redis监听接收连接请求的端口
+# 指定redis监听接收连接请求的端口，默认
 port 6379
 
-# 客户端空闲了没有给redis发送消息命令也不断开连接
+# 客户端空闲了没有给redis发送消息命令也不断开连接，默认
 timeout 0
 
-# 60秒检查一次客户端是否存活
+# 60秒检查一次客户端是否存活，默认300
 tcp-keepalive 60
 
-# 日志级别
+# 守护进程（daemon）方式后台运行，不占用当前终端
+# redis采用的是单进程多线程的模式
+# 当daemonize设置成yes时，代表开启守护进程模式
+# 在该模式下，redis会在后台运行，并将进程pid号写入至redis.conf选项pidfile设置的文件中，此时redis将一直运行，除非手动kill该进程
+# 当daemonize选项设置成no时，当前界面将进入redis的命令行界面，exit强制退出或者关闭连接工具(putty,xshell等)都会导致redis进程退出
+daemonize yes
+
+# daemonize设置为yes时，redis将进程id写入到pidfile指定的文件中，默认
+pidfile /var/run/redis_6379.pid
+
+# 日志级别，默认
 loglevel notice
 
 # 日志文件
-logfile "/var/redis.log"
+# 默认logfile ""，表示打印日志到标准输出，同时如果开启了daemonize, 日志将发送到/dev/null
+# 如果是主机部署redis，这样指定：logfile "/var/log/redis.log"
+# 如果是docker部署redis，这样指定：logfile ""，然后docker会自动收集日志
+logfile ""
 
-# 是否把日志输出到系统日志
+# 是否把日志输出到系统日志，默认注释
 #syslog-enabled no
 
-# 指定redis在系统日志里面的日志标志
+# 指定redis在系统日志里面的日志标志，默认注释
 #syslog-ident redis
 
-# 指定系统日志设备，值必须为 USER 或 LOCAL0-LOCAL7之一
+# 指定系统日志设备，值必须为 USER 或 LOCAL0-LOCAL7之一，默认注释
 # syslog-facility local0
 
 # redis默认有16个数据库
 databases 16
 
+# 3600 秒内至少1次写操作 → 触发 RDB
 save 3600 1
+
+# 300 秒内至少 100 次写操作 → 触发 RDB
 save 300 100
+
+# 60 秒内至少 10000 次写操作 → 触发 RDB
 save 60 10000
 
+# 定义快照文件名，默认
 dbfilename dump.rdb
 
+# 指定登录密码
+requirepass 具体密码
+
+# 开启AOF持久化
 appendonly yes
+
+# 定义只追加文件名，默认
 appendfilename "appendonly.aof"
+
+# 每秒写入只追加文件，默认
 appendfsync everysec
 ```
 
@@ -16824,22 +16865,47 @@ docker pull redis:7.4
 ```yaml
 redis:
     image: redis:7.4
-    container_name: redis01
+    container_name: redis
     ports:
-        - "6379:6379"
+        - 6379:6379
     volumes:
-        - /handle/data/redis/data:/data
-        - /handle/data/redis/conf/redis.conf:/usr/local/etc/redis/redis.conf
+        - redis-data:/data
+        - redis-conf:/usr/local/etc/redis
     networks: 
-        - my-docker-net
+        - my-net
     restart: always
+networks: 
+    my-net: 
+        name: my-net
+volumes: 
+    redis-data: 
+        name: redis-data
+    redis-conf: 
+        name: redis-conf
 ```
 
-- 4.连接redis客户端
+- 启动
 
 ```sh
-# 方法1
+# 首次启动
+docker compose -f path/to/compose.yaml up -d
+
+# 然后将修改好的配置文件复制到/var/lib/docker/volumes/redis-conf/_data
+cp /path/to/redis.conf /var/lib/docker/volumes/redis-conf/_data
+
+# 然后删除容器，不然直接执行启动配置文件不生效的
+docker compose -f mycompose.yaml down
+
+# 最后再启动
+docker compose -f mycompose.yaml up -d
+```
+
+- 连接redis客户端
+
+```sh
+# 方法1，执行后将进入容器环境，然后输入redis-cli并回车，进入redis客户端 
 docker exec -it redis01 /bin/bash
+
 # 方式2
 docker exec -it redis01 redis-cli
 ```
@@ -16849,6 +16915,36 @@ docker exec -it redis01 redis-cli
 ```sh
 ping
 ```
+
+#### Redis Insight
+
+Redis Insight是Redis官方推出的redis数据库管理工具
+
+官网：<https://redis.io/insight/>
+
+- 安装docker版本的redisinsight
+
+```sh
+docker pull redis/redisinsight:2.42
+```
+
+- compose.yaml
+
+```yaml
+redisinsight:
+    image: redis/redisinsight:2.42
+    container_name: redisinsight
+    ports:
+        - 5540:5540
+    volumes:
+        - redisinsight-data:/data
+
+volumes: 
+    redisinsight-data:
+        name: redisinsight-data
+```
+
+- 访问：<http://你的ip:5540/>
 
 #### 数据库操作命令
 
