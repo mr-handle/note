@@ -3738,6 +3738,10 @@ sudo systemctl enable spice-vdagentd
 
 - 目前没有快照的情况下用rsync命令复制ubuntu，然后启动是没有问题的
 
+- 目前没有快照的情况下用qemu-img命令复制ubuntu，然后启动也是没有问题的
+
+- 更推荐qemu-img，它复制后的文件用文件管理器查看占用的空间变成了实际占用空间而不是预定义空间大小
+
 - 目前有外部快照用rsync命令复制后，新增虚拟机，快照丢失了，这种情况，要考虑复制的话继续用virtualbox比较好
     - ubuntu复制启动没有问题，但是系统状态为创建快照那时候的系统
     - archlinux启动引导丢失，修复后，系统状态为创建第一个快照那时候的系统
@@ -3756,8 +3760,7 @@ sudo pacman -S rsync
 sudo mkdir -p /path/to/target
 sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
 
-# 如果没有快照文件用qemu-img复制
-# 这个命令会整理碎片并且将顶层文件和所有外部快照文件合并成target.qcow2一个文件
+# 如果没有快照文件用qemu-img复制，推荐
 # 如果想要保持原来的目录结构就用rsync
 # -O：目标格式，默认raw
 # -p：显示进度
