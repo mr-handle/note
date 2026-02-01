@@ -13583,14 +13583,20 @@ services:
     mysql:
         # 容器名，不指定则为：项目名-服务名-数字-（1-n)
         container_name: mysql
-        # 镜像
+        # 镜像名称
         image: mysql:8.0
         # 端口 
         ports:
             - "3306:3306"
         # 环境变量
         environment:
+            # 必须
             MYSQL_ROOT_PASSWORD: mysql123
+            # 下面的数据库名称、用户名和密码是可选的
+            # 启动后，MySQL会自动创建dbname数据库和user_dbname用户并指定密码user_password，并授予该用户对dbname的全部权限
+            MYSQL_DATABASE: dbname
+            MYSQL_USER: user_dbname
+            MYSQL_PASSWORD: user_password
         volumes:
             # 命名卷，不可以自定义位置，卷名要在顶级元素volumes里面声明
             - mysql-data:/var/lib/mysql
@@ -15540,7 +15546,7 @@ docker run -p 5050:80 \
    mysqld --remove mysql
    ```
 
-#### Linux安装MySQL
+#### RedHat系列Linux安装MySQL
 
 ```sh
 # 查看是否安装了mysql相关的组件
@@ -15572,6 +15578,37 @@ docker pull mysql:8.0.29
 
 # 启动
 docker run -p 3306:3306 --name mysql01 -e MYSQL_ROOT_PASSWORD=mysql123 -d mysql:8.0.29 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+```
+
+- compose.yaml
+
+```yaml
+name: projectname
+services: 
+    mysql:
+        container_name: mysql_container_name
+        image: mysql:8.0.29
+        ports:
+            - "3306:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD: root_passwdord
+            - MYSQL_DATABASE: dbname
+            - MYSQL_USER: user_dbname
+            - MYSQL_PASSWORD: user_password
+        volumes:
+            - mysql-data:/var/lib/mysql
+            - mysql-conf:/etc/mysql/conf.d
+        networks: 
+            - projectname-net
+        restart: always
+networks: 
+    projectname-net: 
+        name: projectname-net
+volumes: 
+    mysql-data: 
+        name: mysql-data
+    mysql-conf: 
+        name: mysql-conf
 ```
 
 #### 登录
