@@ -8090,9 +8090,9 @@ public class DataSourceConfiguration {}
 
 - 用于加载指定的配置文件
 
-- person.yml
+- person.yaml
 
-```yml
+```yaml
 user01:
     name: 张三
 ```
@@ -8101,7 +8101,7 @@ user01:
 
 ```java
 @Component
-@PropertySource(value = "classpath:person.yml")
+@PropertySource(value = "classpath:person.yaml")
 @ConfigurationProperties(prefix = "user01")
 public class Person {
     private String name;
@@ -8253,9 +8253,9 @@ public class XxxController {
 
 - 只能读取单个值，不能读取集合
 
-- 假设配置文件application.yml存在配置
+- 假设配置文件application.yaml存在配置
 
-```yml
+```yaml
 user01:
     name: 张三
 ```
@@ -8271,7 +8271,7 @@ public class UserDO {
 }
 
 @Configuration
-@PropertySource(value = "classpath:person.yml")
+@PropertySource(value = "classpath:person.yaml")
 public class ApplicationConfiguration {
     // 使用场景2
     @Bean
@@ -9655,7 +9655,7 @@ public class Application {
 ```java
 /**
  * 启动项目后会生成存放 pid 的 application.pid 文档
- * pid存放到指定目录：在application.properties(yml)配置文档中添加spring.pid.file=/var/log/app.pid
+ * pid存放到指定目录：在application.properties(yaml)配置文档中添加spring.pid.file=/var/log/app.pid
  */
 public static void main(String[] args) {
     SpringApplication app = new SpringApplication(Application.class);
@@ -9682,7 +9682,7 @@ public static void main(String[] args) {
 
 #### `@ConfigurationProperties`
 
-- 作用：配置绑定，将类中所有属性和配置文件中的相关配置进行绑定，默认从application.properties(.yml)文件中获取值，不用写@Value
+- 作用：配置绑定，将类中所有属性和配置文件中的相关配置进行绑定，默认从application.properties(.yaml)文件中获取值，不用写@Value
   
 - 属性：prefix：取前缀为xxx的属性
 
@@ -9692,9 +9692,9 @@ public static void main(String[] args) {
 
 - 如果是properties文件，并且内容有中文时需要用@PropertySource指定编码格式，并且文件名不能是application.properties
 
-假设配置文件application.yml存在配置
+假设配置文件application.yaml存在配置
 
-```yml
+```yaml
 user01:
     name: 张三
 ```
@@ -9808,7 +9808,7 @@ jdbc.mysql.password = mysql123
 
 // @PropertySource：加载指定配置文件,第二個路徑為另一個jdbc.properties在磁盤上（jar包外）的路徑
 
-// @ConstructorBinding 构造函数注入只能提取application.properties(.yml)文件中的值
+// @ConstructorBinding 构造函数注入只能提取application.properties(.yaml)文件中的值
 // 想要提取别的配置文件中的值，需要通过@Component，同时必须设置getter和setter
 @Getter
 @ConstructorBinding
@@ -12483,9 +12483,9 @@ public class Application {
 
 - 建表：[postgresql.sql](/sql/seata-server-postgresql.sql)
 
-- 解压seata，进入conf文件夹下，参考application.example.yml，修改application.yml
+- 解压seata，进入conf文件夹下，参考application.example.yaml，修改application.yaml
 
-[application.yml](/yml/application.yml)
+[application.yaml](/yaml/application.yaml)
 
 - 启动seata-server
 
@@ -12507,7 +12507,7 @@ seata:
         - SEATA_IP=192.168.56.1
         - SEATA_PORT=8091
     volumes:
-        - /handle/data/seata/application.yml:/seata-server/resources/application.yml
+        - /handle/data/seata/application.yaml:/seata-server/resources/application.yaml
     networks: 
         - my-docker-net
     restart: always
@@ -13572,9 +13572,9 @@ docker inspect 容器id/容器名称 | tail -n 20
 
 ### Docker Compose
 
-#### 编写compose.yml
+#### 编写compose.yaml
 
-```yml
+```yaml
 # 项目名
 name: myproject
 # services：定义一组要运行的容器服务
@@ -13632,17 +13632,17 @@ configs:
 secrets: 
 ```
 
-#### 使用compose.yml启动/下线
+#### 使用compose.yaml启动/下线
 
 ```sh
 # 自动在当前目录查找compose.yaml、docker-compose.yaml
 docker compose up -d
 
 # 指定compose文件名批量新建容器并以后台方式启动
-docker compose -f mycompose.yml up -d
+docker compose -f mycompose.yaml up -d
 
 # 批量移除容器并删除相关资源（如果不在参数中指定不会删除自定义挂载的目录/卷）
-docker compose -f mycompose.yml down
+docker compose -f mycompose.yaml down
 
 # 批量启动
 docker compose start container1 container2 container3
@@ -14798,7 +14798,7 @@ n：文档包含的词条数
 
 - 下载tar.gz文件并解压到指定目录
 
-#### 修改config/elasticsearch.yml文件
+#### 修改config/elasticsearch.yaml文件
 
 ##### 单点部署
 
@@ -14845,7 +14845,7 @@ sysctl -p
 
 ##### 集群部署
 
-```yml
+```yaml
 # 集群名称
 cluster.name: elasticsearch-cluster
 # 节点名称，每个节点的名称不能重复
@@ -14984,7 +14984,7 @@ chown -R elasticsearch:elasticsearch /path/to/kibana-xxx
 elasticsearch/bin/elasticsearch-reset-password -u kibana_system
 ```
 
-- 编辑配置文件/path/to/kibana/config/kibana.yml
+- 编辑配置文件/path/to/kibana/config/kibana.yaml
 
 ```yaml
 server.port: 5601
@@ -15631,9 +15631,11 @@ update user set host='%' where user='dbadmin';
 flush privileges;
 ```
 
-#### phpmyadmin
+#### phpMyAdmin
 
-phpmyadmin是mysql的数据库管理工具，可以通过浏览器进行操作
+phpMyAdmin是mysql的数据库管理工具，可以通过浏览器进行操作
+
+官网：<https://www.phpmyadmin.net/>
 
 - 安装docker版phpmyadmin
 
