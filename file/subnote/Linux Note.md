@@ -3789,22 +3789,32 @@ sudo cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
 # 创建新虚拟机后默认为：<source file="/path/to/yourvmName.suffix"/>
 <source file="/path/to/虚拟机名称.快照名称"/>
 
-# 导入快照(创建新虚拟机并且虚拟系统首次关机后)
-# 需要先删除snapshot.xml里的<domain>...</domain>整段
-virsh snapshot-create 虚拟机名称 快照1.xml --redefine --current
-virsh snapshot-create 虚拟机名称 快照2.xml --redefine --current
+
+
 ```
 
-###### 如果复制后新建虚拟机启动EFI引导失败
+##### 从虚拟机文件创建新虚拟机并恢复快照
 
-新建虚拟机时，virt-manager生成一个错误的/var/lib/libvirt/qemu/nvram/新虚拟机名称_VARS.fd，导致启动引导失败
+###### 新建虚拟机
 
-这时候也可以手动修复引导
+- 1.将"原虚拟机名称_VARS.fd"复制到"/var/lib/libvirt/qemu/nvram/新虚拟机名称_VARS.fd"
 
 ```sh
-# 如果启动报错：failed to load Boot0002 "UEFI Misc Device" from t...: Not found
-# 按下任意键
-# 选择 EFI Internal Shell：新建虚拟机最后一步勾选"Customize configuration before install"，然后在Overview->Hypervisor Details->Firmware，选择具体EFI才会有这个选项
+sudo cp /path/to/原虚拟机名称_VARS.fd /var/lib/libvirt/qemu/nvram/新虚拟机名称_VARS.fd
+```
+
+- 2.新建虚拟机
+    - 如果"原虚拟机名称_VARS.fd"丢失了，新建虚拟机时，virt-manager将自己生成一个"/var/lib/libvirt/qemu/nvram/新虚拟机名称_VARS.fd"
+    - 这很可能导致导致启动引导失败（archlinux，ubuntu目前试了没问题）
+    - 如果新建虚拟机启动EFI引导失败，这时候也可以手动修复引导
+        - 首先需要先删除该虚拟机，然后再次新建虚拟机
+        - 在新建虚拟机最后一步勾选"Customize configuration before install"，然后点下一步
+        - 在Overview->Hypervisor Details->Firmware，选择具体EFI，根据需要选是否带secureboot的，archlinux不需要带secureboot的
+        - 然后开始安装，将看到启动报错：failed to load Boot0002 "UEFI Misc Device" from t...: Not found
+        - 按下任意键，然后选择 EFI Internal Shell（如果上面没有选择具体EFI是没有这个选项的）
+        - 然后
+
+```sh
 # 进入EFI系统分区（ESP）
 FS0:
 
@@ -3823,11 +3833,68 @@ cd GRUB
 # 查看目录，能看到grubx64.efi
 ls
 
-# 永久修复启动项
+# 永久修复启动项，也可以直接执行这条指令，通过tab键补全确认是否有FS0:\EFI\GRUB\grubx64.efi
 bcfg boot add 0 FS0:\EFI\GRUB\grubx64.efi "GRUB"
 
 # 然后重启系统
 reset
+```
+
+###### 恢复backing file（如果有外部快照文件）
+
+```sh
+# 对于有外部快照的虚拟机文件
+# 由于backing file的路径是写死在虚拟机文件里面的，因此复制后要重新rebase
+# 假设虚拟机文件顺序为domain.qcow2 -> domain.snapname1 -> domain.snapname2
+# 先进入虚拟机文件所在目录，如果不进入虚拟机文件所在目录则要写全路径
+# 然后依次执行
+# 这样执行完后，就恢复了
+# 如果不执行rebase，则domain.snapname1和domain.snapname2根本不能使用
+sudo qemu-img rebase -u -F qcow2 -b domain.qcow2 domain.snapname1
+sudo qemu-img rebase -u -F qcow2 -b domain.snapname1 domain.snapname2
+```
+
+###### 恢复外部快照（恢复后在virt-manager的快照列表可以看到）
+
+- 如果有快照名.xml文件
+    - 将快照名.xml文件<domain>...</domain>块的内容替换为新虚拟机的
+    - 直接复制新虚拟机的xml（virt-manager的虚拟机详情-概览的xml就是）
+
+- 如果没有备份快照名.xml文件，也可以手动生成
+
+```xml
+<domainsnapshot>
+  <!-- 填写快照名称 -->
+  <name>domain.shapshotname</name>
+  <state>shutoff</state>
+  <!-- 假设虚拟文件生成顺序为：domain.qcow2 -> domain.shapshotname1 -> domain.shapshotname2 -->
+  <!-- 则如果当前定义的快照文件是shapshotname1.xml，则不用写parent块，shapshotname2开始要写parent块 -->
+  <!-- shapshotname2的parent块里的name填shapshotname1，以此类推 -->
+  <parent>
+    <name>finished-system-setup</name>
+  </parent>
+  <!-- 暂时保留，不知道是不是必须写 -->
+  <creationTime>1767704084</creationTime>
+  <memory snapshot='no'/>
+  <disks>
+    <disk name='vda' snapshot='external' type='file'>
+      <driver type='qcow2'/>
+      <!-- 根据快照文件的实际路径填写 -->
+      <source file='/path/to/domain.snapshotname'/>
+    </disk>
+  </disks>
+  <domain>
+    <!-- 这里的内容直接复制新虚拟机的xml，virt-manager的虚拟机详情-概览的xml就是 -->
+  </domain>
+</domainsnapshot>
+```
+
+- 导入快照(创建新虚拟机并且虚拟系统首次关机后)
+
+```sh
+# 假设快照文件顺序为：快照1->快照2
+virsh snapshot-create [--redefine] [--current] --domain 虚拟机名称 快照1.xml
+virsh snapshot-create [--redefine] [--current] --domain 虚拟机名称 快照2.xml
 ```
 
 ##### 扩容
