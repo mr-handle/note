@@ -3761,7 +3761,10 @@ sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
 # 如果想要保持原来的目录结构就用rsync
 # -O：目标格式，默认raw
 # -p：显示进度
-sudo qemu-img convert -O qcow2 -p /path/to/active.qcow2 /path/to/target.qcow2
+sudo qemu-img convert -p -O qcow2 /path/to/active.qcow2 /path/to/target.qcow2
+
+# 查看qcow2文件预定义大小和实际占用空间大小
+sudo qemu-img info ubuntuserver.qcow2
 
 # 必须复制原虚拟机的，然后在新建虚拟机前
 # 将其复制到/var/lib/libvirt/qemu/nvram/新虚拟机名称_VARS.fd
