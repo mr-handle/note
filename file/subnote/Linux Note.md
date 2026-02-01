@@ -3756,7 +3756,7 @@ sudo pacman -S rsync
 sudo mkdir -p /path/to/target
 sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
 
-# # 如果没有快照文件用rsync复制
+# 如果没有快照文件用qemu-img复制
 # 这个命令会整理碎片并且将顶层文件和所有外部快照文件合并成target.qcow2一个文件
 # 如果想要保持原来的目录结构就用rsync
 # -O：目标格式，默认raw

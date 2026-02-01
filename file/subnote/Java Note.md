@@ -11919,6 +11919,16 @@ public class GatewayConfiguration {
 }
 ```
 
+## Spring Cloud Vault
+
+vault官网：<https://github.com/hashicorp/vault>
+
+### 使用docker版本vault
+
+```sh
+docker pull hashicorp/vault:1.19.2
+```
+
 ## Spring Cloud Alibaba
 
 - maven dependency
@@ -13471,9 +13481,9 @@ docker volume inspect 卷名
 - 对于容器卷，docker统一放在主机的`/var/lib/docker/volumes/卷名`目录下
 
 ```sh
-# 目录映射目录映射带/
+# 目录映射（绑定挂载），可以自定义位置，但是必须先在主机上创建目录，对于配置文件要提前复制一份到主机目录
 -v /data/docker/registry:/tmp/registry
-# 卷映射，卷名前面不带/，卷映射对于配置文件不用提前复制一份到主机目录，目录映射要
+# 卷映射（命名卷），卷名前面不带/，卷映射对于配置文件不用提前复制一份到主机目录
 -v ngconf:/etc/nginx
 ```
 
@@ -13565,12 +13575,13 @@ docker inspect 容器id/容器名称 | tail -n 20
 #### 编写compose.yml
 
 ```yml
-# 应用名
-name: myserver
+# 项目名
+name: myproject
+# services：定义一组要运行的容器服务
 services: 
-    # 服务名，要启动多少个就写多少个
+    # 服务名，名称自行定义
     mysql:
-        # 容器名，不指定则为：应用名-服务名-数字-（1-n)
+        # 容器名，不指定则为：项目名-服务名-数字-（1-n)
         container_name: mysql
         # 镜像
         image: mysql:8.0
@@ -13581,25 +13592,34 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: mysql123
         volumes:
-            # 如果是卷名要在顶级元素volumes里面声明
+            # 命名卷，不可以自定义位置，卷名要在顶级元素volumes里面声明
             - mysql-data:/var/lib/mysql
+            # 绑定挂载，可以自定义位置，但是必须先在主机上创建目录 
             - /app/myconf:/etc/mysql/conf.d
-        # 随系统启动
+        # 无论容器因为什么原因（容器内部程序崩溃、手动stop、Docker守护进程重启、系统重启）退出，都要自动重启
         restart: always
-        # 网络，要在顶级元素networks里面声明，一个应用可以加入多个网络，
+        # 网络，要在顶级元素networks里面声明，一个应用可以加入多个网络
         networks: 
-            - mynet
+            # 使用compose网络标识符
+            - compose-net-name
         # 依赖：比如要先启动redis才能启动mysql
         depends_on:
             - myredis
     myredis:
+# networks表示自定义网络
+# 除非指定了external: true，否则无需先手动创建网络，compose能自动创建
 networks: 
-    mynet: 
-        # 不指定则为：应用名-newwork名
+    # docker-compose文件内部使用的网络标识符，不是docker实际创建的网络名
+    compose-net-name: 
+        # docker实际创建的网络名称，不指定则为：项目名-compose网络标识符
         name: mynetname
+        # 默认
+        external: false
+# volumes自定义卷
 volumes: 
+    # compose内部使用的卷名，不是docker实际创建的卷名
     mysql-data: 
-        # 不指定则为：应用名-volume名
+        # docker实际创建的卷名，不指定则为：项目名-volume名
         name: myvolumename
 configs: 
 # 密钥
@@ -13609,6 +13629,9 @@ secrets:
 #### 使用compose.yml启动/下线
 
 ```sh
+# 自动在当前目录查找compose.yaml、docker-compose.yaml
+docker compose up -d
+
 # 指定compose文件名批量新建容器并以后台方式启动
 docker compose -f mycompose.yml up -d
 
