@@ -391,22 +391,6 @@ rm [-rf] 文件/目录
 mv 源目录/文件 目的目录/文件
 ```
 
-#### rsync复制文件
-
-```sh
-# archlinux安装rsync 
-sudo pacman -S rsync
-
-# -a：归档
-# -h：人类可读
-# --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小
-# --info=progress2：复制总体进度
-# 要先创建目的目录，最后源目录记得加/后缀，表示复制目录内容
-# rsync只能复制，不能整理碎片
-sudo mkdir -p /path/to/target
-sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
-```
-
 #### ls查看目录内容
 
 ```sh
@@ -3763,6 +3747,21 @@ sudo systemctl enable spice-vdagentd
     - archlinux启动引导丢失，修复后，系统状态为创建第一个快照那时候的系统
 
 ```sh
+# archlinux安装rsync 
+sudo pacman -S rsync
+
+# rsync适合复制有外部快照文件的虚拟机，没有外部快照文件的情况更推荐用qemu-img转换命令
+# rsync只能复制，不能整理qcow2碎片
+# -a：归档
+# -h：人类可读
+# --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小
+# --info=progress2：复制总体进度
+# 要先创建目的目录，最后原目录记得加/后缀，表示复制目录内容
+sudo mkdir -p /path/to/target
+sudo rsync -ah --sparse --info=progress2 /path/to/vmdirectory/ /path/to/target
+
+# qemu-img适合转换没有外部快照文件的虚拟机
+# 如果有外部快照，则效果是相当于将虚拟机文件合并，最后只有一个虚拟机文件并且不会有backing file了
 # qemu-img在转换完成后生成的目标文件大小将不再是转换前原文件那样显示的是预定义大小
 # 而是显示为实际占用空间的大小，预定义大小不变
 # -p：显示进度
@@ -3771,6 +3770,8 @@ sudo qemu-img convert -p -O qcow2 /path/to/active.qcow2 /path/to/target.qcow2
 
 # 如果有外部快照，假设虚拟机文件的生成顺序是：domain.qcow2 -> domain.snapshotname1 -> domain.snapshotname2
 # 转换后的目标文件内容为：domain.qcow2
+# 用这个命令可以将domain.qcow2文件转成显示为实际大小而不是预定义大小的目标文件
+# 此外如果domain.snapshotname1和domain.snapshotname2还是用rsync复制的话，跟rsync复制整个虚拟机文件夹的效果是差不多的
 sudo qemu-img convert -p -O qcow2 /path/to/domain.qcow2 /path/to/target.qcow2
 
 # 转换后的目标文件内容为：domain.qcow2 + domain.snapshotname1
@@ -3778,7 +3779,6 @@ sudo qemu-img convert -p -O qcow2 /path/to/domain.snapshotname1 /path/to/target.
 
 # 转换后的目标文件内容为：domain.qcow2 + domain.snapshotname1 + domain.snapshotname2
 sudo qemu-img convert -p -O qcow2 /path/to/domain.snapshotname2 /path/to/target.qcow2
-
 
 # 查看qcow2文件预定义大小和实际占用空间大小
 sudo qemu-img info ubuntuserver.qcow2
