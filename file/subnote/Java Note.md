@@ -189,8 +189,6 @@ ClassName.class.getResource(resourceName)
     - 如果ClassName.class在一个目录中，则用url表示相对路径为：`file:/path/to/directory/`
     - 如果ClassName.class在一个jar文件中，则用url表示相对路径为：`jar:file:/path/to/file.jar!/path/to/directory/`
 
-![getResource输出](/images/类路径.png)
-
 ### ClassName.class.getClassLoader().getResource
 
 常用于加载classpath根下的资源
