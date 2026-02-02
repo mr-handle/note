@@ -4,28 +4,28 @@
 
 - 文件夹名称一律用小驼峰，并且单个单词的文件夹名称一律用单数形式
 - 变量命名：变量名+变量类型，这样可以快速知道变量属于什么类型，并且不用输入那么多字母就弹出来代码补全了，省的都是时间啊
-- 用来存储对象的变量称为引用变量。
-- 方法名有final修饰，表示此方法是终结方法，不能被子类重写。
-- 可变长参数在一个方法中最多只能有一个，并且必须放在最后。
-- Java编译器自动引入java.lang。
+- 用来存储对象的变量称为引用变量
+- 方法名有final修饰，表示此方法是终结方法，不能被子类重写
+- 可变长参数在一个方法中最多只能有一个，并且必须放在最后
+- Java编译器自动引入java.lang
 - `方法的签名`（signature）: 要完整地描述一个方法，需要指出`方法名`以及`参数类型`
-    - 返回类型不是方法签名的一部分。也就是说， 不能有两个名字相同、参数顺序和类型也相同，但是返回不同类型值的方法。
-- VO（View Object）：视图对象，前端和控制层之间的数据传输对象。
-- DTO（Data Transfer Object）：数据传输对象，控制层与服务层之间的数据传输对象。
-- DO（Domain Object）：领域对象，就是从现实世界中抽象出来的有形或无形的业务实体。
+    - 返回类型不是方法签名的一部分。也就是说， 不能有两个名字相同、参数顺序和类型也相同，但是返回不同类型值的方法
+- VO（View Object）：视图对象，前端和控制层之间的数据传输对象
+- DTO（Data Transfer Object）：数据传输对象，控制层与服务层之间的数据传输对象
+- DO（Domain Object）：领域对象，就是从现实世界中抽象出来的有形或无形的业务实体
 - PO（Persistent Object）：持久化对象，它跟持久层（通常是关系型数据库）的数据结构形成一一对应的映射关系
-    - 如果持久层是关系型数据库，那么，数据表中的每个字段（或若干个）就对应PO的一个（或若干个）属性。
-- 不用public、protected、private修饰的字段和方法就是包作用域。位于同一个包的类，可以访问包作用域的字段和方法。
+    - 如果持久层是关系型数据库，那么，数据表中的每个字段（或若干个）就对应PO的一个（或若干个）属性
+- 不用public、protected、private修饰的字段和方法就是包作用域。位于同一个包的类，可以访问包作用域的字段和方法
 
 ### JDK
 
-- `JRE` 是 Java 运行时环境
-    - 它是运行已编译 Java 程序所需的所有内容的集合，包括 Java 虚拟机（JVM），Java 类库，java 命令和其他的一些基础构件。
-    - 但是，它不能用于创建新程序。
-- `JDK` 是 Java Development Kit 缩写，它是功能齐全的 Java SDK。
+- `JRE` 是 Java 运行时环境（Java Runtime Environment）
+    - 它是运行已编译 Java 程序所需的所有内容的集合，包括 Java 虚拟机（JVM），Java 类库，java 命令和其他的一些基础构件
+    - 但是，它不能用于创建新程序
+- `JDK` 是 Java Development Kit 缩写，它是功能齐全的 Java SDK
     - 它拥有 JRE 所拥有的一切
-    - 还有编译器（javac）和工具（如 javadoc 和 jdb）。
-    - 它能够创建和编译程序。
+    - 还有编译器（javac）和工具（如 javadoc 和 jdb）
+    - 它能够创建和编译程序
 
 #### 安装JDK
 
@@ -46,7 +46,7 @@ mkdir -p 指定目录
 tar -zxvf xxx.tar.gz -C 指定目录
 ```
 
-- 2.设置环境变量（解压后bin文件夹所在目录为jdk根目录，假设为`/usr/local/jdk/xxx`）
+- 2.设置环境变量（解压后bin文件夹所在目录为jdk根目录，假设为`/opt/jdk/xxx`）
 
 ```sh
 # /etc/profile 是系统级的shell启动配置文件，它作用于所有用户的登录shell
@@ -64,7 +64,7 @@ cp /etc/profile /etc/profile.bk
 vi /etc/profile
 
 # 3.在profile文件末尾添加
-export JAVA_HOME=/usr/local/jdk/xxx
+export JAVA_HOME=/opt/jdk/xxx
 export PATH=$PATH:${JAVA_HOME}/bin
 ```
 
@@ -82,7 +82,7 @@ java -version
 
 ### Java源文件
 
-- 若将多个类的声明放在一个文档中，只能有一个类声明为公有类。
+- 若将多个类的声明放在一个文档中，只能有一个类声明为公有类
 
 ```java
 public class A {}
@@ -133,32 +133,74 @@ public void test5() {
 
 ### 类路径
 
-- 类路径是所有包含类文件的路径的集合
-
-- 类路径包括
-    - 根目录（某个自定义目录，里面包含了各种类文件）
+- 类路径就是JVM在运行时用来查找类文件(.class)和资源文件（*.properties、*.xml等）的一组目录或jar文件列表
+- 类路径是一组路径的集合，它包括
     - 当前目录（.）
-    - jar文件/目录（/home/user/archives/app.jar,/home/user/archives/'*'）
+    - 某个自定义目录，里面包含了各种类文件或资源文件或jar文件
+    - jar文件
+        - `/path/to/file.jar`
+        - `/path/to/archives/*`，会被展开，将`/path/to/archives`里面的jar/zip文件加入到类路径
 
-#### 通过指定类路径运行Java程序
+- 根目录：类路径中，类型为目录的都是根目录
+- 执行`java -jar file.jar`时，JVM会忽略-cp，并且类路径只来自：
+    - file.jar 本身
+    - file.jar 的MANIFEST里的Class-Path字段（如果有）
+    - Spring Boot Launcher构造的虚拟classpath（如果是fat jar）
+        - BOOT-INF/classes + BOOT-INF/lib/*.jar
 
-如果我们要执行一个jar包的类文件，就可以把jar包放到类路径中，这样JVM会自动在xxx.jar文件里去搜索这个类文件
+#### 执行Java程序
 
-- 通过指定类路径和主类运行某个路径下的类文件
+##### 通过指定类路径和主类执行Java程序
+
+如果我们要执行一个jar包，就可以把jar包放到类路径中，这样JVM会自动在xxx.jar文件里去搜索主类执行Java程序
 
 ```sh
-# .表示当前路径，假设类文件路径为：./com/handle/HelloWorld.class
+# .表示当前路径，假设主类路径为：./com/handle/HelloWorld.class
 java -classpath . com.handle.HelloWorld
-```
 
-- 通过指定类路径和主类运行jar包中的类文件
-
-```sh
-# ./HelloWorld.jar 表示当前目录下的HelloWorld.jar文件，里面包含com.handle.HelloWorld.class（主类）文件
+# ./HelloWorld.jar 表示当前目录下的HelloWorld.jar文件，假设其包含主类：com.handle.HelloWorld.class
 java -classpath ./HelloWorld.jar com.handle.HelloWorld
 ```
 
+##### 通过`java -jar file.jar`执行Java程序
+
+```sh
+java -jar file.jar
+```
+
+### ClassName.class.getResource
+
+常用于加载与当前类同包的资源、加载classpath根下的资源（以`/`开头）
+
+```java
+ClassName.class.getResource(resourceName)
+```
+
+- ClassName.class.getResource的相对路径是以"/"结尾的
+
+- 如果resourceName是以`/`开头
+    - 如果类路径中`有`类型为目录的路径，则相对路径为类路径中的第一个类型为目录的路径（classpath根）
+    - 如果类路径中`无`类型为目录的路径，
+        - 如执行`java -cp file.jar MainClass`或`java -jar file.jar`，则相对路径为jar文件内部的虚拟根目录，用url表示为：`jar:file:/path/to/file.jar!/`
+
+        - 如果是执行`java -jar file.jar`，并且file.jar是Spring Boot的可执行jar文件，则用url表示相对路径为：`jar:file:/path/to/file.jar!/BOOT-INF/classes/`
+
+- 如果resourceName非以`/`开头，则相对路径为ClassName类所在包的目录
+    - 如果ClassName.class在一个目录中，则用url表示相对路径为：`file:/path/to/directory/`
+    - 如果ClassName.class在一个jar文件中，则用url表示相对路径为：`jar:file:/path/to/file.jar!/path/to/directory/`
+
 ![getResource输出](/images/类路径.png)
+
+### ClassName.class.getClassLoader().getResource
+
+常用于加载classpath根下的资源
+
+和ClassName.class.getResource("/" + resourceName)功能一样
+
+```java
+// resourceName不能以`/`开头
+ClassName.class.getClassLoader().getResource(resourceName)
+```
 
 ### 二进制知识
 
@@ -5637,7 +5679,26 @@ java -Dsun.jnu.encoding=UTF-8 myApp.jar
 
 #### Maven的profile
 
-Maven配置文件允许我们配置不同环境的构建设置，例如开发、测试和生产
+profile用来为不同环境（dev/test/prod）或不同构建场景准备不同的配置集，在构建时按需启用
+
+在settings.xml和pom.xml中都可以定义profile，定义后在ide的maven面板中看到
+
+- 在settings.xml中定义profile
+
+```xml
+<profile>
+    <id>jdk-21</id>
+    <activation>
+        <jdk>21</jdk>
+        <activeByDefault>true</activeByDefault>
+    </activation>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+    </properties>
+</profile>
+```
 
 - 在pom.xml文件中定义配置文件
 
