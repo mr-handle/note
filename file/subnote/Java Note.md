@@ -459,6 +459,104 @@ String hexAddress2 = object.toString().substring(object.toString().indexOf("@") 
 
 ### 操作文件
 
+#### File
+
+- 新建文件
+
+```java
+// 新建文件
+File file = new File("/path/to/newfile.suffix");
+if (file.createNewFile()) {
+    // 删除文件
+    if (file.delete()) {
+        System.out.println("new file had been deleted!");
+    }
+}
+
+// 新建临时文件，指定文件名、后缀和文件路径
+File file = File.createTempFile("temp", ".txt", new File("/path/to/directory"));
+// 在JVM退出时自动删除该文件
+file.deleteOnExit();
+```
+
+- 新建目录
+
+```java
+File directory = new File("/path/to/directory");
+if (!directory.exists()) {
+    // 创建当前File对象表示的目录，父目录必须存在
+    // directory.mkdir();
+    // 创建当前File对象表示的目录，并在必要时将不存在的父目录也创建出来
+    directory.mkdirs();
+    
+    File subdirectory = new File("/path/to/directory/subdirectory");
+    // 先删除子目录，子目录不为空时无法删除父目录
+    subdirectory.delete();
+
+    // 删除父目录
+    directory.delete();
+}
+```
+
+- 遍历目录
+
+```java
+File file = new File("/path/to/directory");
+
+// 列出所有文件和子目录,但不包括子目录下的文件和目录
+// 遍历文件名
+String[] list = file.list();
+for (String item : list) {
+    System.out.println("filename: " + item);
+}
+
+// 遍历文件
+File[] files = file.listFiles();
+for (File item : files) {
+    System.out.println("file: " + item);
+}
+
+// 过滤文件
+File[] filterFiles = file.listFiles(new FilenameFilter() {
+    @Override
+    public boolean accept(File dir, String name) {
+        // 返回true表示接受该文件
+        return name.endsWith(".yaml");
+    }
+});
+
+// 遍历过滤出来的文件
+for (File item : filterFiles) {
+    System.out.println("filter: " + item);
+}
+```
+
+- 获取文件路径
+
+```java
+// 表示JVM的当前工作目录，和System.getProperty("user.dir")一样
+// idea：项目根目录
+// java -jar file.jar：执行这条命令时所在的目录
+String path = new File("").getCanonicalPath();
+
+// 路径分隔符，不同系统平台有不同的值，Windows是"\"，Linux是"/"
+System.out.println(File.separator);
+
+File file = new File("..");
+
+// getPath()，返回构造方法传入的路径，不会解析"."、".."，不会解析符号链接，不做任何规范化
+// 输出：..
+System.out.println(file.getPath());
+
+// getAbsolutePath()，返回绝对路径，不会解析"."、".."，不会解析符号链接，不做任何规范化
+// 输出：/path/to/userDir/..
+System.out.println(file.getAbsolutePath());
+
+// getCanonicalPath()，它和绝对路径类似，但是返回的是规范路径,就是解析"."、".."和符号链接，得到标准的绝对路径
+// 输出：/path/to
+System.out.println(file.getCanonicalPath());
+```
+
 #### 读取文件
 
 - 读取resources目录下的文件
@@ -466,8 +564,12 @@ String hexAddress2 = object.toString().substring(object.toString().indexOf("@") 
 ```java
 // 通过class.getResourceAsStream，要加前缀/
 InputStream input = Xxx.class.getResourceAsStream("/fileName");
+
 // 通过classLoader.getResourceAsStream，不需要加前缀
 InputStream input = Xxx.class.getClassLoader().getResourceAsStream("fileName");
+
+// 通过classLoader.getResource，不需要加前缀
+URL url = Xxx.class.getClassLoader().getResource("fileName");
 ```
 
 - 复制文件
