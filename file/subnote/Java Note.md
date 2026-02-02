@@ -9940,6 +9940,36 @@ public class ApplicationTest {
 
 ```
 
+### 获取应用所在目录
+
+- 用ApplicationHome
+
+```java
+// 底层代码还是调用了getProtectionDomain，但做了修正，更可靠稳定
+ApplicationHome home = new ApplicationHome(Application.class);
+
+// java -jar file.jar为：/path/to/file.jar
+// ide为：/path/to/target/classes
+File jarFile = home.getSource();
+
+// java -jar file.jar为：/path/to
+// ide为：/path/to/target/classes，已经确认，不是输出错了
+File dir = home.getDir();
+```
+
+- 用getProtectionDomain
+
+```java
+// java -jar file.jar为：/path/to/app.jar
+// ide为：/path/to/project/target/classes
+String jarPath = new File(
+    Application.class.getProtectionDomain()
+        .getCodeSource()
+        .getLocation()
+        .toURI()
+).getAbsolutePath();
+```
+
 ### 整合AOP
 
 - 导入如下依赖就可以用@Aspect注解声明切面了
