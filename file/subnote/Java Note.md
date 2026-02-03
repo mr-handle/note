@@ -8424,11 +8424,11 @@ public final class JacksonUtil {
 public final class JacksonUtil {
     private static JacksonUtil instance;
 
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper OBJECT_MAPPER;
 
     // 作为Spring管理的工具类，定义为包级构造器更合适
-    JacksonUtil(JacksonUtil jacksonUtil) {
-        this.objectMapper = jacksonUtil.objectMapper;
+    JacksonUtil(ObjectMapper objectMapper) {
+        this.OBJECT_MAPPER = objectMapper;
     }
 
     @PostConstruct
@@ -8437,7 +8437,15 @@ public final class JacksonUtil {
     }
 
     public static String writeValueAsString(Object value) throws JsonProcessingException {
-        return instance.objectMapper.writeValueAsString(value);
+        return instance.OBJECT_MAPPER.writeValueAsString(value);
+    }
+
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException {
+        return instance.OBJECT_MAPPER.readValue(content, valueType);
+    }
+
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException {
+        return instance.OBJECT_MAPPER.readValue(content, valueTypeRef);
     }
 }
 
@@ -8446,16 +8454,16 @@ public final class JacksonUtil {
 public final class JacksonUtil {
     private static ObjectMapper objectMapper;
 
-    private final ObjectMapper injectedObjectMapper;
+    private final ObjectMapper INJECTED_OBJECT_MAPPER;
 
     // 作为Spring管理的工具类，定义为包级构造器更合适
-    JacksonUtil(ObjectMapper injectedObjectMapper) {
-        this.injectedObjectMapper = injectedObjectMapper;
+    JacksonUtil(ObjectMapper objectMapper) {
+        this.INJECTED_OBJECT_MAPPER = objectMapper;
     }
 
     @PostConstruct
     public void init() {
-        JacksonUtil.objectMapper = this.injectedObjectMapper;
+        JacksonUtil.objectMapper = this.INJECTED_OBJECT_MAPPER;
     }
 
     public static String writeValueAsString(Object value) throws JsonProcessingException {
@@ -13086,11 +13094,11 @@ public final class JacksonUtil {
         return SpringBeanHolder.getCacheBean(ObjectMapper.class).writeValueAsString(value);
     }
 
-    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException, JsonMappingException {
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException {
         return SpringBeanHolder.getCacheBean(ObjectMapper.class).readValue(content, valueType);
     }
 
-    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException, JsonMappingException {
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException {
         return SpringBeanHolder.getCacheBean(ObjectMapper.class).readValue(content, valueTypeRef);
     }
 }
@@ -13100,10 +13108,11 @@ public final class JacksonUtil {
 public final class JacksonUtil {
     private static JacksonUtil instance;
 
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper OBJECT_MAPPER;
 
-    JacksonUtil(JacksonUtil jacksonUtil) {
-        this.objectMapper = jacksonUtil.objectMapper;
+    // 作为Spring管理的工具类，定义为包级构造器更合适
+    JacksonUtil(ObjectMapper objectMapper) {
+        this.OBJECT_MAPPER = objectMapper;
     }
 
     @PostConstruct
@@ -13112,15 +13121,15 @@ public final class JacksonUtil {
     }
 
     public static String writeValueAsString(Object value) throws JsonProcessingException {
-        return instance.objectMapper.writeValueAsString(value);
+        return instance.OBJECT_MAPPER.writeValueAsString(value);
     }
 
-    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException, JsonMappingException {
-        return instance.objectMapper.readValue(content, valueType);
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException {
+        return instance.OBJECT_MAPPER.readValue(content, valueType);
     }
 
-    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException, JsonMappingException {
-        return instance.objectMapper.readValue(content, valueTypeRef);
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException {
+        return instance.OBJECT_MAPPER.readValue(content, valueTypeRef);
     }
 }
 
@@ -13129,27 +13138,27 @@ public final class JacksonUtil {
 public final class JacksonUtil {
     private static ObjectMapper objectMapper;
 
-    private final ObjectMapper injectedObjectMapper;
+    private final ObjectMapper INJECTED_OBJECT_MAPPER;
 
     // 作为Spring管理的工具类，定义为包级构造器更合适
-    JacksonUtil(ObjectMapper injectedObjectMapper) {
-        this.injectedObjectMapper = injectedObjectMapper;
+    JacksonUtil(ObjectMapper objectMapper) {
+        this.INJECTED_OBJECT_MAPPER = objectMapper;
     }
 
     @PostConstruct
     public void init() {
-        JacksonUtil.objectMapper = this.injectedObjectMapper;
+        JacksonUtil.objectMapper = this.INJECTED_OBJECT_MAPPER;
     }
 
     public static String writeValueAsString(Object value) throws JsonProcessingException {
         return objectMapper.writeValueAsString(value);
     }
 
-    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException, JsonMappingException {
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException {
         return objectMapper.readValue(content, valueType);
     }
 
-    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException, JsonMappingException {
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException {
         return objectMapper.readValue(content, valueTypeRef);
     }
 }
@@ -18839,10 +18848,23 @@ System.out.println(userVOFromJson);
 
 如果A依赖B，B又依赖A，如果都在构造器里注入，直接就报错了
 
-- 一级缓存：存成品对象
-- 二级缓存：存半成品（实例化了但还没注入属性）
-- 三级缓存：存对象工厂
+- 一级缓存（singletonObjects）：存成品Bean对象（完全初始化）
+- 二级缓存（earlySingletonObjects）：存半成品Bean对象（实例化了但还没注入属性）
+- 三级缓存（singletonFactories）：存Bean工厂（用于创建代理或提前暴露引用）
 
-创建A时，把其放进三级缓存，然后创建B
+- 创建A时，将其工厂放进三级缓存
 
-B需要A时，去缓存里拿，拿到的是A的引用，这样就打破了死循环
+- 然后发现A依赖B，于是创建B
+
+- 然后发现B需要A，
+    - 先查一级缓存，没有
+    - 再查二级缓存，没有
+    - 再查三级缓存，找到了A的工厂
+        - 调用工厂创建一个提前暴露的A的引用
+        - 放入二级缓存
+        - 从三级缓存移除A的工厂
+        - 这样B就拿到了A的引用了（虽然A还没初始化）
+- 然后B完成初始化，放入一级缓存
+- 继续完成A的初始化，正常注入B
+- 然后B完成初始化，放入一级缓存
+- 最终成功解决循环依赖
