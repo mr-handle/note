@@ -8374,19 +8374,10 @@ public class XxxController {
 
 ```java
 // 方法1
-// 使用SpringBeanHolder，它对所有工具类都适用，然后在工具类里面获取Spring Bean并调用其实例方法，推荐
+// 使用SpringBeanHolder，它对所有工具类都适用，然后在工具类里面获取Spring Bean并调用其实例方法
 @Component
 public class SpringBeanHolder implements ApplicationContextAware {
-    private static final String T = "T";
-
-    private static final String N = "N";
-
-    private static final String SYMBOL_SHARP = "#";
-
     private static ApplicationContext applicationContext;
-
-    // 缓存单例Bean
-    private static final ConcurrentHashMap<String, Object> CACHE_BEAN_MAP = new ConcurrentHashMap<>();
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) {
@@ -8400,26 +8391,36 @@ public class SpringBeanHolder implements ApplicationContextAware {
     public static <T> T getBean(String name, Class<T> clazz) {
         return applicationContext.getBean(name, clazz);
     }
-
-    public static <T> T getCacheBean(Class<T> clazz) {
-        String key = N + clazz.getName();
-        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(clazz)));
-    }
-
-    public static <T> T getCacheBean(String name, Class<T> clazz) {
-        String key = T + clazz.getName() + SYMBOL_SHARP + name;
-        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(name, clazz)));
-    }
 }
 
 // 这里就不用声明为Spring Bean了
 public final class JacksonUtil {
     public static String writeValueAsString(Object value) throws JsonProcessingException {
-        return SpringBeanHolder.getCacheBean(ObjectMapper.class).writeValueAsString(value);
+        return SpringBeanHolder.getBean(ObjectMapper.class).writeValueAsString(value);
     }
 }
 
-// 方法2，实例字段注入 + @PostConstruct赋值给static实例，注入的Spring Bean是final的，第二推荐
+// 或者将SpringBeanHolder.getBean提取出来放到一个方法里
+public final class JacksonUtil {
+    private static volatile ObjectMapper objectMapper;
+
+    private static ObjectMapper getObjectMapper() {
+        if (Objects.isNull(objectMapper)) {
+            synchronized (JacksonUtil.class) {
+                if (Objects.isNull(objectMapper)) {
+                    objectMapper = SpringBeanHolder.getBean(ObjectMapper.class);
+                }
+            }
+        }
+        return objectMapper;
+    }
+
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
+        return getObjectMapper().writeValueAsString(value);
+    }
+}
+
+// 方法2，实例字段注入 + @PostConstruct赋值给static实例，注入的Spring Bean是final的，推荐
 @Component
 public final class JacksonUtil {
     private static JacksonUtil instance;
@@ -13050,19 +13051,10 @@ private ObjectMapper objectMapper;
 
 ```java
 // 方法1
-// 或者使用SpringBeanHolder，它对所有工具类都适用，然后在工具类里面获取Spring Bean并调用其实例方法，推荐
+// 或者使用SpringBeanHolder，它对所有工具类都适用，然后在工具类里面获取Spring Bean并调用其实例方法
 @Component
 public class SpringBeanHolder implements ApplicationContextAware {
-    private static final String T = "T";
-
-    private static final String N = "N";
-
-    private static final String SYMBOL_SHARP = "#";
-
     private static ApplicationContext applicationContext;
-
-    // 缓存单例Bean
-    private static final ConcurrentHashMap<String, Object> CACHE_BEAN_MAP = new ConcurrentHashMap<>();
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) {
@@ -13075,16 +13067,6 @@ public class SpringBeanHolder implements ApplicationContextAware {
 
     public static <T> T getBean(String name, Class<T> clazz) {
         return applicationContext.getBean(name, clazz);
-    }
-
-    public static <T> T getCacheBean(Class<T> clazz) {
-        String key = N + clazz.getName();
-        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(clazz)));
-    }
-
-    public static <T> T getCacheBean(String name, Class<T> clazz) {
-        String key = T + clazz.getName() + SYMBOL_SHARP + name;
-        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(name, clazz)));
     }
 }
 
@@ -13103,7 +13085,35 @@ public final class JacksonUtil {
     }
 }
 
-// 方法2，第二推荐
+// 或者将SpringBeanHolder.getBean提取出来放到一个方法里
+public final class JacksonUtil {
+    private static volatile ObjectMapper objectMapper;
+
+    private static ObjectMapper getObjectMapper() {
+        if (Objects.isNull(objectMapper)) {
+            synchronized (JacksonUtil.class) {
+                if (Objects.isNull(objectMapper)) {
+                    objectMapper = SpringBeanHolder.getBean(ObjectMapper.class);
+                }
+            }
+        }
+        return objectMapper;
+    }
+
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
+        return getObjectMapper().writeValueAsString(value);
+    }
+
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException {
+        return getObjectMapper().readValue(content, valueType);
+    }
+
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException {
+        return getObjectMapper().readValue(content, valueTypeRef);
+    }
+}
+
+// 方法2，推荐
 @Component
 public final class JacksonUtil {
     private static JacksonUtil instance;
