@@ -18878,3 +18878,10 @@ System.out.println(userVOFromJson);
 - 继续完成A的初始化，正常注入B
 - 然后B完成初始化，放入一级缓存
 - 最终成功解决循环依赖
+
+```yaml
+# Spring Boot 2.6+默认禁止循环依赖，需要手动开启才可以
+spring:
+    main:
+        allow-circular-references: true
+```
