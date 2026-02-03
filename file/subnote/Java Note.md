@@ -8074,6 +8074,10 @@ FastAutoGenerator.create("jdbc:postgresql://localhost:5432/databaseName", "usern
 
 ## Spring
 
+- 启动时Spring扫描所有XML配置或注解
+- 把每个Bean的信息解析成BeanDefinition对象，存到Map中
+- BeanFactory利用反射机制实例化Bean对象，并递归填充其属性
+
 ### IOC
 
 读取配置文件声明的组件（Bean）信息，转成BeanDefinition对象，然后根据BeanDefinition对象反射创建Bean对象，并管理Bean对象的生命周期
@@ -18826,3 +18830,19 @@ UserVO userVOFromJson = gson.fromJson(json, UserVO.class);
 // UserVO(isMale=null)，结果丢失了isMale的字段值
 System.out.println(userVOFromJson);
 ```
+
+### Spring问题
+
+#### Spring是如何解决循环依赖的？
+
+答：使用三级缓存机制（只适用于单例且非构造器注入的场景）
+
+如果A依赖B，B又依赖A，如果都在构造器里注入，直接就报错了
+
+- 一级缓存：存成品对象
+- 二级缓存：存半成品（实例化了但还没注入属性）
+- 三级缓存：存对象工厂
+
+创建A时，把其放进三级缓存，然后创建B
+
+B需要A时，去缓存里拿，拿到的是A的引用，这样就打破了死循环
