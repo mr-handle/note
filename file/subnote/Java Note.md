@@ -1033,6 +1033,23 @@ public final class DateTimeUtil {
 
 ### 多线程
 
+#### 同步块
+
+```java
+private static volatile ObjectMapper objectMapper;
+
+// 要二次判断，加锁前判断一次，加锁后判断一次
+public static void methodName() {
+    if (Objects.isNull(objectMapper)) {
+        synchronized (ClassName.class) {
+            if (Objects.isNull(objectMapper)) {
+                objectMapper = applicationContext.getBean(ObjectMapper.class);
+            }
+        }
+    }
+}
+```
+
 #### CountDownLatch
 
 一个同步辅助类，在完成一组正在其它线程中执行的操作之前，它允许一个或多个线程一直等待
@@ -8306,7 +8323,7 @@ https://www.springframework.org/schema/beans/spring-beans.xsd">
 </beans>
 ```
 
-3.定义.定义配置类
+3.定义配置类
 
 ```java
 @Configuration
@@ -8315,6 +8332,133 @@ public class MainConfiguration {}
 ```
 
 #### DI注解
+
+Spring的三大依赖注入方式：构造器注入、字段注入、Setter注入
+
+```java
+// 构造器注入，依赖字段可以定义为final（官方推荐）
+@Controller
+public class MyController {
+    private final MyService myService;
+
+    // 在只有一个构造器的情况下，Spring会自动把它当成需要注入的构造器,写不写@Autowired都可以
+    public MyController(MyService myService) {
+        this.orderService = myService;
+    }
+}
+
+// 字段注入
+@Component
+public class MyController {
+    @Autowired
+    private MyService myService;
+}
+
+// Setter注入
+@Controller
+public class XxxController {
+    private MyService myService;
+
+    @AutoWired
+    public void setMyService(MyService myService) {
+        this.myService = myService;
+    }
+}
+```
+
+- 工具类的静态方法使用Spring Bean
+
+```java
+// 方法1
+// 使用SpringBeanHolder，它对所有工具类都适用，然后在工具类里面获取Spring Bean并调用其实例方法，推荐
+@Component
+public class SpringBeanHolder implements ApplicationContextAware {
+    private static final String T = "T";
+
+    private static final String N = "N";
+
+    private static final String SYMBOL_SHARP = "#";
+
+    private static ApplicationContext applicationContext;
+
+    // 缓存单例Bean
+    private static final ConcurrentHashMap<String, Object> CACHE_BEAN_MAP = new ConcurrentHashMap<>();
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        SpringBeanHolder.applicationContext = applicationContext;
+    }
+
+    public static <T> T getBean(Class<T> clazz) {
+        return applicationContext.getBean(clazz);
+    }
+
+    public static <T> T getBean(String name, Class<T> clazz) {
+        return applicationContext.getBean(name, clazz);
+    }
+
+    public static <T> T getCacheBean(Class<T> clazz) {
+        String key = N + clazz.getName();
+        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(clazz)));
+    }
+
+    public static <T> T getCacheBean(String name, Class<T> clazz) {
+        String key = T + clazz.getName() + SYMBOL_SHARP + name;
+        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(name, clazz)));
+    }
+}
+
+// 这里就不用声明为Spring Bean了
+public final class JacksonUtil {
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
+        return SpringBeanHolder.getCacheBean(ObjectMapper.class).writeValueAsString(value);
+    }
+}
+
+// 方法2，实例字段注入 + @PostConstruct赋值给static实例，注入的Spring Bean是final的，第二推荐
+@Component
+public final class JacksonUtil {
+    private static JacksonUtil instance;
+
+    private final ObjectMapper objectMapper;
+
+    // 作为Spring管理的工具类，定义为包级构造器更合适
+    JacksonUtil(JacksonUtil jacksonUtil) {
+        this.objectMapper = jacksonUtil.objectMapper;
+    }
+
+    @PostConstruct
+    public void init() {
+        JacksonUtil.instance = this;
+    }
+
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
+        return instance.objectMapper.writeValueAsString(value);
+    }
+}
+
+// 方法3，实例字段注入 + @PostConstruct赋值给static字段，注入的Spring Bean不是final的，不推荐
+@Component
+public final class JacksonUtil {
+    private static ObjectMapper objectMapper;
+
+    private final ObjectMapper injectedObjectMapper;
+
+    // 作为Spring管理的工具类，定义为包级构造器更合适
+    JacksonUtil(ObjectMapper injectedObjectMapper) {
+        this.injectedObjectMapper = injectedObjectMapper;
+    }
+
+    @PostConstruct
+    public void init() {
+        JacksonUtil.objectMapper = this.injectedObjectMapper;
+    }
+
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(value);
+    }
+}
+```
 
 ##### @AutoWired
 
@@ -8344,6 +8488,7 @@ public class XxxController {
     private XxxService xxxService;
 
     // 使用场景2，在构造方法上
+    // 在只有一个构造器的情况下，Spring会自动把它当成需要注入的构造器,写不写@Autowired都可以
     @AutoWired
     public XxxController(XxxService xxxService) {
         this.xxxService = xxxService;
@@ -12880,64 +13025,127 @@ spring.jackson.date-format=yyyy-MM-dd HH:mm:ss
 spring.jackson.serialization.write-dates-as-timestamps=true
 ```
 
+- 使用jackson
+
+```java
+@Autowired
+private ObjectMapper objectMapper;
+```
+
 - 自定义Jackson配置类：[JacksonConfiguration](/java/JacksonConfiguration.java)
 
 - ObjectMapper是线程安全的，因此可以定义一个Jackson工具类，避免每次注入Jackson
 
 ```java
-// 1.定义工具类
-public final class JacksonUtil {
-    private static ObjectMapper objectMapper;
+// 方法1
+// 或者使用SpringBeanHolder，它对所有工具类都适用，然后在工具类里面获取Spring Bean并调用其实例方法，推荐
+@Component
+public class SpringBeanHolder implements ApplicationContextAware {
+    private static final String T = "T";
 
-    public static String writeValueAsString(Object value) throws JsonProcessingException {
-        return objectMapper.writeValueAsString(value);
+    private static final String N = "N";
+
+    private static final String SYMBOL_SHARP = "#";
+
+    private static ApplicationContext applicationContext;
+
+    // 缓存单例Bean
+    private static final ConcurrentHashMap<String, Object> CACHE_BEAN_MAP = new ConcurrentHashMap<>();
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        SpringBeanHolder.applicationContext = applicationContext;
     }
 
-    public static <T> T readValue(String content, Class<T> valueType)
-    throws JsonProcessingException, JsonMappingException {
-        return objectMapper.readValue(content, valueType);
+    public static <T> T getBean(Class<T> clazz) {
+        return applicationContext.getBean(clazz);
     }
 
-    public <T> T readValue(String content, TypeReference<T> valueTypeRef)
-            throws JsonProcessingException, JsonMappingException {
-        return objectMapper.readValue(content, valueTypeRef);
+    public static <T> T getBean(String name, Class<T> clazz) {
+        return applicationContext.getBean(name, clazz);
+    }
+
+    public static <T> T getCacheBean(Class<T> clazz) {
+        String key = N + clazz.getName();
+        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(clazz)));
+    }
+
+    public static <T> T getCacheBean(String name, Class<T> clazz) {
+        String key = T + clazz.getName() + SYMBOL_SHARP + name;
+        return clazz.cast(CACHE_BEAN_MAP.computeIfAbsent(key, k -> applicationContext.getBean(name, clazz)));
     }
 }
 
-// 2.初始化工具类的objectMapper
+// 这里就不用声明为Spring Bean了
+public final class JacksonUtil {
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
+        return SpringBeanHolder.getCacheBean(ObjectMapper.class).writeValueAsString(value);
+    }
+
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException, JsonMappingException {
+        return SpringBeanHolder.getCacheBean(ObjectMapper.class).readValue(content, valueType);
+    }
+
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException, JsonMappingException {
+        return SpringBeanHolder.getCacheBean(ObjectMapper.class).readValue(content, valueTypeRef);
+    }
+}
+
+// 方法2，第二推荐
 @Component
-public class JacksonUtilInitializer {
-    @Autowired
-    private ObjectMapper objectMapper;
+public final class JacksonUtil {
+    private static JacksonUtil instance;
+
+    private final ObjectMapper objectMapper;
+
+    JacksonUtil(JacksonUtil jacksonUtil) {
+        this.objectMapper = jacksonUtil.objectMapper;
+    }
 
     @PostConstruct
-    public void init() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        Field field = JacksonUtil.class.getDeclaredField("objectMapper");
-        field.setAccessible(true);
-        field.set(null, objectMapper);
+    public void init() {
+        JacksonUtil.instance = this;
+    }
+
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
+        return instance.objectMapper.writeValueAsString(value);
+    }
+
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException, JsonMappingException {
+        return instance.objectMapper.readValue(content, valueType);
+    }
+
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException, JsonMappingException {
+        return instance.objectMapper.readValue(content, valueTypeRef);
     }
 }
 
-// 或者直接通过构造方法注入
+// 方法3，objectMapper不是final的，不推荐
 @Component
 public final class JacksonUtil {
     private static ObjectMapper objectMapper;
 
-    private JacksonUtil(ObjectMapper objectMapper) {
-        JacksonUtil.objectMapper = objectMapper;
+    private final ObjectMapper injectedObjectMapper;
+
+    // 作为Spring管理的工具类，定义为包级构造器更合适
+    JacksonUtil(ObjectMapper injectedObjectMapper) {
+        this.injectedObjectMapper = injectedObjectMapper;
+    }
+
+    @PostConstruct
+    public void init() {
+        JacksonUtil.objectMapper = this.injectedObjectMapper;
     }
 
     public static String writeValueAsString(Object value) throws JsonProcessingException {
         return objectMapper.writeValueAsString(value);
     }
 
-    public static <T> T readValue(String content, Class<T> valueType)
-    throws JsonProcessingException, JsonMappingException {
+    public static <T> T readValue(String content, Class<T> valueType) throws JsonProcessingException, JsonMappingException {
         return objectMapper.readValue(content, valueType);
     }
 
-    public <T> T readValue(String content, TypeReference<T> valueTypeRef)
-            throws JsonProcessingException, JsonMappingException {
+    public <T> T readValue(String content, TypeReference<T> valueTypeRef) throws JsonProcessingException, JsonMappingException {
         return objectMapper.readValue(content, valueTypeRef);
     }
 }
