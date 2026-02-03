@@ -29,6 +29,12 @@
 
 #### 安装JDK
 
+Oracle JDK的协议：jdk17+都是NFTC协议：免费使用 + 更新3年，3年后如果想要获得更新就要付费订阅了，当然可以选择不更新嘿嘿
+
+GraalVM Community Edition（CE）：GPLv2 + Classpath Exception协议，开源免费
+
+Oracle GraalVM：GFTC（GraalVM Free Terms and Conditions）协议，免费使用 + 更短更新周期（与Oracle JDK 的NFTC类似）
+
 ##### 1.windows安装jdk
 
 - 1.下载jdk压缩包xxx.zip，解压到指定目录（解压后bin文件夹所在目录为jdk根目录，假设为`D:\jdk\xxx`）
@@ -3199,6 +3205,8 @@ native-image @target\tmp\native-image-xxxxxxx.args
 ## Java高级
 
 ### JVM
+
+![JVM大致结构模型](/images/JVM大致结构模型.png)
 
 - 类加载器子系统
     - 加载阶段
@@ -9214,6 +9222,22 @@ public class ApplicationTest {
     }
 }
 ```
+
+### Spring Bean生命周期
+
+- 反射创建bean实例
+- bean属性赋值
+- 初始化
+    - 初始化前置处理：BeanPostProcessor接口的实现类对象调用postProcessBeforeInitialization()方法
+    - 如果有定义@PostConstruct标记的方法，则执行
+    - 如果实现了InitializingBean接口，则执行afterPropertiesSet()方法
+    - 如果配置了initMethod()方法，则执行
+    - 初始化后置处理：BeanPostProcessor接口的实现类对象调用postProcessAfterInitialization()方法
+- 使用
+- 销毁
+    - 如果有定义@PreDestroy标记的方法，则执行
+    - 如果实现了DisposableBean接口，则执行destroy()方法
+    - 如果配置了destroyMethod()方法，则执行
 
 ## Spring MVC
 
