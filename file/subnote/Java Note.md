@@ -18566,3 +18566,55 @@ public class ExceptionTest {
     }
 }
 ```
+
+### 序列化问题
+
+#### 为什么pojo类布尔类型字段不要用is开头？
+
+答：因为不同的序列化工具（如jackjson、gson）对于布尔类型字段isFieldName的处理不同，如
+
+jackjson遵循JavaBeans规范，isFieldName被认为是一个`方法`，解析完得到的是fieldName
+
+gson不遵循JavaBeans规范，isFieldName被认为是一个`字段`，解析完得到的是isFieldName
+
+如果用jackjson序列化，而用gson反序列化，将导致布尔类型的字段值丢失
+
+团队开发的时候，如微服务之间API调用，你根本不知道对方是用什么序列化/反序列化工具，因此pojo类布尔类型字段不要用is开头
+
+- 定义一个遵循JavaBeans规范的VO
+
+```java
+// 这里不用lombok的getter/setter注解
+// 是因为笔者用lombok的是1.18.30版本，发现其生成的是不遵循JavaBeans规范的getIsMale/setIsMale
+// getIsMale/setIsMale不会因使用不同序列化工具处理布尔类型字段isFieldName而导致不同的结果
+@ToString
+public class UserVO {
+    private Boolean isMale;
+
+    public Boolean isMale() {
+        return this.isMale;
+    }
+
+    public void setMale(Boolean male) {
+        this.isMale = male;
+    }
+}
+```
+
+```java
+UserVO userVO = new UserVO();
+userVO.setMale(true);
+
+String json = new ObjectMapper().writeValueAsString(userVO);
+// {"male":true}
+System.out.println(json);
+
+Gson gson = new Gson();
+// {"isMale":true}
+System.out.println(gson.toJson(userVO));
+
+// 用jackson序列化，用gson反序列化
+UserVO userVOFromJson = gson.fromJson(json, UserVO.class);
+// UserVO(isMale=null)，结果丢失了isMale的字段值
+System.out.println(userVOFromJson);
+```
