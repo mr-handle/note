@@ -348,21 +348,25 @@ public String encodeHexString(final byte[] data) {
 
 对byte和short类型进行移位时，会首先转换为int再进行位移
 
-- 左移`<<`，高位丢弃，低位补0，十进制数m左移n位相当于m乘以2的n次方
+如果移位位数大于等于该数据类型的位数（如对int类型的数据移位32位）
+
+会先计算`该数据类型的位数 % 移位位数`，得到真正的移位位数，再进行移位操作
+
+- 左移`<<`， 低位补0，十进制数m左移n位相当于m乘以2的n次方
 
 ```java
 int m = 1;       // 00000000 00000000 00000000 00000001 = 1
 int r = m << 1;  // 00000000 00000000 00000000 00000010 = 2
 ```
 
-- 右移`>>`，低位丢弃，高位补符号位，十进制数m右移n位相当于m除以2的n次方
+- 右移`>>`，高位补符号位，十进制数m右移n位相当于m除以2的n次方
 
 ```java
 int m = 2;       // 00000000 00000000 00000000 00000010 = 2
 int r = m >> 1;  // 00000000 00000000 00000000 00000001 = 1
 ```
 
-- 无符号右移`>>>`，低位丢弃，高位补0，注意，`没有无符号左移`！
+- 无符号右移`>>>`，高位补0，注意，`没有无符号左移`！
 
 ```java
 int m = -2;        // 11111111 11111111 11111111 11111110 = -2
@@ -619,6 +623,34 @@ try (InputStream inputStream = Application.class.getClassLoader().getResourceAsS
 
 ### Java数据类型
 
+#### 基本数据类型和对应的包装类型
+
+|基本数据类型|占字节数|对应的包装类型|
+|:-|:-|:-|
+|byte|1|Byte|
+|short|2|Short|
+|int|4|Integer|
+|long|8|Long|
+|float|4|Float|
+|double|8|Double|
+|boolean|Java语言规范中没有定义，由具体的JVM决定|Boolean|
+|char|2|Character|
+
+Byte,Short,Integer,Long这4种包装类默认创建了相应类型的[-128，127]的缓存数据
+
+Character创建了[0,127]的缓存数据
+
+Boolean创建了Boolean.TRUE、Boolean.FALSE
+
+对于Integer，可以通过JVM参数`-XX:AutoBoxCacheMax=<size>`修改缓存上限，但不能修改下限-128
+
+```java
+// 除了Boolean，可以通过"包装类型名称.SIZE" 获得该基本数据类型占用的位数
+// 除了Boolean，可以通过"包装类型名称.BYTES"获得该基本数据类型占用的字节数
+Assertions.assertEquals(16, Character.SIZE);
+Assertions.assertEquals(2, Character.BYTES);
+```
+
 #### String
 
 ##### 字符串常量池
@@ -662,9 +694,21 @@ System.out.println(s3 == s4);
 
 #### BigDecimal
 
-- 防止精度丢失，更推荐使用`new BigDecimal(String val)`构造方法来创建对象；
-- `BigDecimal.valueOf(double val)`静态方法创建对象，当数值有效位数很多的时候，会有科学计数的精度问题。
+使用`new BigDecimal(String val)`构造方法来创建对象，精度不会丢失
+
+使用`BigDecimal.valueOf(double val)`静态方法创建对象，当数值有效位数很多的时候，还是会丢失精度
+
 - 等值比较应该用compareTo()方法，而不是equals()方法；因为equals()方法会比较值和精度，而compareTo()方法比较的时候会忽略精度
+
+```java
+BigDecimal bigDecimal = new BigDecimal("1234567890.1234567890");
+// 精确输出：1234567890.1234567890
+System.out.println(bigDecimal);
+
+BigDecimal bigDecimal2 = BigDecimal.valueOf(1234567890.1234567890);
+// 精度丢失：1234567890.1234567
+System.out.println(bigDecimal2);
+```
 
 - RoundingMode.HALF_UP，四舍五入，在大量运算时，结果偏向大数，使得误差产生积累进而产生系统误差
 
@@ -14450,6 +14494,75 @@ worker节点为了能够对外提供服务，每个node都会包含3个组件：
 - container-runtime可以是Docker-Engine、Containerd、CRI-O、Mirantis Container Runtime
 
 master节点包含4个组件：kube-apiserver、etcd、ControllerManager和scheduler
+
+- kube-apiserver
+    - 负责提供kubernetes集群的API接口服务，所有的组件都会通过这个接口来进行通信
+    - 还负责对所有资源对象的增删改查等操作进行认证、授权和访问控制
+- scheduler
+    - 负责监控集群中所有节点的资源使用情况，然后根据调度策略，将pod调度到合适的节点上运行
+- ControllerManager
+    - 负责管理集群中各种资源对象的状态，如pod、node、service等，根据它们的状态做出相应的响应，确保集群中的各种资源对象都处于预期的状态
+- etcd
+    - 一个高可用的键-值存储系统，存储集群中所有资源对象的状态信息
+
+### 下载kubernetes
+
+minikube是一个轻量级的kubernetes发行版，可在本地计算机上创建虚拟机，并部署仅包含一个节点的简单集群
+
+此外k3s、k3d、kind也可以用来搭建本地的轻量级kubernetes环境
+
+交互工具：kubectl是一个命令行工具，Dashboard是一个webui界面，此外还有API接口，它们都可以用来跟创建的kubernetes集群进行交互，管理集群中的各种资源
+
+#### 使用minikube
+
+下载minikube：<https://github.com/kubernetes/minikube>
+
+```sh
+# 解压得到可执行文件，将其改名为minikube
+tar -zxvf minikube-linux-amd64.tar.gz 
+
+# 将当前用户加入docker用户组并立即生效
+sudo usermod -aG docker $USER && newgrp docker
+
+# 进入目录下启动minikube
+# --driver=docker：指定驱动为docker
+# --image-mirror-country=cn：指定使用国内镜像
+./minikube start --driver=docker --image-mirror-country=cn
+
+# 查看minikube状态
+./minikube status
+
+# 停止minikube
+./minikube stop
+
+# 因为没有独立安装kubectl，可以使用minikube内置的，但是命令比较长
+# 查看集群中的节点
+./minikube kubectl get nodes
+```
+
+#### 使用k3s
+
+k3s官网：<https://k3s.io/>
+
+k3s是一个CNCF认证的轻量级kubernetes发行版，更加轻量快速，而且集成了kubernetes的大部分架构和功能，相比较minikube这样的单节点kubernetes集群，k3s可以方便地搭建一个多节点集群
+
+下载稳定版：<https://update.k3s.io/v1-release/channels/stable>
+
+选择文件名是k3s的下载，它是一个可执行文件，别的带image的是容器镜像文件，不要下载它们
+
+```sh
+# 下载完后赋予可执行权限
+sudo chmod +x k3s
+
+# 启动，会占用当前终端
+sudo ./k3s server
+
+# 查看节点
+sudo ./k3s kubectl get nodes
+
+# 查看pod
+sudo ./k3s kubectl get pods -A
+```
 
 ## 消息队列
 

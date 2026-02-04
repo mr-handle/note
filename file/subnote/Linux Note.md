@@ -555,7 +555,8 @@ chgrp [-R] 组名 文件/目录
 
 - 第一种方式：
     - 通过`+`（增加权限）、`-`（撤回权限）、`=`（赋予权限）
-    - `u`：所有者；`g`：所在组；`o`：其它组；`a`：所有人
+    - `u`：所有者；`g`：所在组；`o`：其它组；`a`：所有人（all）
+    - 如果不指定u/g/o/a，chmod默认使用a
 - 第二种方式：通过数字变更权限
       - r=4,w=2,x=1,赋予了什么权限就将其权限值相加
 
@@ -564,6 +565,10 @@ chgrp [-R] 组名 文件/目录
 chmod u=rwx,g=rx,o=x 文件/目录
 
 chmod u-x,g+w+x,o+r 文件/目录
+
+# chmod u+x,g+x,o+x 文件/目录
+# chmod a+x 文件/目录
+chmod +x 文件/目录
 ```
 
 ##### 给文件加锁
@@ -860,6 +865,23 @@ grep 可选选项 查找内容 源文件
 # 如下两个命令的功能一样
 grep "handle" /home/handle/hello.txt
 cat /home/handle/hello.txt | grep "handle"
+```
+
+### alias定义命令别名
+
+```sh
+# 查看所有别名
+alias
+
+# 创建别名
+alias 别名='命令'
+
+# 删除别名
+unalias unalias 别名
+
+# 上面的创建和删除别名都是在当前终端生效，只要关闭了终端就没了
+# 想要让别名在终端永久生效，可以写入 ~/.bashrc，如果使用zsh的话可以添加到~/.zshrc中，但是笔者没试过
+alias ll='ls -l'
 ```
 
 ### crond任务调度
