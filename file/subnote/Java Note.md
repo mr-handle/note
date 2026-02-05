@@ -19199,7 +19199,11 @@ public class ExceptionTest {
 
 #### 为什么pojo类布尔类型字段不要用is开头？
 
-答：因为不同的序列化工具（如jackjson、gson）对于布尔类型字段isFieldName的处理不同，如
+答：因为不同框架、序列化工具对JavaBean规范的遵守不一样，造成对isFieldName这样的布尔类型字段的解析不一致
+
+导致属性名、getter/setter名、序列化/反序列化字段名不一致，从而引发难以排查的兼容性问题
+
+因为不同的序列化工具（如jackjson、gson）对于布尔类型字段isFieldName的处理不同，如
 
 jackjson遵循JavaBeans规范，isFieldName被认为是一个`方法`，解析完得到的是fieldName
 
@@ -19212,9 +19216,9 @@ gson不遵循JavaBeans规范，isFieldName被认为是一个`字段`，解析完
 - 定义一个遵循JavaBeans规范的VO
 
 ```java
-// 如果字段是boolean类型的isFieldName，lombok生成的getter/setter才会变成isFieldName()/setFieldName()
+// 如果字段是boolean类型的isFieldName，lombok生成的getter/setter是isFieldName()/setFieldName()
 // 如果字段是Boolean类型的isFieldName，lombok生成的getter/setter是getIsFieldName()/setIsFieldName()
-// getIsFieldName()/setIsFieldName()不会因使用不同序列化工具处理布尔类型字段isFieldName而导致不同的结果
+// 虽然Boolean没有这个不统一的问题，但是谁知道会使用到哪些框架，它们对isFieldName的解析统一与否，因此还是不要使用isFieldName来定义布尔字段
 @ToString
 public class UserVO {
     private Boolean isMale;
