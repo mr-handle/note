@@ -14424,6 +14424,13 @@ pod创建了一个容器的运行环境，在这个环境中，容器间可以�
 
 将一组pod封装成一个服务，这个服务可以通过一个统一的入口来访问
 
+- service的类型有：
+    - ClusterIP：默认类型，集群内部的服务
+    - NodePort：节点端口类型，将服务公开到集群节点上，然后就可以通过节点的ip地址和端口访问服务
+    - LoadBalancer：负载均衡类型，将服务公开到外部负载均衡器上
+    - ExternalName: 外部名称类型，通过返回一个CNAME记录，将服务映射到一个外部域名上
+    - Headless：无头类型，可以创建一个没有ClusterIP的服务，主要用于DNS解析和服务发现
+
 #### ingress
 
 用来管理从集群外部访问集群内部服务的入口和方式
@@ -14505,6 +14512,12 @@ master节点包含4个组件：kube-apiserver、etcd、ControllerManager和sched
 - etcd
     - 一个高可用的键-值存储系统，存储集群中所有资源对象的状态信息
 
+### Helm
+
+kubernetes的包管理工具，帮助我们更方便地管理kubernetes的应用，有点类似于yum
+
+使用它可以方便地安装、升级和管理应用
+
 ### 下载kubernetes
 
 minikube是一个轻量级的kubernetes发行版，可在本地计算机上创建虚拟机，并部署仅包含一个节点的简单集群
@@ -14523,6 +14536,9 @@ tar -zxvf minikube-linux-amd64.tar.gz
 
 # 将当前用户加入docker用户组并立即生效
 sudo usermod -aG docker $USER && newgrp docker
+
+# 查看minikube版本
+./minikube version
 
 # 进入目录下启动minikube
 # --driver=docker：指定驱动为docker
@@ -14564,6 +14580,19 @@ sudo ./k3s kubectl get nodes
 sudo ./k3s kubectl get pods -A
 ```
 
+#### 配置k3s镜像源
+
+```sh
+# 新建文件并添加如下内容，然后重新启动k3s
+sudo vim /etc/rancher/k3s/registries.yaml
+
+mirrors:
+    docker.io:
+        endpoint:
+            - "https://45hrqeao.mirror.aliyuncs.com"
+            - "https://hub-mirror.c.163.com"
+```
+
 ##### 创建和配置worker节点
 
 ```sh
@@ -14576,6 +14605,199 @@ sudo ./k3s agent --server https://master_ip:6443 --token master_token
 # 然后在master上可以看到worker节点了
 sudo ./k3s kubectl get nodes
 ```
+
+### kubectl
+
+需要在master节点上执行
+
+```sh
+# 查看资源对象状态
+# all：列出集群中所有的资源对象
+kubectl get nodes/pod/svc/其它资源对象/all
+
+# 查看pod所在节点和pod的ip
+kubectl get pod -o wide
+
+# 访问pod所提供的服务
+# 一般最好不要直接使用pod来提供服务
+# 首先，pod使用的是一个集群内部的ip，这个ip是不能直接从集群外部访问到的
+# 其次，pod并不是一个非常稳定的实体，经常会被创建或销毁，这时候它的ip也可能发生变化
+# 作为解决方案，可以使用service来对外提供服务
+curl pod的ip
+
+# 创建pod，会下载nginx镜像，就算用的是docker驱动，docker已经有nginx镜像了还是会下载，它会用自己的镜像
+kubectl run nginx --image=nginx
+
+# 可以看到创建的nginx的创建状态
+kubectl get pod
+
+# 查看create命令帮助
+kubectl create -h
+
+# 创建deployment，会根据配置创建pod
+# 在deployment和pod之间还有一个中间层replicaSet，用来管理pod副本数量，也被创建了
+# deployment管理replicaSet，replicaSet管理pod
+# 我们只管创建deployment，让k8s自己管理replicaSet和pod
+kubectl create deployment nginx-deployment --image=nginx
+
+# 可以看到创建的nginx-deployment的创建状态
+kubectl get deployment
+
+# 查看replicaset状态
+kubectl get replicaset
+
+# 查看pod状态
+# 列出的pod名字构成：kubectl create deployment 指定的名字-replicaset随机串-pod随机串
+kubectl get pod
+
+# 编辑deployment，这种方式不常用，但是很快
+kubectl edit deployment deploymentName
+
+# 查看日志
+kubectl log podName
+
+# 进入容器
+# --：告诉kubectl，后面的内容不再是kubectl的参数，而是要传给容器的命令
+# 退出容器用exit就可以了
+kubectl exec -it podName -- /bin/bash
+
+# 删除资源对象
+kubectl delete deployment deploymentName
+```
+
+### 创建service
+
+```sh
+# 创建/删除服务
+kubectl create/delete service serviceName
+
+# 将一个已经存在的deployment对外公开为一个服务
+kubectl expose deployment deploymentName
+
+# 查看服务的详细信息
+# 如果想要查看其它资源类型的详细信息，只要把service改成其它资源类型就可以了
+kubectl describe service serviceName
+```
+
+### kubernetes命名空间
+
+命名空间用来对集群中的资源进行隔离和分组的一种机制
+
+这样在不同的命名空间中的资源就不会因为名字相同而产生冲突了
+
+一般可以用来隔离不同的项目或者不同的环境
+
+如果不指定命名空间，创建的资源对象就会放到default这个命名空间中
+
+平时输入的各种命令，如果不指定命名空间，默认也都是在default命名空间中执行的
+
+```sh
+# 查看命名空间
+kubectl get namespace
+```
+
+### kubernetes配置文件(yaml)
+
+```yaml
+# 指定使用哪个版本的api，用来定义怎样和apiserver交互，格式：group/version
+# group有apps（应用）、batch（批处理）、autoscaling（自动扩缩容）等
+apiVersion: apps/v1
+# 指定资源对象类型：有Deployment、Service、ConfigMap等
+# 不同的资源对象的配置会有所不同，需要根据具体情况来写配置文件，而不是用一个固定的模板
+kind: Deployment
+# 定义资源对象的元数据，比如资源对象的名称、标签、命名空间等
+metadata:
+    # 如定义创建的deployment名称
+    name: containerName-deployment
+# spectification的缩写，定义各种资源对象的配置信息,里面还可以嵌套spec
+# 如这里是定义deployment的配置信息
+spec:
+    # 用来选择特定资源
+    selector:
+        matchLabels:
+            app: nginx
+    # 副本数
+    replicas: 2
+    template:
+        metadata:
+            labels:
+                app: nginx
+        # 定义pod的配置信息
+        spec:
+            containers:
+                -   name: nginx
+                    # 使用的镜像和版本
+                    image: nginx:1.25
+                    ports:
+                        # 对外暴露的端口
+                        - conntainerPort:  80
+```
+
+```sh
+# 通过配置文件创建/删除资源对象
+kubectl create/delete -f /path/to/config.yaml
+
+# 应用配置文件中的内容到集群中（可能是创建或更新资源对象）
+kubectl apply -f /path/to/config.yaml
+```
+
+#### service配置文件
+
+```yaml
+# 指定使用哪个版本的api，用来定义怎样和apiserver交互，格式：group/version
+# group有apps（应用）、batch（批处理）、autoscaling（自动扩缩容）等
+apiVersion: v1
+# 指定资源对象类型：有Deployment、Service、ConfigMap等
+# 不同的资源对象的配置会有所不同，需要根据具体情况来写配置文件，而不是用一个固定的模板
+kind: Service
+# 定义资源对象的元数据，比如资源对象的名称、标签、命名空间等
+metadata:
+    # 如定义创建的Service名称
+    name: serviceName
+# spectification的缩写，定义各种资源对象的配置信息,里面还可以嵌套spec
+# 如这里是定义deployment的配置信息
+spec:
+    # 服务类型，默认是ClusterIP类型的服务，它只能在集群内部访问到
+    # 指定为NodePort，节点端口类型的服务
+    type: NodePort
+    # 用来选择特定资源
+    selector:
+        # 指定所有app是nginx的资源
+        app: nginx
+    ports:
+        -   protocol: TCP
+            # 对外暴露的端口
+            port:  80
+            # serviec背后的pod对应的端口
+            targetPort: 80
+            # 节点对外提供服务的端口，在外部通过浏览器访问集群服务的就用这个端口访问，要求必须在30000~32767之间
+            nodePort: 30080
+```
+
+### Portainer
+
+kubernetes的可视化管理工具
+
+下载配置文件：<https://downloads.portainer.io/ce-lts/portainer.yaml>
+
+然后去掉文件里面portainer/templates/rbac.yaml和portainer/templates/pvc.yaml这两个部分的内容，不然pod会一直pending启动不了
+
+如果是k3s的话至少要有一个master节点和一个worker节点
+
+笔者现成的配置文件：[poratiner.yaml](/file/kubernetes/portainer.yaml)
+
+```sh
+# -n：指定命名空间
+kubectl apply -n portainer -f /path/to/portainer.yaml
+
+# 查看portainer状态
+kubectl get all -n portainer
+
+# 重启portainer（pod）
+kubectl rollout restart deployment portainer -n portainer
+```
+
+- 访问：<http://masterIP:30777>，第一次访问会要求设置一个密码
 
 ## 消息队列
 
