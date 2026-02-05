@@ -19212,9 +19212,9 @@ gson不遵循JavaBeans规范，isFieldName被认为是一个`字段`，解析完
 - 定义一个遵循JavaBeans规范的VO
 
 ```java
-// 这里不用lombok的getter/setter注解
-// 是因为笔者用lombok的是1.18.30版本，发现其生成的是不遵循JavaBeans规范的getIsMale/setIsMale
-// getIsMale/setIsMale不会因使用不同序列化工具处理布尔类型字段isFieldName而导致不同的结果
+// 如果字段是boolean类型的isFieldName，lombok生成的getter/setter才会变成isFieldName()/setFieldName()
+// 如果字段是Boolean类型的isFieldName，lombok生成的getter/setter是getIsFieldName()/setIsFieldName()
+// getIsFieldName()/setIsFieldName()不会因使用不同序列化工具处理布尔类型字段isFieldName而导致不同的结果
 @ToString
 public class UserVO {
     private Boolean isMale;
