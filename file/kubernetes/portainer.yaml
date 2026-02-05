@@ -79,19 +79,12 @@ spec:
       nodeSelector:
         {}
       serviceAccountName: portainer-sa-clusteradmin
-      volumes:
-        - name: "data"
-          persistentVolumeClaim:
-            claimName: portainer
       containers:
         - name: portainer
           image: "portainer/portainer-ce:lts"
           imagePullPolicy: Always
           args:
-          - '--tunnel-port=30776'          
-          volumeMounts:
-            - name: data
-              mountPath: /data              
+          - '--tunnel-port=30776'                      
           ports:
             - name: http
               containerPort: 9000

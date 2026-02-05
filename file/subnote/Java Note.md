@@ -14780,7 +14780,7 @@ kubernetes的可视化管理工具
 
 下载配置文件：<https://downloads.portainer.io/ce-lts/portainer.yaml>
 
-然后去掉文件里面portainer/templates/rbac.yaml和portainer/templates/pvc.yaml这两个部分的内容，不然pod会一直pending启动不了
+然后去掉文件里面portainer/templates/rbac.yaml和portainer/templates/pvc.yaml这两个部分的内容，以及和volume有关的内容，不然pod会一直pending启动不了
 
 如果是k3s的话至少要有一个master节点和一个worker节点
 

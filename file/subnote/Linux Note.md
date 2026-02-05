@@ -3761,7 +3761,7 @@ sudo systemctl enable spice-vdagentd
 复制后，如果原虚拟机和新虚拟机要同时启动，记得修改新虚拟机的hostname
 
 ```sh
-# --file：指定新虚拟机文件的位置，如果不指定，将在原虚拟机文件的目录新建一个newDomain.qcow2
+# --file：指定新虚拟机文件的位置，所在目录需要先创建，如果不指定，将在原虚拟机文件的目录新建一个newDomain.qcow2
 # --check disk_size=off：不检测存放新虚拟机文件的磁盘的大小，如果不加这个参数，当磁盘文件小于原虚拟机文件预定义大小时会终止复制
 sudo virt-clone --original oldDomainName --name newDomainName --file /path/to/newDomain.qcow2 --auto-clone --check disk_size=off
 ```
