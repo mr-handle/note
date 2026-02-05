@@ -14564,6 +14564,19 @@ sudo ./k3s kubectl get nodes
 sudo ./k3s kubectl get pods -A
 ```
 
+##### 创建和配置worker节点
+
+```sh
+# 从master节点获取一个token，作为创建worker节点的一个认证凭证
+sudo cat /var/lib/rancher/k3s/server/node-token
+
+# 在worker节点上用master的地址和token启动来加入集群
+sudo ./k3s agent --server https://master_ip:6443 --token master_token
+
+# 然后在master上可以看到worker节点了
+sudo ./k3s kubectl get nodes
+```
+
 ## 消息队列
 
 ### Pulsar
