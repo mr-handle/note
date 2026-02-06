@@ -424,13 +424,16 @@ Assertions.assertFalse(a == b);
 
 ### 继承
 
-- 继承写法：子类名 extends 父类名；子类名 implements 父接口名；子接口名 extends 父接口名。
+- 继承写法：
+    - 子类名 extends 父类名
+    - 子类名 implements 父接口名
+    - 子接口名 extends 父接口名
 
-- 子类自动获得父类的所有字段，严禁定义与父类重名的字段
+- 子类拥有父类所有的字段和方法（包括私有字段和私有方法）
+
+- 父类中的私有字段和方法子类是无法访问，只是拥有，严禁定义与父类重名的字段
 
 - 子类不能继承父类的静态属性，但可以对父类静态属性操作
-
-- 子类能不能访问父类字段要看父类字段的访问修饰符
 
 - 任何class的构造方法，第一行语句必须是调用父类的构造方法。如果没有明确地调用父类的构造方法，编译器会帮我们自动加一句super();
 
@@ -440,6 +443,45 @@ Assertions.assertFalse(a == b);
     - 因为这个抽象方法本身是无法执行的，所以，父类也无法被实例化，因而这个父类也必须申明为抽象类
 
 - 如果一个抽象类没有字段，所有方法全部都是抽象方法，就可以把该抽象类改写为接口
+
+- 接口主要用于对类的行为进行约束，实现了某个接口就具有了对应的行为
+
+- 抽象类主要用于代码复用，强调的是所属关系
+
+#### 接口
+
+```java
+public interface InterfaceName {
+    // 接口中的字段只能是public static final类型的，不能被修改且必须有初始值
+    // 可以不写public static final
+    type fieldName = value;
+
+    // 接口中的抽象方法默认是public abstract，可以不写public abstract
+    returnType abstractName(...);
+
+    // Java 8引入的default方法用于提供接口方法的默认实现，可以在实现类中被覆盖
+    default void defaultMethodName() {
+        // todo
+    }
+
+    // Java 8引入的static方法无法在实现类中被覆盖，只能通过接口名.staticMethodName(...)直接调用，类似于类中的静态方法
+    // static方法通常用于定义一些通用的、与接口相关的工具方法，一般很少用
+    static void staticMethodName() {
+        // todo
+    }
+
+    // Java 9引入的private方法可以用于在接口内部共享代码，不对外暴露
+    // 私有静态方法，可以被static和default方法调用
+    private static void methodName() {
+        // todo
+    }
+
+    // 私有实例方法，只能被default方法调用
+    private void methodName() {
+        // todo
+    }
+}
+```
 
 #### 继承关系判断
 
@@ -491,6 +533,22 @@ String hexAddress1 = Integer.toHexString(System.identityHashCode(object));
 // 方法2，前提是没有重写toString()
 String hexAddress2 = object.toString().substring(object.toString().indexOf("@") + 1);
 ```
+
+### 拷贝
+
+- 引用拷贝：两个不同的引用指向同一个对象
+
+- 浅拷贝：
+    - 浅拷贝会在堆上创建一个新的对象（区别于引用拷贝的一点）
+    - 如果原对象内部的字段是引用类型的话，直接复制内部对象的引用地址
+
+- 深拷贝：完全复制整个对象，包括这个对象所包含的内部对象
+
+![拷贝对比](/images/拷贝对比.png)
+
+### hashCode()
+
+hashCode() 的作用是获取哈希码，这个哈希码的作用是确定该对象在哈希表中的索引位置
 
 ### 操作文件
 
@@ -940,6 +998,123 @@ Map<String, String> hashMap = list.stream().collect(HashMap::new, (map, item) ->
 System.out.println(hashMap);
 ```
 
+#### HashMap
+
+HashMap的结构简单理解为数组+链表/红黑树
+
+数组中的每一个元素就是一个桶（bucket）
+
+每个桶刚开始是一个链表，后面随着链表变长可能会转为红黑树
+
+链表/红黑树里面存的是键值对：Node<K,V>
+
+当把键值对加入到HashMap时，HashMap
+
+```java
+public class HashMap<K,V> extends AbstractMap<K,V>
+    implements Map<K,V>, Cloneable, Serializable {
+    // AbstractMap和Map接口先不管它
+
+    //  初始化容量，必须是2的n次方，默认16
+    static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
+
+    // 最大容量不能超过2³⁰
+    static final int MAXIMUM_CAPACITY = 1 << 30;
+
+    // 当元素数量达到容量的75%时触发扩容
+    static final float DEFAULT_LOAD_FACTOR = 0.75f;
+
+    // 默认当某个桶里的链表长度 ≥ 8 时，HashMap会尝试把链表转成红黑树
+    static final int TREEIFY_THRESHOLD = 8;
+
+    // 默认当树节点数量减少到 ≤ 6 时，红黑树会退化回普通链表
+    static final int UNTREEIFY_THRESHOLD = 6;
+
+    // 默认只有当HashMap的整体容量 ≥ 64 时，桶内链表才允许树化
+    // 也就是说当HashMap的整体容量 ≥ 64 时，并且桶内链表长度 ≥ 8 时，才会将该链表转化为红黑树 
+    static final int MIN_TREEIFY_CAPACITY = 64;
+
+    // Node内部类，简单把Node当成存放键值对的链表就行了，Map.Entry是一个接口，先不管它
+    static class Node<K,V> implements Map.Entry<K,V> {
+        final int hash;
+        final K key;
+        V value;
+        Node<K,V> next;
+        // 省略一些方法
+    }
+
+    // HashMap数组，每个元素是一个Node<K,V>，代表链表或红黑树
+    transient Node<K,V>[] table;
+
+    // entrySet字段用来存储entrySet()方法返回的视图对象
+    // 为了避免每次调用entrySet()方法都new一个新的视图对象
+    // HashMap在第一次调用时创建一个EntrySet对象，缓存在entrySet字段里，后续调用直接返回entrySet
+    transient Set<Map.Entry<K,V>> entrySet;
+
+    // HashMap当前存储的键值对数量
+    transient int size;
+
+    // HashMap的“结构性修改计数器”
+    // 每当HashMap的结构发生变化（增加、删除、扩容），modCount就会+1
+    // 它的主要作用是让迭代器在遍历过程中检测到HashMap是否被外部修改，从而触发fail‑fast
+    transient int modCount;
+
+    // HashMap的扩容阈值，HashMap在put新元素之后，发现size超过threshold才扩容
+    // 值为：capacity * loadFactor
+    int threshold;
+
+    // HashMap 的“负载因子”，用于决定扩容阈值（threshold）
+    final float loadFactor;
+
+    public V put(K key, V value) {
+        return putVal(hash(key), key, value, false, true);
+    }
+
+    // 待分析
+    final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
+        Node<K,V>[] tab; Node<K,V> p; int n, i;
+        if ((tab = table) == null || (n = tab.length) == 0)
+            n = (tab = resize()).length;
+        if ((p = tab[i = (n - 1) & hash]) == null)
+            tab[i] = newNode(hash, key, value, null);
+        else {
+            Node<K,V> e; K k;
+            if (p.hash == hash &&
+                ((k = p.key) == key || (key != null && key.equals(k))))
+                e = p;
+            else if (p instanceof TreeNode)
+                e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+            else {
+                for (int binCount = 0; ; ++binCount) {
+                    if ((e = p.next) == null) {
+                        p.next = newNode(hash, key, value, null);
+                        if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                            treeifyBin(tab, hash);
+                        break;
+                    }
+                    if (e.hash == hash &&
+                        ((k = e.key) == key || (key != null && key.equals(k))))
+                        break;
+                    p = e;
+                }
+            }
+            if (e != null) { // existing mapping for key
+                V oldValue = e.value;
+                if (!onlyIfAbsent || oldValue == null)
+                    e.value = value;
+                afterNodeAccess(e);
+                return oldValue;
+            }
+        }
+        ++modCount;
+        if (++size > threshold)
+            resize();
+        afterNodeInsertion(evict);
+        return null;
+    }
+}
+```
+
 #### TreeMap
 
 TreeMap以Key的顺序来进行排序，TreeMap的Key必须实现Comparable接口，如果作为Key的class没有实现Comparable接口，那么，必须在创建TreeMap时同时指定一个自定义排序算法
@@ -953,6 +1128,28 @@ map.put(4, "李四");
 List<String> sortNames = new ArrayList<>(map.values());
 // [张三, 李四, 王五, 赵六]
 System.out.println(sortNames);
+```
+
+#### HashSet
+
+下面简单分析一下HashSet源码中的关键字段和方法
+
+```java
+// 声明了一个HashMap类型的字段
+transient HashMap<E,Object> map;
+
+// 声明了一个Object类型的常量字段
+static final Object PRESENT = new Object();
+
+// Set<Type> set = new HashSet<>()实际上是new了一个HashMap并赋给map字段
+public HashSet() {
+    map = new HashMap<>();
+}
+
+// add方法实际上是调用HashMap类型的map字段的put方法，key是要添加的元素，value是PRESENT
+public boolean add(E e) {
+    return map.put(e, PRESENT)==null;
+}
 ```
 
 #### Concurrent 集合
