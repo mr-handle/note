@@ -3581,7 +3581,8 @@ sudo pacman -S unrar
 sudo pacman -S gwenview
 
 # 草莓音乐播放器
-sudo pacman -S strawberry
+# gst-libav：默认不支持ape格式的音乐播放，装了这个就可以了
+sudo pacman -S strawberry gst-libav
 
 # 视频播放器
 sudo pacman -S haruna

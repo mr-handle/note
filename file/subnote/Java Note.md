@@ -1045,6 +1045,28 @@ public class HashMap<K,V> extends AbstractMap<K,V>
         // 省略一些方法
     }
 
+    // 红黑树
+    // TreeNode<K,V> 继承了 LinkedHashMap.Entry<K,V>
+    // LinkedHashMap.Entry <K,V>继承了 HashMap.Node<K,V>
+    // TreeNode其实是Node的子类
+    static final class TreeNode<K,V> extends LinkedHashMap.Entry<K,V> {
+        TreeNode<K,V> parent;  // red-black tree links
+        TreeNode<K,V> left;
+        TreeNode<K,V> right;
+        TreeNode<K,V> prev;    // needed to unlink next upon deletion
+        boolean red;
+
+        final TreeNode<K,V> putTreeVal(HashMap<K,V> map, Node<K,V>[] tab, int h, K k, V v)；
+    }
+
+    // LinkedHashMap.Entry<K,V>继承了HashMap.Node<K,V>
+    static class Entry<K,V> extends HashMap.Node<K,V> {
+        Entry<K,V> before, after;
+        Entry(int hash, K key, V value, Node<K,V> next) {
+            super(hash, key, value, next);
+        }
+    }
+
     // HashMap数组，每个元素是一个Node<K,V>，代表链表或红黑树
     transient Node<K,V>[] table;
 
@@ -1082,23 +1104,39 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     // 如果equals()返回false，说明HashMap中还没有该键值对，会将该键值对加入到Node<K,V>对象（链表或红黑树）中
 
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
+        // n存放HashMap数组长度
         Node<K,V>[] tab; Node<K,V> p; int n, i;
         if ((tab = table) == null || (n = tab.length) == 0)
+            // 如果HashMap数组为null或长度为0，初始化HashMap数组
             n = (tab = resize()).length;
+        // 计算索引，将HashMap数组的元素（也就是链表/红黑树头节点）赋给p
+        // 由于长度n为2的幂，(n - 1) & hash 和 hash % n等价，但是前者更快
+        // & 是按位与，用来取低位
         if ((p = tab[i = (n - 1) & hash]) == null)
+            // 如果HashMap数组对应索引位置的元素为null
+            // 新建链表
             tab[i] = newNode(hash, key, value, null);
         else {
+            // 如果HashMap数组对应索引位置的元素不为null
             Node<K,V> e; K k;
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
+                // 如果p的哈希值和put的参数key的哈希值相同
+                // 并且p.key和key相等
+                // 将p赋给e
                 e = p;
             else if (p instanceof TreeNode)
+                // 如果p是红黑树，走TreeNode.putTreeVal方法
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
             else {
+                // 如果以上二者都不是
                 for (int binCount = 0; ; ++binCount) {
                     if ((e = p.next) == null) {
+                        // 如果p的下一节点为null，则创建节点并将其赋给p.next
                         p.next = newNode(hash, key, value, null);
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                            // 如果链表符合条件，转成红黑树
+                            // 当前链表索引binCount，因为上一步创建了新节点了所以当前节点不是最后一个节点，TREEIFY_THRESHOLD - 1
                             treeifyBin(tab, hash);
                         break;
                     }
@@ -1121,6 +1159,28 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             resize();
         afterNodeInsertion(evict);
         return null;
+    }
+
+    // 将符合条件的链表转成红黑树
+    final void treeifyBin(Node<K,V>[] tab, int hash) {
+        int n, index; Node<K,V> e;
+        if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
+            resize();
+        else if ((e = tab[index = (n - 1) & hash]) != null) {
+            TreeNode<K,V> hd = null, tl = null;
+            do {
+                TreeNode<K,V> p = replacementTreeNode(e, null);
+                if (tl == null)
+                    hd = p;
+                else {
+                    p.prev = tl;
+                    tl.next = p;
+                }
+                tl = p;
+            } while ((e = e.next) != null);
+            if ((tab[index] = hd) != null)
+                hd.treeify(tab);
+        }
     }
 }
 ```
