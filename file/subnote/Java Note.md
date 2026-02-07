@@ -713,6 +713,8 @@ Assertions.assertEquals(2, Character.BYTES);
 
 ##### 字符串常量池
 
+字符串常量池（String Intern Pool）里存放的是指向堆中某个String对象的引用
+
 - 保证字符串变量s指向的是字符串常量池中的数据的两种方式
     - 1.字面量定义的方式：String s = "hello";
     - 2.调用intern方法：String s = xxxString.intern();
@@ -1071,6 +1073,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     // 待分析
+    // 先调用对象的hashCode()方法，得到一个“哈希值”，并通过内部散列函数对这个哈希值再做一次简单的转换（比如取余），决定这条数据应该放进数组的哪一个桶
+    // 如果该桶当前是空的，就直接将键值对添加到这个桶的Node<K,V>对象中
+    // 如果该桶中已经有其他元素，HashMap会在这个桶的Node<K,V>对象（链表或红黑树）中逐个比较
+    // 如果key的哈希值Node<K,V>对象中当前元素的key的哈希值不同，继续比对Node<K,V>对象中的下一个元素
+    // 如果key的哈希值Node<K,V>对象中当前元素的key的哈希值相同，则会进一步调用equals()方法来检查这两个对象是否“相等”
+    // 如果equals()返回true，说明HashMap中已存在与当前key相同的Node<K,V>对象的元素，HashMap将其value更新
+    // 如果equals()返回false，说明HashMap中还没有该键值对，会将该键值对加入到Node<K,V>对象（链表或红黑树）中
+
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
         if ((tab = table) == null || (n = tab.length) == 0)
@@ -2690,11 +2700,50 @@ Map<Boolean, Dish> mostCaloricPartitionedByVegetarian = menu.stream().collect(
 
 ### 异常
 
+![异常类层次结构图概览](/images/异常类层次结构图概览.png)
+
+- Exception：程序本身可以处理的异常，可以通过 catch 来进行捕获
+    - 分为Checked Exception和Unchecked Exception，其中受检异常，必须处理
+    - 除了RuntimeException及其子类以外，其他的Exception类及其子类都属于受检异常
+    - 一般来说，只有当这个异常是业务逻辑的一部分，并且调用方必须处理它时，才会使用Checked Exception
+- Error：程序本身无法处理的错误，不建议通过catch捕获，这些异常发生时，JVM一般会选择线程终止
+
 - 当某个方法抛出了异常时，如果当前方法没有捕获异常，异常就会被抛到上层调用方法，直到遇到某个try {...} catch {...} finally {}被捕获为止
+
+```java
+public class Throwable implements Serializable {
+    // 返回异常的详细信息
+    public String getMessage() {
+        return detailMessage;
+    }
+
+    // 返回异常的本地化信息
+    // 默认返回的信息和getMessage()相同，Throwable的子类可以覆写此方法生成本地化信息
+    public String getLocalizedMessage() {
+        return getMessage();
+    }
+
+    public String getMessage() {
+        return detailMessage;
+    }
+
+    // 返回异常的简要描述
+    public String toString() {
+        String s = getClass().getName();
+        String message = getLocalizedMessage();
+        return (message != null) ? (s + ": " + message) : s;
+    }
+
+    // 打印异常及其回溯信息到标准错误流
+    public void printStackTrace() {
+        printStackTrace(System.err);
+    }
+}
+```
 
 #### 捕获异常
 
-- 捕获异常使用try {...} catch {...} finally {} 语句，把可能发生异常的代码放到try中，然后使用catch捕获对应的Exception及其子类
+- 捕获异常使用`try {...} catch {...} finally {}`语句，把可能发生异常的代码放到try中，然后使用catch捕获对应的Exception及其子类
 
 - 多个catch语句只有一个能被执行
 

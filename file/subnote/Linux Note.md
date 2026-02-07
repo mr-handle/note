@@ -3788,7 +3788,7 @@ sudo pacman -S rsync
 # rsync只能复制，不能整理qcow2碎片
 # -a：归档
 # -h：人类可读
-# --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小
+# --sparse：保留稀疏文件结构，不会把qcow2/raw膨胀成预定义大小，对于普通文件如果加了这个参数rsync不会做任何额外处理
 # --info=progress2：复制总体进度
 # 要先创建目的目录，最后原目录记得加/后缀，表示复制目录内容
 sudo mkdir -p /path/to/target
