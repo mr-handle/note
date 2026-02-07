@@ -814,32 +814,85 @@ public enum ColorEnum {
 
 #### 泛型
 
-##### 定义和使用泛型
+泛型一般有三种使用方式：泛型接口、泛型类、泛型方法
+
+##### 泛型接口
+
+- 定义泛型接口
 
 ```java
-public class ClassName<T> {
-    private T field;
+public interface InterfaceName<T> {
+    T methodName(T t);
+}
+```
 
-    public T getField() {
-        return field;
+- 实现泛型接口
+
+```java
+// 实现类不指定类型
+public class ClassName<T> implements InterfaceName<T> {
+    @Override
+    public T methodName(T t) {
+        return t;
+    }
+}
+
+// 实现类指定类型
+public class ClassName implements InterfaceName<String> {
+    @Override
+    public String methodName(String s) {
+        return s;
     }
 }
 ```
 
-- 定义泛型方法
+##### 泛型类
+
+- 定义泛型类
+
+```java
+public class ClassName<T> {
+    private T fieldName;
+
+    public ClassName(T fieldName) {
+        this.fieldName = fieldName;
+    }
+
+    public T getFieldName() {
+        return fieldName;
+    }
+}
+```
+
+- 创建泛型类的对象
   
 ```java
+泛型类名<具体类型> objectName = new 泛型类名<>();
+```
+
+##### 泛型方法
+
+- 定义泛型方法
+
+```java
 public class ClassName {
-    public <T> T function(T t) {
+    // 静态泛型方法
+    public static <T> void staticMethodName(T t) {
+        System.out.println(t);
+    }
+
+    // 实例泛型方法
+    public <T> T methodName(T t) {
         return t;
     }
 }
 ```
 
-- 定义泛型类的对象
-  
+- 使用泛型方法
+
 ```java
-泛型类名<具体类型> object = new 泛型类名<具体类型>();
+ClassName.staticMethodName("static");
+System.out.println(new ClassName().methodName("instance"));
 ```
 
 ##### 通配符类型(wildcard type)
