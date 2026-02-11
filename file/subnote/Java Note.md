@@ -2051,15 +2051,70 @@ public void testTransmittableThreadLocal() throws InterruptedException {
 }
 ```
 
-### 动态代理
+### 代理模式
+
+#### 静态代理
+
+静态代理在编译时就将接口、实现类、代理类这些都变成了一个个实际的 class 文件
+
+静态代理对目标对象的每个方法的增强都要手动完成
+    - 非常不灵活：比如接口一旦新增加方法，目标对象和代理对象都要进行修改
+    - 且麻烦：需要对每个目标类都单独写一个代理类
+
+- 1.定义一个接口及其实现类
+
+```java
+public interface UserService {
+    void save(String name);
+}
+
+public class UserServiceImpl implements UserService {
+    @Override
+    public void save(String name) {
+        System.out.println("save user: " + name);
+    }
+}
+```
+
+- 2.创建代理类并同样实现该接口
+
+```java
+public class UserServiceProxy implements UserService {
+    private final UserService userService;
+
+    public UserServiceProxy(UserService userService) {
+        this.userService = userService;
+    }
+
+    @Override
+    public void save(String name) {
+        // 调用方法前添加自己的操作
+        System.out.println("before method " + "save");
+        // 调用被代理对象的方法
+        userService.save(name);
+        // 调用方法后添加自己的操作
+        System.out.println("after method " + "save");
+    }
+}
+```
+
+- 3.使用代理对象调用方法
+
+```java
+UserService userService = new UserServiceImpl();
+UserServiceProxy proxy = new UserServiceProxy(userService);
+proxy.save("handle");
+```
+
+#### 动态代理
 
 从JVM角度来说，动态代理是在运行时动态生成类字节码，并加载到JVM中。
 
-#### JDK原生动态代理
+##### JDK原生动态代理
 
-缺点：只能代理实现了接口的类。
-<br/>
-核心：InvocationHandler接口和Proxy类。
+缺点：只能代理实现了接口的类
+
+核心：InvocationHandler接口和Proxy类
 
 - 1.定义一个接口及其实现类
 
@@ -2115,7 +2170,7 @@ UserService proxyInstance = (UserService) Proxy.newProxyInstance(
 proxyInstance.save("Tom");
 ```
 
-#### CGLIB动态代理
+##### CGLIB动态代理
 
 Maven依赖
 
@@ -2127,9 +2182,10 @@ Maven依赖
 </dependency>
 ```
 
-CGLIB是一个基于ASM的字节码生成库，它允许我们在运行时对字节码进行修改和动态生成。<br/>
+CGLIB是一个基于ASM的字节码生成库，它允许我们在运行时对字节码进行修改和动态生成
+
 缺点：CGLIB通过继承方式实现代理，因此不能代理终结类和终结方法
-<br/>
+
 核心：MethodInterceptor接口和Enhancer类
 
 - 1.定义一个类
@@ -2142,7 +2198,7 @@ public class UserServiceImpl {
 }
 ```
 
-- 2.实现MethodInterceptor接口并重写intercept方法，intercept用于拦截增强被代理类的方法
+- 2.实现MethodInterceptor接口并重写intercept方法，intercept用于增强被代理类的方法
 
 ```java
 public class UserMethodInterceptor implements MethodInterceptor {
