@@ -757,6 +757,7 @@ System.out.println(s3 == s4);
 使用`new BigDecimal(String val)`构造方法来创建对象，精度不会丢失
 
 使用`BigDecimal.valueOf(double val)`静态方法创建对象，当数值有效位数很多的时候，还是会丢失精度
+    - 因为此方法内部其实执行了Double.toString，按double的实际能表达的精度对尾数进行了截断
 
 - 等值比较应该用compareTo()方法，而不是equals()方法；因为equals()方法会比较值和精度，而compareTo()方法比较的时候会忽略精度
 
