@@ -3547,19 +3547,14 @@ dkms status
 sudo cat /sys/module/nvidia_drm/parameters/modeset
 ```
 
-###### 安装切换显卡工具
-
-对于笔记本，安装完对应的显卡驱动后，还要安装切换显卡工具
-
-笔者建议就是直接切换用独显或核显
+###### 对于笔记本使用独显启动指定程序
 
 ```sh
-# 安装完重启
-yay -S optimus-manager
+# 安装nvidia-prime
+yay -S nvidia-prime
 
-# 命令行切换显卡，nvidia, integrated, hybrid，分别为独显、集显和混合模式
-# 切换到 Nvidia GPU
-optimus-manager --switch nvidia
+# 用独显启动指定程序
+prime-run 程序名
 ```
 
 ##### 安装其它常用软件
