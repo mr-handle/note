@@ -3347,6 +3347,7 @@ import_tables:
 ...
 
 # 继续在该目录下新建luna_pinyin.custom.yaml文件，输入如下内容
+# 让指定的词库文件生效
 patch:
     # final对应final.dict.yaml文件
     "translator/dictionary": final
@@ -3393,7 +3394,9 @@ sort: by_weight
 㘃        re        99%
 ```
 
-- 3.在该目录下创建luna_pinyin.custom.dict.yaml文件（扩展哪个输入方案的词汇就命名为“方案名.custom.dict.yaml”，存放想要添加的词库
+- 3.在该目录下创建词库文件luna_pinyin.custom.dict.yaml
+    - 也可以是"自定义名称.dict.yaml"，但是这样定义部署后会生成"自定义名称.userdb"文件夹，多余
+    - 个人建议还是用"方案名称.custom.dict.yaml"
 
 ```yaml
 ---
@@ -3402,6 +3405,7 @@ version: "2025.12.18"
 sort: by_weight
 # 是否启用默认的“八股文”词库及词频系统，如需启用请设为true 
 use_preset_vocabulary: true
+# 导入已有词库
 import_tables:
     # 这里的缩进必须用空格
     # 添加默认词库
@@ -3417,6 +3421,7 @@ import_tables:
 
 ```yaml
 patch:
+    # 让指定的词库文件生效
     # luna_pinyin.custom对应luna_pinyin.custom.dict.yaml文件
     "translator/dictionary": luna_pinyin.custom
 ```
