@@ -3404,9 +3404,8 @@ sort: by_weight
 use_preset_vocabulary: true
 import_tables:
     # 这里的缩进必须用空格
-    # 默认词库luna_pinyin，luna_pinyin.custom.dict.yaml本身就是对luna_pinyin.dict.yaml的扩展
-    # 它已经继承了luna_pinyin的所有词汇，不需要再手动添加
-    # - luna_pinyin
+    # 添加默认词库
+    - luna_pinyin
     # 添加安装的rime-pinyin-zhwiki词库
     - zhwiki
     # 添加自定义的扩展词库，对应自定义的extension.dict.yaml文件
