@@ -3299,6 +3299,7 @@ sudo pacman -S fcitx5-pinyin-zhwiki
 sudo pacman -S fcitx5-rime
 
 # 安装适用于rime输入法的词库，不会自动加载，需要手动配置
+# 安装后得到文件：/usr/share/rime-data/zhwiki.dict.yaml
 sudo pacman -S rime-pinyin-zhwiki
 ```
 
@@ -3371,7 +3372,7 @@ patch:
 
 当然如果重新打开放自定义词条信息的文件还是要检查制表符有没有被编辑器替换掉，根据情况设置回制表符再保存
 
-- 1.进入`~/.local/share/fcitx5/rime`目录
+- 1.进入`~/.local/share/fcitx5/rime`目录(fcitx5-android目录是: Android/data/org.fcitx.fcitx5.android/files/data/rime)
 
 - 2.在该目录下创建自定义词库文件extension.dict.yaml，存放自定义词条
 
@@ -3379,36 +3380,36 @@ patch:
 # 自定义词库
 # 记得用UTF-8编码并保存
 ---
-# name对应extension.dict.yaml文件
+# extension对应extension.dict.yaml文件
 name: extension
 version: "2025.12.18"
 sort: by_weight
 ...
 
 # 以下开始为自定义词条
-# 词汇、拼音、权重间用4长度的制表符，千万不要用空格，重新打开此文件也要注意检查和设置
+# 词汇、拼音、权重间用8长度的制表符，千万不要用空格，重新打开此文件也要注意检查和设置
 # 权重可以不写
-# \t表示制表符，例子：㘃\tre\t99%
-㘃 re 99%
+# \t表示制表符，例子：㘃\tre\t99%，权重99%是可以不写的
+㘃        re        99%
 ```
 
-- 3.在该目录下创建final.dict.yaml文件，存放想要添加的词库
+- 3.在该目录下创建luna_pinyin.custom.dict.yaml文件（扩展哪个输入方案的词汇就命名为“方案名.custom.dict.yaml”，存放想要添加的词库
 
 ```yaml
 ---
-# name对应final.dict.yaml文件
-name: final
+name: luna_pinyin.custom
 version: "2025.12.18"
 sort: by_weight
 # 是否启用默认的“八股文”词库及词频系统，如需启用请设为true 
 use_preset_vocabulary: true
 import_tables:
     # 这里的缩进必须用空格
-    # 添加默认词库
-    - luna_pinyin
+    # 默认词库luna_pinyin，luna_pinyin.custom.dict.yaml本身就是对luna_pinyin.dict.yaml的扩展
+    # 它已经继承了luna_pinyin的所有词汇，不需要再手动添加
+    # - luna_pinyin
     # 添加安装的rime-pinyin-zhwiki词库
     - zhwiki
-    # 添加自定义的词库，对应自定义的extension.dict.yaml文件
+    # 添加自定义的扩展词库，对应自定义的extension.dict.yaml文件
     - extension
 ...
 ```
@@ -3417,8 +3418,8 @@ import_tables:
 
 ```yaml
 patch:
-    # final对应final.dict.yaml文件
-    "translator/dictionary": final
+    # luna_pinyin.custom对应luna_pinyin.custom.dict.yaml文件
+    "translator/dictionary": luna_pinyin.custom
 ```
 
 - 5.然后重新部署输入法
