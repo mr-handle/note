@@ -3500,6 +3500,11 @@ sudo vim /etc/pacman.conf
 # 到安装教程官网，根据显卡代码安装对应的显卡驱动：https://wiki.archlinux.org/title/NVIDIA
 lspci -k -d ::03xx
 
+# Nouveau（NVIDIA开源驱动），目前英伟达没有完全开源，性能不如英伟达闭源驱动的一半，不建议安装
+# linux内核包已经包含了nouveau开源驱动（即mesa和lib32-mesa不用手动安装了，provides the DRI driver for 3D acceleration）
+# Mesa NVK Vulkan Driver
+sudo pacman -S vulkan-nouveau lib32-vulkan-nouveau
+
 # NVIDIA（闭源）
 # 新版显卡的驱动已经从nvidia改成nvidia-open了
 # nvidia-open：NVIDIA内核模块
@@ -3528,7 +3533,7 @@ sudo pacman -S mesa libva-intel-driver vulkan-intel
 
 ###### 安装GTX 1060显卡驱动
 
-GTX 1060显卡驱动已经被老黄归为Legacy, supported，需要自己编译安装了
+GTX 1060显卡驱动已经被老黄归为Legacy, supported，需要自己编译安装了，安装完重启即可
 
 ```sh
 # 安装headers
@@ -3540,16 +3545,16 @@ sudo pacman -S linux-headers
 yay -S nvidia-580xx-dkms
 
 # 使dkms命令生效
-source /usr/share/bash-completion/completions/dkms
+# source /usr/share/bash-completion/completions/dkms
 
 # 将可以看到刚刚安装的显卡驱动
-dkms status
+# dkms status
 
 # 对于使用Wayland的情况，如Plasma(Wayland)，还需要进行DRM (Direct Rendering Manager) 内核模式设置
 # 从nvidia-utils 560.35.03-5起,默认已经启用DRM
 # 对于老版本的驱动，设置modeset=1
 # 先确认，输出应该为Y
-sudo cat /sys/module/nvidia_drm/parameters/modeset
+# sudo cat /sys/module/nvidia_drm/parameters/modeset
 ```
 
 ###### 对于笔记本使用独显启动指定程序
