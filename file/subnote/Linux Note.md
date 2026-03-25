@@ -3612,6 +3612,9 @@ sudo pacman -S clamtk
 
 # 应用沙盒
 sudo pacman -S firejail
+
+# 安装后可以在系统设置->"About this System"查看电脑系统概要/详细信息
+sudo pacman -S kinfocenter
 ```
 
 ##### 安装steam
