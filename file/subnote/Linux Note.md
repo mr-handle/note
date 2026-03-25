@@ -181,8 +181,10 @@ su - 用户名
 useradd 用户名
 
 # 创建新用户
-# 创建该用户的家目录，将该家目录的所有者设置为该用户
-useradd -m 用户名
+# -m，创建该用户的家目录，将该家目录的所有者设置为该用户
+# -G，加入wheel，但是也会创建和用户名相同的用户组
+# -s，指定用户登录时使用的默认shell为/bin/bash
+useradd -m [-G wheel] [-s /bin/bash] 用户名
 
 # 创建新用户并指定家目录
 useradd -d 指定目录 用户名
@@ -1907,6 +1909,15 @@ elif [[ 条件表达式2 ]]; then
 else
     命令3
 fi
+
+# if后也可以跟命令，command的执行结果（command的退出状态码）：0 → 条件为真，非0 → 条件为假
+if command; then
+    命令1
+elif command; then
+    命令2
+else
+    命令3
+fi
 ```
 
 - case语句
@@ -3148,7 +3159,7 @@ sudo systemctl enable sddm
 - 设置锁屏界面显示的时间为24小时制
 
 ```sh
-# 查看C.UTF-8是不死已经内置有了，如果没有需要先生成
+# 查看C.UTF-8是否已经内置有了，如果没有需要先生成
 locale -a | grep C
 
 # 添加：LC_TIME=C.UTF-8，然后重启
@@ -3165,6 +3176,12 @@ useradd -m handle
 
 # 指定handle的登录密码
 passwd handle
+
+# 用户加入 wheel 组，然后重启，新的组权限才会生效，这里以上面创建的handle为例
+# usermod 修改用户账户的命令
+# -a append，追加组（不移除已有组）
+# -G wheel 指定要加入的组是 wheel
+usermod -aG wheel handle
 ```
 
 ##### （root用户）安装sudo
@@ -3185,11 +3202,13 @@ pacman -S sudo
 # 找到这行： # %wheel ALL=(ALL:ALL) ALL然后取消注释，保存退出
 EDITOR=vim visudo
 
-# 用户加入 wheel 组，然后重启，新的组权限才会生效，这里以上面创建的handle为例
-# usermod 修改用户账户的命令
-# -a append，追加组（不移除已有组）
-# -G wheel 指定要加入的组是 wheel
-usermod -aG wheel handle
+# 或者这样（还没试过）
+# -i，直接修改文件（in-place edit）
+# s/旧内容/新内容/，找到旧内容，替换为新内容
+# 如果旧内容有正则符号要用\转义
+# 如果旧内容或新内容有/要对/转义或者写成s|旧内容|新内容|,也可以将|换成其它分隔符
+# ^，匹配行首
+sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 ```
 
 ##### 安装yay
@@ -3722,9 +3741,9 @@ qemu还能运行virtualbox的vdi文件，但是长期来看用qemu-img转成raw�
 
 ```sh
 # qemu-base：命令行版本
-# qemu-desktop：默认x86_64模拟器
-# qemu-full：完全版
-sudo pacman -S qemu-full
+# qemu-desktop：只有x86_64架构
+# qemu-full：完全版，还包含其它架构
+sudo pacman -S qemu-desktop
 
 # libvirt通过命令行管理KVM/QEMU（虚拟机）
 # virt-manager是通过libvirt管理KVM/QEMU（虚拟机）的GUI
