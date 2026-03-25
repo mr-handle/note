@@ -2073,6 +2073,21 @@ result=$(sum 1 2)
 echo "$result"
 ```
 
+#### 追加内容到文件
+
+```sh
+FILE="/path/to/file"
+
+# 追加一行配置
+echo "content of line" >> "$FILE"
+
+# 追加多行配置，EOF可以换成任何你喜欢的标记，比如END
+cat <<EOF >> "$FILE"
+content of line1
+content of line2
+EOF
+```
+
 #### 综合
 
 ```sh
