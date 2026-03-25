@@ -3615,6 +3615,9 @@ sudo pacman -S firejail
 
 # 安装后可以在系统设置->"About this System"查看电脑系统概要/详细信息
 sudo pacman -S kinfocenter
+
+# archlinux版的cpu-z，也可以查看系统和电脑硬件信息
+sudo pacman -S cpu-x
 ```
 
 ##### 安装steam
