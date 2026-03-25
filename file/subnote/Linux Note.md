@@ -3099,10 +3099,9 @@ sudo pacman -S kde-gtk-config
 
 # plasma-nm，管理网络连接，并且在任务栏显示网络托盘图标，可作为NetworkManager的GUI
 # plasma-pa，音量控制器，并且在任务栏显示托盘小喇叭
-# plasma-systemmonitor，系统监视器，类似Windows的任务管理器
 # kscreen，显示设置，如设置分辨率、缩放等，不安装的话系统设置里面Display & Monitor选项置灰
 # plasma-firewall，防火墙控制面板
-sudo pacman -S plasma-nm plasma-pa plasma-systemmonitor kscreen plasma-firewall
+sudo pacman -S plasma-nm plasma-pa kscreen plasma-firewall
 ```
 
 - 只安装kde-applications的部分应用
@@ -3612,6 +3611,10 @@ sudo pacman -S clamtk
 
 # 应用沙盒
 sudo pacman -S firejail
+
+# archlinux版的任务管理器，监控CPU、GPU、内存、网络等
+# plasma-systemmonitor无法监测英伟达显卡的GPU使用情况，该列信息为空白，mission-center完全可以替换之
+sudo pacman -S mission-center
 
 # 安装后可以在系统设置->"About this System"查看电脑系统概要/详细信息
 sudo pacman -S kinfocenter
