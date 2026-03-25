@@ -3612,7 +3612,8 @@ sudo pacman -S clamtk
 # 应用沙盒
 sudo pacman -S firejail
 
-# archlinux版的任务管理器，监控CPU、GPU、内存、网络等
+# archlinux版的任务管理器，依赖nvtop，用来监控CPU、GPU、内存、网络等
+# 但是mission-center无法获取到部分的进程id，但是不妨碍它可以停止应用的运行
 # plasma-systemmonitor无法监测英伟达显卡的GPU使用情况，该列信息为空白，mission-center完全可以替换之
 sudo pacman -S mission-center
 
@@ -4325,6 +4326,9 @@ Exec=/home/handle/Applications/WeChat.AppImage
 Icon=/home/handle/Applications/WeChat.png
 Terminal=false
 Categories=Development;
+# 这个应用是否支持启动通知：应用启动时显示“正在启动”的动画，在任务栏显示一个“启动中”的高亮，等应用真正启动后再恢复正常
+# 如果应用支持这个机制，桌面环境就能知道它什么时候启动完成。
+StartupNotify=true
 ```
 
 - 如果是wine，则Exec键值对需要做变动
