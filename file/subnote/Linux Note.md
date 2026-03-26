@@ -183,7 +183,7 @@ useradd 用户名
 # 创建新用户
 # -m，创建该用户的家目录，将该家目录的所有者设置为该用户
 # -G，加入wheel，但是也会创建和用户名相同的用户组
-# -s，指定用户登录时使用的默认shell为/bin/bash
+# -s，指定用户登录时使用的默认shell为/bin/bash，一定要确认该bash存在，不然会导致用户登录不了，这种情况执行："chsh -s path/to/正确的bash 用户名"来纠正
 useradd -m [-G wheel] [-s /bin/bash] 用户名
 
 # 创建新用户并指定家目录
@@ -2762,13 +2762,16 @@ w
 
 ```sh
 # 格式化efi系统分区为fat32
-mkfs.fat -F 32 /dev/efi_system_partition
+# -n，标签
+mkfs.fat -F 32 [-n boot] /dev/efi_system_partition
 
 # 格式化swap分区
-mkswap /dev/swap_partition
+# -L，标签
+mkswap [-L swap] /dev/swap_partition
 
 # 格式化/分区为ext4
-mkfs.ext4 /dev/root_partition
+# -L，标签
+mkfs.ext4 [-L archlinux] /dev/root_partition
 ```
 
 ##### 3. 挂载分区
@@ -4489,6 +4492,9 @@ fdisk -l
 # 选择要分区的设备
 fdisk /dev/the_disk_to_be_partitioned
 
+# 或用cfdisk（如果有），图形化的fdisk 
+cfdisk /dev/the_disk_to_be_partitioned
+
 # 首先输入g创建GPT分区表
 g 
 
@@ -4516,7 +4522,8 @@ fdisk -l
 
 # 创建一个新的文件系统（即格式化为指定的文件系统），前提是该分区必须已经卸载
 # 不同文件系统对应不同的命令，以分区/dev/sda1为例
-mkfs.ext4 /dev/sda1
+# -L，标签
+mkfs.ext4 -L archlinux /dev/sda1
 mkfs.exfat /dev/sda1
 mkfs.fat -F 32 /dev/sda1
 ```
@@ -4563,120 +4570,70 @@ sudo fdisk -l
 # 修改核心配置文件后重建
 sudo nixos-rebuild switch
 
+# 查看当前系统generations
+sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
+
+# 切换到指定generations
+sudo nix-env --profile /nix/var/nix/profiles/system --switch-generation 204
+
+# 删除所有旧generations，只保留当前版本
+sudo nix-collect-garbage -d
+
+# 删除指定generations
+sudo nix-env --profile /nix/var/nix/profiles/system --delete-generations 205 206
+
 # 查看帮助
 nixos-help
 ```
 
 ### 安装NixOS
 
-下载iso、制作启动盘、进入live系统，分区定义、格式化、挂载略过
+下载iso、制作启动盘、进入live系统，分区定义、格式化、挂载略过，可参考archlinux的安装教程
+
+```sh
+# 进入live系统后，切换为root用户
+sudo -i
+```
+
+#### 生成初始配置文件
+
+```sh
+# 会在/mnt/etc/nixos生成configuration.nix和hardware-configuration.nix文件
+sudo nixos-generate-config --root /mnt
+```
 
 #### 配置国内加速
 
 在挂载分区后安装之前，先配置国内加速
 
 ```sh
-sudo mkdir -p /etc/nix
+# 编辑主配置文件，再虚拟机试了一下没生效，不知道什么原因
+sudo vim /mnt/etc/nixos/configuration.nix
 
-sudo tee /etc/nix/nix.conf <<EOF
-experimental-features = nix-command flakes
-substituters = https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/
-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-EOF
-
-# 生成初始配置文件
-# 会在/mnt/etc/nixos生成configuration.nix和hardware-configuration.nix文件
-sudo nixos-generate-config --root /mnt
-```
-
-- 编辑configuration.nix
-
-```sh
-# 编辑主配置文件
-sudo nano /mnt/etc/nixos/configuration.nix
-```
-
-- 替换为如下内容（最小实用版+国内加速）
-
-```nix
-{ config, pkgs, ... }:
-
-{
-  imports = [ ./hardware-configuration.nix ];
-
-  # Bootloader（UEFI 默认）
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  # 主机名与网络
-  networking.hostName = "nixos";                  # 改成你喜欢的
-  networking.networkmanager.enable = true;
-
-  # 时区与中文支持
-  time.timeZone = "Asia/Shanghai";
-  i18n.defaultLocale = "zh_CN.UTF-8";
-  console = {
-    font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
-    useXkbConfig = true;
-  };
-
-  # 国内加速（永久生效）
+# 在imports = [ ./hardware-configuration.nix ];后添加
 nix.settings = {
-  substituters = [
-    "https://mirrors.ustc.edu.cn/nix-channels/store"     # 中科大（可优先）
-    "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"  # 清华
-    "https://cache.nixos.org/"
-  ];
-  trusted-public-keys = [
-    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-  ];
+    substituters = [
+        "https://mirrors.ustc.edu.cn/nix-channels/store"
+        "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+        "https://cache.nixos.org/"
+    ];
+    trusted-public-keys = [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+    ];
 };
-
-  # 普通用户（务必改用户名和初始密码）
-  users.users.demo = {                            # ← 改成你的用户名
-    isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
-    initialPassword = "12345678";                 # 登录后立即改密码！
-  };
-
-  # 基本软件包
-  environment.systemPackages = with pkgs; [
-    vim git
-  ];
-
-  # 桌面环境 KDE Plasma
-  services.desktopManager.plasma6.enable = true;
-
-  # SSH 服务
-  services.openssh.enable = false;
-
-  # NixOS系统版本
-  system.stateVersion = "25.11";
-}
 ```
 
 #### 开始安装
 
 ```sh
 # 安装
+# 中断安装ctrl + c，不会损坏已下载内容
 sudo nixos-install
 
-# 中断安装ctrl + c，不会损坏已下载内容
-# 直接在下次运行 nixos-install 时用选项指定多个源
+
+# 也可以不改主配置文件，安装时通过选项指定多个源
+# 貌似是Graphical ISO才可以，待确认
 sudo nixos-install \
   --option substituters "https://mirrors.ustc.edu.cn/nix-channels/store https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/" \
   --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-```
-
-### 问题和解决办法
-
-- 如果sudo nixos-rebuild switch报error: public key is not valid（通常因旧 key 配置污染）
-
-```sh
-# 临时绕过坏 key 并 rebuild（成功后自动修复）
-sudo nixos-rebuild switch \
-  --option substituters "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/" \
-  --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-
-sudo nixos-rebuild switch --upgrade
 ```
