@@ -4554,3 +4554,129 @@ lsblk -o NAME,ALIGNMENT
 # 或者手动计算分区的起始扇区是否能被8整除，如果是，说明4k对齐
 sudo fdisk -l
 ```
+
+## NixOS
+
+核心配置文件：/etc/nixos/configuration.nix
+
+```sh
+# 修改核心配置文件后重建
+sudo nixos-rebuild switch
+
+# 查看帮助
+nixos-help
+```
+
+### 安装NixOS
+
+下载iso、制作启动盘、进入live系统，分区定义、格式化、挂载略过
+
+#### 配置国内加速
+
+在挂载分区后安装之前，先配置国内加速
+
+```sh
+sudo mkdir -p /etc/nix
+
+sudo tee /etc/nix/nix.conf <<EOF
+experimental-features = nix-command flakes
+substituters = https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+EOF
+
+# 生成初始配置文件
+# 会在/mnt/etc/nixos生成configuration.nix和hardware-configuration.nix文件
+sudo nixos-generate-config --root /mnt
+```
+
+- 编辑configuration.nix
+
+```sh
+# 编辑主配置文件
+sudo nano /mnt/etc/nixos/configuration.nix
+```
+
+- 替换为如下内容（最小实用版+国内加速）
+
+```nix
+{ config, pkgs, ... }:
+
+{
+  imports = [ ./hardware-configuration.nix ];
+
+  # Bootloader（UEFI 默认）
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  # 主机名与网络
+  networking.hostName = "nixos";                  # 改成你喜欢的
+  networking.networkmanager.enable = true;
+
+  # 时区与中文支持
+  time.timeZone = "Asia/Shanghai";
+  i18n.defaultLocale = "zh_CN.UTF-8";
+  console = {
+    font = "${pkgs.terminus_font}/share/consolefonts/ter-u28n.psf.gz";
+    useXkbConfig = true;
+  };
+
+  # 国内加速（永久生效）
+nix.settings = {
+  substituters = [
+    "https://mirrors.ustc.edu.cn/nix-channels/store"     # 中科大（可优先）
+    "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"  # 清华
+    "https://cache.nixos.org/"
+  ];
+  trusted-public-keys = [
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+  ];
+};
+
+  # 普通用户（务必改用户名和初始密码）
+  users.users.demo = {                            # ← 改成你的用户名
+    isNormalUser = true;
+    extraGroups = [ "wheel" "networkmanager" ];
+    initialPassword = "12345678";                 # 登录后立即改密码！
+  };
+
+  # 基本软件包
+  environment.systemPackages = with pkgs; [
+    vim git
+  ];
+
+  # 桌面环境 KDE Plasma
+  services.desktopManager.plasma6.enable = true;
+
+  # SSH 服务
+  services.openssh.enable = false;
+
+  # NixOS系统版本
+  system.stateVersion = "25.11";
+}
+```
+
+#### 开始安装
+
+```sh
+# 安装
+sudo nixos-install
+
+# 中断安装ctrl + c，不会损坏已下载内容
+# 直接在下次运行 nixos-install 时用选项指定多个源
+sudo nixos-install \
+  --option substituters "https://mirrors.ustc.edu.cn/nix-channels/store https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/" \
+  --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+```
+
+### 问题和解决办法
+
+- 如果sudo nixos-rebuild switch报error: public key is not valid（通常因旧 key 配置污染）
+
+```sh
+# 临时绕过坏 key 并 rebuild（成功后自动修复）
+sudo nixos-rebuild switch \
+  --option substituters "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/" \
+  --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+
+sudo nixos-rebuild switch --upgrade
+```
