@@ -4966,3 +4966,52 @@ line
 string
 ''
 ```
+
+#### 查找路径
+
+它是一个文件系统路径，取决于builtins.nixPath定义的值
+
+官方建议生产代码避免使用查找路径，它是不可复现的
+
+```sh
+# /nix/var/nix/profiles/per-user/root/channels/nixpkgs
+<nixpkgs>
+
+# /nix/var/nix/profiles/per-user/root/channels/nixpkgs/lib
+<nixpkgs/lib>
+```
+
+#### 方法
+
+Nix语言的方法是没有名称的，为匿名函数或者称之为lambda，但是它可以赋值给一个名称
+
+```sh
+# 方法定义，方法总是只有一个参数，用`:`隔开，左边是方法参数，右边是方法体
+functionArgument:functionBody
+
+# 单参数方法
+# 输出：<LAMBDA>，表示结果是一个匿名函数
+x: x + 1
+
+# 多参数方法，通过内嵌来实现
+x: y: x + y
+
+# 属性集作为方法参数
+{ a, b }: a + b
+
+# 给方法参数设置默认值
+{ a, b ? 0 }: a + b
+
+# 允许可变参数
+{ a, b, ...}: a + b
+
+# 给属性集参数命名，如下两种写法等价
+args@{ a, b, ... }: a + b + args.c
+{ a, b, ... }@args: a + b + args.c
+
+# 将方法赋给一个名称
+# 输出：<LAMBDA>
+let
+    f = x: x + 1;
+in f
+```
