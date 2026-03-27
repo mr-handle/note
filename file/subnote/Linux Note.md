@@ -4774,3 +4774,195 @@ home-manager switch --rollback
 ```sh
 nix.settings.experimental-features = "nix-command flakes";
 ```
+
+### Nix语言
+
+```sh
+# 装完NixOS操作系统后，可以在终端输入"nix repl"进入交互环境，有点像jshell，不过它只支持Nix语言
+# 笔者就称它为nixshell吧
+nix repl
+
+# 退出nixshell
+:q
+
+# 帮助
+:?
+
+# 有些输出显示的不够完整，可以用:p
+# 输出：{ a = { ... }; }
+{ a.b.c = 1; }
+
+# 输出：{ a = { b = { c = 1; }; }; }
+:p { a.b.c = 1; }
+
+# 计算file.nix的结果
+echo 1 + 2 > file.nix
+
+# 如果不指定文件名，则默认读default.nix文件
+# 有些输出显示的不够完整，可以用--strict
+# 输出：3
+nix-instantiate --eval file.nix
+
+echo "{ a.b.c = 1; }" > file.nix
+# 输出：{ a = <CODE>; }
+nix-instantiate --eval file.nix
+# 输出：{ a = { b = { c = 1; }; }; }
+nix-instantiate --eval --strict file.nix
+
+# 以下两种写法是一样的
+# 输出：3
+let
+    x = 1;
+    y = 2;
+in x + y
+
+# 输出：3
+let x=1;y=2;in x+y
+```
+
+#### 名称和值
+
+Nix语言中，值可以是级别数据类型，列表，属性集和方法
+
+属性集和let表达式都是用来给值分配名称的，用=赋值，结尾加分号
+
+```sh
+# 属性集是一个name-value-pairs，name必须唯一
+{
+    name =  "handle";
+    age = 18;
+}
+
+# 递归属性集，允许在属性集内部的某个属性访问属性集的其它属性
+# 如果不加rec就会报错
+# 属性的顺序可以任意，输出时会进行排序
+# 输出：{ one = 1; three = 3; two = 2; }
+rec {
+    one = 1;
+    two = one + 1;
+    three = two + 1;
+}
+```
+
+#### `let...in...`表达式
+
+```sh
+# let表达式：
+# 将值赋给名称以重复使用，赋值顺序随意，可以引用其它的名称
+let
+    b = a + 1;
+    a = 1;
+in
+a + b
+
+# 只有let表达式里面的表达式可以相互访问，外面的不可以
+# 报错，x没定义
+{
+  a = let x = 1; in x;
+  b = x;
+}
+
+# 通过属性名.内部属性名来访问属性
+# 输出1
+let
+    attrset = { x = 1; };
+in
+attrset.x
+```
+
+#### `with ...; ...`表达式
+
+访问属性集的属性时，可以省略属性集名称
+
+```sh
+# 输出：[ 1 2 3 ]
+let
+    a = {
+        x = 1;
+        y = 2;
+        z = 3;
+    };
+in
+# 等效写法：[ a.x a.y a.z ]
+with a; [ x y z ]
+
+# 作用域仅限紧跟着的分号
+# 报错：x没定义
+let
+    a = {
+        x = 1;
+        y = 2;
+        z = 3;
+    };
+in
+{
+    b = with a; [ x y z ];
+    c = x;
+}
+```
+
+#### `inherit ...`表达式
+
+避免内嵌作用域赋值相同属性名时重复写外层作用域的属性名
+
+```sh
+# 输出：{ x = 1; y = 2; }
+let
+    x = 1;
+    y = 2;
+in
+{
+    # 等价于：x = x; y = y;
+    inherit x y;
+}
+
+# 属性集用：inherit (...) ...
+# 输出：{ x = 1; y = 2; }
+let
+    a = { x = 1; y = 2; };
+in
+{
+    # 等价于：x = a.x; y = a.y;
+    inherit (a) x y;
+}
+
+# 在let表达式内部也可以用
+# 输出：[ 1 2 ]
+let
+    # 等价于： 
+    # x = { x = 1; y = 2; }.x;
+    # y = { x = 1; y = 2; }.y;
+    inherit ({ x = 1; y = 2; }) x y;
+in [ x y ]
+```
+
+#### `${ ... }`
+
+就把它当成字符串占位符，只有代表字符串类型的属性名或表达式才允许，否则会报错
+
+```sh
+# 输出："hello Nix"
+let
+    name = "Nix";
+in
+"hello ${name}"
+
+# 支持内嵌写法，但是会增加阅读难度，不推荐这么写
+# 输出："no no no"
+let
+    a = "no";
+in
+"${a + " ${a + " ${a}"}"}"
+```
+
+#### 多行字符串
+
+如果多行字符串的每一行前面都有相同数量的空格，那么这些空格会被自动去掉
+
+```sh
+''
+multi
+line
+string
+''
+```
