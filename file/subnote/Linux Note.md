@@ -4637,3 +4637,42 @@ sudo nixos-install \
   --option substituters "https://mirrors.ustc.edu.cn/nix-channels/store https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/" \
   --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
 ```
+
+### 使用Home Manager
+
+- 在/etc/nixos/configuration.nix中导入home-manager
+
+```sh
+let
+    # home-manager作为模块添加到NixOS，笔者使用的是25.11版本的系统，这里也选择对应版本的home-manager
+    home-manager = builtins.fetchTarball https://github.com/nix-community/home-manager/archive/release-25.11.tar.gz;
+in
+{
+    imports = [
+            # 导入home-manager
+            (import "${home-manager}/nixos")
+        ];
+
+    # handle是普通用户
+    users.users.handle.isNormalUser = true;
+
+    # 定义handle用户的home-manager配置
+    home-manager.users.handle = { pkgs, ... }: {
+        # 定义要home-manager管理的用户级软件
+        home.packages = with pkgs; [
+            
+        ];
+
+        # 定义要home-manager管理的应用配置，如果home-manager没有对应的programs.appname模块，则需要自行声明，如用xdg.configFile
+        programs.git.enable = true;
+        programs.vscode.enable = true;
+        programs.idea.enable = true;
+        programs.firefox.enable = true;
+        programs.onlyoffice.enable = true;
+
+        # The state version is required and should stay at the version you
+        # originally installed.
+        home.stateVersion = "25.11";
+    };
+}
+```
