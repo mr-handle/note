@@ -4638,7 +4638,76 @@ sudo nixos-install \
   --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
 ```
 
+### nix-shell
+
+#### 命令式创建nix-shell环境
+
+```sh
+# nix-shell用来临时安装包，这个命令实际上是创建一个包含指定包名的nix-shell环境
+# 安装成功后会进入nix-shell环境，提示符变成：[nix-shell:~]$，就可以运行安装的包了
+# nix-shell环境中也可以执行安装命令，然后进入嵌套的nix-shell环境，它会继承上一层的应用
+# 在嵌套的nix-shell环境中执行exit，会回到上一层nix-shell环境
+nix-shell -p 包名 [包名2]
+
+# 快速执行然后退出nix-shell环境
+# 这个命令不会在nix-shell环境安装该包，如果系统没有该包会先拉取
+# --pure，忽略大多数环境变量，相当于隔离运行
+# -I，指定包源
+nix-shell -p 包名 --run "包名[ 选项]"
+nix-shell -p git --run "git --version" --pure -I nixpkgs=https://github.com/NixOS/nixpkgs/tarball/2a601aafdc5605a5133a2ca506a34a3a73377247
+
+# 退出nix-shell环境，安装的包也会没了
+exit
+
+# 删除不同版本的包，释放占用的空间
+nix-collect-garbage
+```
+
+#### 通过shell.nix配置nix-shell环境
+
+- 创建shell.nix并输入如下内容
+
+```nix
+let
+    nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
+    pkgs = import nixpkgs { config = {}; overlays = []; };
+in
+
+pkgs.mkShellNoCC {
+    packages = with pkgs; [
+        # 这里列出包名
+        cowsay
+        lolcat
+    ];
+
+    # mkShellNoCC中的属性名只要不是保留字段
+    # 并且属性值能被转换成字符串，那么它就会变成环境变量
+    GREETING = "Hello, Nix!";
+
+    # 在进入nix-shell环境开始交互之前，执行一些命令
+    # 也可以通过shellHook来使用即使是保留字的属性名
+    shellHook = ''
+        echo $GREETING | cowsay | lolcat
+    '';
+}
+```
+
+- 在shell.nix文件所在路径执行`nix-shell`来创建nix-shell环境
+
+### 指定包版本
+
+```sh
+# <nixpkgs>指向文件系统的包，不可复现
+{ pkgs ? import <nixpkgs> {} }:
+
+# 指向特定版本的包
+{ pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/06278c77b5d162e62df170fec307e83f1812d94b.tar.gz") {}
+}:
+```
+
 ### 使用Home Manager
+
+#### 配置home-manager
 
 - 在/etc/nixos/configuration.nix中导入home-manager
 
@@ -4664,7 +4733,13 @@ in
         ];
 
         # 定义要home-manager管理的应用配置，如果home-manager没有对应的programs.appname模块，则需要自行声明，如用xdg.configFile
-        programs.git.enable = true;
+        programs.git = {
+            enable = true;
+            # 如果已经有了git的用户配置，执行home-manager switch会提示该配置的路径并让你先移动/删除它，不然这个配置不会生效
+            userName = "handle";
+            userEmail = "handle@example.org";
+        };
+
         programs.vscode.enable = true;
         programs.idea.enable = true;
         programs.firefox.enable = true;
@@ -4673,6 +4748,29 @@ in
         # The state version is required and should stay at the version you
         # originally installed.
         home.stateVersion = "25.11";
+
+        # Let Home Manager install and manage itself.
+        programs.home-manager.enable = true;
     };
 }
+```
+
+#### 激活home-manager
+
+```sh
+home-manager switch
+
+# will create a result link to a directory containing an activation script and the generated home directory files
+home-manager build
+
+# 恢复到上一次的配置
+home-manager switch --rollback
+```
+
+### 使用Nix Flakes
+
+- 先在configuration.nix添加如下内容并重新构建系统
+
+```sh
+nix.settings.experimental-features = "nix-command flakes";
 ```
