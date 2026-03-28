@@ -4795,9 +4795,10 @@ nix repl
 # 输出：{ a = { b = { c = 1; }; }; }
 :p { a.b.c = 1; }
 
-# 计算file.nix的结果
+# 1.定义file.nix
 echo 1 + 2 > file.nix
 
+# 2.计算file.nix的结果
 # 如果不指定文件名，则默认读default.nix文件
 # 有些输出显示的不够完整，可以用--strict
 # 输出：3
@@ -4986,8 +4987,8 @@ string
 Nix语言的方法是没有名称的，为匿名函数或者称之为lambda，但是它可以赋值给一个名称
 
 ```sh
-# 方法定义，方法总是只有一个参数，用`:`隔开，左边是方法参数，右边是方法体
-functionArgument:functionBody
+# 方法定义，方法总是只有一个参数，用`: `（冒号空格）隔开，左边是方法参数，右边是方法体
+functionArgument: functionBody
 
 # 单参数方法
 # 输出：<LAMBDA>，表示结果是一个匿名函数
@@ -5014,4 +5015,218 @@ args@{ a, b, ... }: a + b + args.c
 let
     f = x: x + 1;
 in f
+```
+
+##### 方法调用
+
+格式：方法（名） 参数，中间有空格
+
+```sh
+# 输出：2
+let
+    f = x: x + 1;
+in f 1
+
+# 字面量的属性集作为参数
+# 输出：1
+let
+    f = x: x.a;
+in
+f { a = 1; }
+
+# 名称作为参数
+# 输出：1
+let
+    f = x: x.a;
+    v = { a = 1; };
+in
+f v
+
+# 通过括号调用匿名方法
+# 输出：2
+(x: x + 1) 1
+
+# 括号表示方法调用，将结果作为列表元素
+# 输出：[ 2 ]
+let
+    f = x: x + 1;
+    a = 1;
+in [ (f a) ]
+
+# 由于列表元素也是用空格隔开，如果不用括号，会把f和a当成列表元素
+# 输出：[ <LAMBDA> 1 ]
+let
+    f = x: x + 1;
+    a = 1;
+in [ f a ]
+
+# 多参数方法通过内嵌方法实现，以下两种写法等价
+x: y: x + y
+x: (y: x + y)
+
+# 输出：<LAMBDA>，相当于y: 1 + y
+let
+    f = x: y: x + y;
+in
+f 1
+
+# 输出：3
+let
+    f = x: y: x + y;
+in
+f 1 2
+```
+
+###### 属性集参数
+
+```sh
+{a, b}: a + b
+
+# 输出：3
+let
+  f = {a, b}: a + b;
+in
+f { a = 1; b = 2; }
+
+# 当属性集实参多一个属性时，将报错调用意外参数c
+let
+  f = {a, b}: a + b;
+in
+f { a = 1; b = 2; c = 3; }
+```
+
+###### 参数默认值
+
+格式：`参数名 ? 默认值`
+
+如果一个参数定义了默认值，这个参数不是必传的
+
+```sh
+# 输出：1
+let
+    f = {a, b ? 0}: a + b;
+in
+f { a = 1; }
+
+# 输出：0
+let
+    f = {a ? 0, b ? 0}: a + b;
+in
+f { } # empty attribute set
+```
+
+###### 可变参数
+
+```sh
+# 输出：3
+let
+  f = {a, b, ...}: a + b;
+in
+f { a = 1; b = 2; c = 3; }
+```
+
+###### 命名属性集参数的方法调用
+
+```sh
+# 输出：6
+let
+  f = {a, b, ...}@args: a + b + args.c;
+in
+f { a = 1; b = 2; c = 3; }
+```
+
+##### 方法库
+
+有两个广泛使用的方法库：builtins和import
+
+###### builtins
+
+Nix自带了许多内置于该语言中的方法
+
+它们是用C++实现的，作为Nix语言解释器的一部分
+
+这些方法可以用builtins常量来使用
+
+```sh
+# 输出：<PRIMOP>
+builtins.toString
+
+# 输出："1"
+builtins.toString 1
+```
+
+###### import
+
+import接受指向Nix文件的路径，读取该路径以计算包含的Nix表达式，并返回结果值
+
+如果该路径指向一个目录，则使用该目录中的default.nix文件
+
+```sh
+# 定义file.nix内容
+echo 1 + 2 > file.nix
+
+# 输出：3
+import ./file.nix
+```
+
+由于nix文件可以包含任何表达式，import的是方法的话方法可以立即跟参数
+
+```sh
+# 定义file.nix内容
+echo "x: x + 1" > file.nix
+
+# 输出：2
+import ./file.nix 1
+```
+
+###### pkgs.lib
+
+nixpkgs仓库包含一个称为`lib`的属性集，它提供了大量有用的方法
+
+并且是用Nix语言实现并作为Nix语言一部分
+
+Nixpkgs属性集按照约定命名为pkgs，这些方法可以用pkgs.lib来使用
+
+```sh
+# 本例使用查找路径获取某个版本的Nixpkgs
+# <nixpkgs>是查找路径，由环境变量$NIX_PATH的值决定，最终import这个值指向的文件
+# 这里pkgs恰好是一个方法，因此给它传一个空的属性集作为参数就足够了
+# 输出：LOOKUP PATHS CONSIDERED HARMFUL
+let
+    pkgs = import <nixpkgs> {};
+in
+# pkgs方法存在一个lib.strings.toUpper内嵌方法
+pkgs.lib.strings.toUpper "lookup paths considered harmful"
+
+# 本例用指定版本的Nixpkgs
+let
+    nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/06278c77b5d162e62df170fec307e83f1812d94b.tar.gz";
+    pkgs = import nixpkgs {};
+in
+pkgs.lib.strings.toUpper "always pin your sources"
+
+# pkgs作为一个方法的参数的例子
+{ pkgs, ... }: pkgs.lib.strings.removePrefix "no " "no true scotsman"
+
+# 使用上面的方法
+nix-instantiate --eval file.nix --arg pkgs 'import <nixpkgs> {}'
+
+# 经常地，你还会在NixOS配置和Nixpkgs里面看到直接使用lib
+# 在pkgs是可用的时候，这个lib是跟pkgs.lib是等价的
+{ lib, ... }:
+let
+  to-be = true;
+in
+lib.trivial.or to-be (! to-be)
+
+# 使用这个方法
+nix-instantiate --eval file.nix --arg lib '(import <nixpkgs> {}).lib'
+
+
+# 有时候为了提高易读性，pkgs和lib会作为参数传递
+{ pkgs, lib, ... }:
+# ... multiple uses of `pkgs`
+# ... multiple uses of `lib`
+
+# 由于历史原因，一些和pkgs.lib同名的builtins方法，功能是一样的
 ```
