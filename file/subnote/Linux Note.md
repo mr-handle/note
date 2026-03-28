@@ -4588,12 +4588,37 @@ nixos-help
 
 ### 安装NixOS
 
-下载iso、制作启动盘、进入live系统，分区定义、格式化、挂载略过，可参考archlinux的安装教程
+- 图形化ISO镜像安装无脑点就行了，下面以最小化ISO镜像（或者是图形化ISO镜像进入live后选择终端手动）安装为例
+
+- 下载iso、制作启动盘、进入live系统略过
+
+- 切换root用户，设置字体，连接网络
 
 ```sh
 # 进入live系统后，切换为root用户
+# 当前自动登录的nixos用户密码是空的，sudo操作不用输入密码
 sudo -i
+
+# 如果觉得终端字体太小了
+setfont ter-v32n
+
+# 连接网络
+nmtui
 ```
+
+- 通过ssh远程安装（可选）
+
+```sh
+# 先开启sshd服务，在live系统执行
+systemctl start sshd
+
+# 设置root或nixos的密码，用来远程登录，以nixos为例
+passwd nixos
+```
+
+复制客户机的ssh公钥文件到live系统的`/home/nixos/.ssh/authorized_keys` 或 `/root/.ssh/authorized_keys`目录下
+
+- 分区定义、格式化、挂载略过，可参考archlinux的安装教程
 
 #### 生成初始配置文件
 
