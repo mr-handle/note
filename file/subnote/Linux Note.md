@@ -4660,6 +4660,7 @@ nix-shell -p git --run "git --version" --pure -I nixpkgs=https://github.com/NixO
 exit
 
 # 删除不同版本的包，释放占用的空间
+# 实际上是删除Nix store中无用的构建结果
 nix-collect-garbage
 ```
 
@@ -5274,4 +5275,89 @@ builtins.fetchurl "https://github.com/NixOS/nix/archive/7c3ab5751568a0bc63430b33
 # 自动解压
 # 输出："/nix/store/d59llm96vgis5fy231x6m7nrijs0ww36-source"
 builtins.fetchTarball "https://github.com/NixOS/nix/archive/7c3ab5751568a0bc63430b33a5169c5e4784a0ff.tar.gz"
+```
+
+#### Derivations
+
+Derivations是Nix和Nix语言的核心，可以将其理解为派生构建（构建蓝图）
+
+Nix语言用来描述derivations
+
+Nix通过运行Derivations来获得构建结果
+
+构建结果也可以作为其它derivations的输入
+
+声明derivations的Nix语言原语是内置的非纯方法`derivation`
+
+派生构建通常由Nixpkgs的构建机制`stdenv.mkDerivation`封装，它隐藏了关键的构建过程中涉及的许多复杂性
+
+当你遇到`mkDerivation`时，它代表了Nix最终构建的一些东西
+
+```sh
+# pkgs.nix是一个derivation，这里可以将它看成一次derivation调用
+# string插值将pkgs.nix转换为Nix store的路径
+# 输出："/nix/store/sv2srrjddrp2isghmrla8s6lazbzmikd-nix-2.11.0"
+let
+    pkgs = import <nixpkgs> {};
+in "${pkgs.nix}"
+```
+
+#### 例子
+
+```sh
+# 声明nix的shell环境，并在环境初始化时执行shellHook定义的内容
+{ pkgs ? import <nixpkgs> {} }:
+let
+    message = "hello world";
+in
+# pkgs.mkShellNoCC是一个方法
+pkgs.mkShellNoCC {
+    packages = with pkgs; [ cowsay ];
+    shellHook = ''
+        cowsay ${message}
+    '';
+}
+
+# 例子：部分NixOS系统configuration.nix的代码
+# 这个表达式是一个方法，返回一个属性集
+# 方法参数最少要有config和pkgs，也可以有更多的参数
+# 方法返回的属性集包含imports和environment
+# 例子这里config参数没有用到
+{ config, pkgs, ... }: {
+
+    # imports是一个只有一个元素的列表，指向相对路径./hardware-configuration.nix的文件
+    # 注意imports不是内置的import方法库，只是一个常规的属性名
+    imports = [ ./hardware-configuration.nix ];
+
+    # environment本身是一个只有一个属性（systemPackages）的属性集
+    # systemPackages在这里是一个只有一个元素（git，即pkgs.git）的属性
+    environment.systemPackages = with pkgs; [ git ];
+
+    # ...
+
+}
+
+# 例子：简化Nixpkgs的包声明
+# mkDerivation方法是stdenv的一个属性，接收一个递归属性集作为参数
+{ lib, stdenv, fetchurl }:
+
+stdenv.mkDerivation rec {
+
+    pname = "hello";
+
+    version = "2.12";
+
+    # fetchurl来自外部方法的参数    
+    src = fetchurl {
+        url = "mirror://gnu/${pname}/${pname}-${version}.tar.gz";
+        sha256 = "1ayhp9v4m4rdhjmnl2bq3cibrbqqkgjbl3s7yk2nhlh8vj3ay16g";
+    };
+
+    # meta属性本身是一个属性集
+    meta = with lib; {
+        # 即license = lib.licenses.gpl3Plus;
+        license = licenses.gpl3Plus;
+    };
+
+}
 ```
