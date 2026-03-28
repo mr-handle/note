@@ -4719,9 +4719,9 @@ let
 in
 {
     imports = [
-            # 导入home-manager
-            (import "${home-manager}/nixos")
-        ];
+        # 导入home-manager
+        (import "${home-manager}/nixos")
+    ];
 
     # handle是普通用户
     users.users.handle.isNormalUser = true;
@@ -5216,7 +5216,7 @@ nix-instantiate --eval file.nix --arg pkgs 'import <nixpkgs> {}'
 # 在pkgs是可用的时候，这个lib是跟pkgs.lib是等价的
 { lib, ... }:
 let
-  to-be = true;
+    to-be = true;
 in
 lib.trivial.or to-be (! to-be)
 
@@ -5268,7 +5268,7 @@ Nix语言提供了一些用于在求值期间从网络获取文件的方法
 
 这些方法最终都会计算为文件在Nix store中的路径
 
-```sh
+```nix
 # 输出："/nix/store/7dhgs330clj36384akg86140fqkgh8zf-7c3ab5751568a0bc63430b33a5169c5e4784a0ff.tar.gz"
 builtins.fetchurl "https://github.com/NixOS/nix/archive/7c3ab5751568a0bc63430b33a5169c5e4784a0ff.tar.gz"
 
@@ -5293,7 +5293,7 @@ Nix通过运行Derivations来获得构建结果
 
 当你遇到`mkDerivation`时，它代表了Nix最终构建的一些东西
 
-```sh
+```nix
 # pkgs.nix是一个derivation，这里可以将它看成一次derivation调用
 # string插值将pkgs.nix转换为Nix store的路径
 # 输出："/nix/store/sv2srrjddrp2isghmrla8s6lazbzmikd-nix-2.11.0"
@@ -5304,7 +5304,7 @@ in "${pkgs.nix}"
 
 #### 例子
 
-```sh
+```nix
 # 声明nix的shell环境，并在环境初始化时执行shellHook定义的内容
 { pkgs ? import <nixpkgs> {} }:
 let
@@ -5360,4 +5360,196 @@ stdenv.mkDerivation rec {
     };
 
 }
+```
+
+### 打包
+
+Nixpkgs Standard Environment (stdenv)
+
+#### derivation架构
+
+```nix
+# 这是一个需要一个属性集包含stdenv元素的方法
+# 方法生成一个derivation（目前还啥也没有做）
+{ stdenv }:
+
+stdenv.mkDerivation {}
+```
+
+#### 自定义一个打包方法（自包含stdenv依赖）
+
+##### 打包逻辑
+
+```nix
+# default.nix
+# 这个文件用来处理传参
+let
+    nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
+    pkgs = import nixpkgs { config = {}; overlays = []; };
+in
+{
+    # 如果pkgs属性集的元素符合给定方法的参数，callPackage会自动传参给该方法
+    # 这里是自动提供stdenv和fetchzip
+    hello = pkgs.callPackage ./hello.nix {};
+}
+
+# hello.nix
+{
+    stdenv,
+    fetchzip
+}:
+stdenv.mkDerivation {
+    # 包名
+    pname = "hello";
+    # 包版本
+    version = "2.12.1";
+
+    # 从GNU Project’s FTP server下载源码归档文件用fetchzip
+    # 指示Nix要用fetchzip来下载源码归档文件
+    # fetchzip可以拉取的格式有很多，不仅仅是zip
+    # fetchzip会自动解压，并对解压后的内容计算哈希
+    src = fetchzip {
+        # hello应用源码归档文件地址
+        url = "https://ftp.gnu.org/gnu/hello/hello-2.12.1.tar.gz";
+    # 在源码归档文件被下载和解压之前，是不知道hash是什么的
+    # 如果提供一个错误的hashNix将会报错
+    # 先将hash属性设置为空字符串，然后根据报错信息填写正确的hash
+    sha256 = "sha256-1kJjhtlsAkpNB7f6tZEs+dbKd8z7KoNHyDHEJ0tmhnc=";
+  };
+}
+```
+
+##### 构建打包
+
+```sh
+# 实现hello.nix中定义的派生蓝图
+# 从终端输出可知调用了configure方法，它用来生成一个Makefile，然后根据Makefile构建这个项目
+# 由于stdenv构建系统是基于GNU Autoconf，它会自动检查项目路径构成，因此不需要写任何构建指示
+nix-build -A hello
+```
+
+##### 构建结果
+
+```sh
+# 输出：default.nix hello.nix  result
+# result是一个指向Nix store中，刚刚构建成功生成的二进制文件的路径的符号链接
+ls
+
+#  执行此二进制文件
+./result/bin/hello
+```
+
+#### 自定义一个打包方法（需要添加外部依赖）
+
+- 打包逻辑
+
+```nix
+# default.nix
+let
+    nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
+    pkgs = import nixpkgs { config = {}; overlays = []; };
+in
+{
+    icat = pkgs.callPackage ./icat.nix {};
+}
+```
+
+```nix
+# icat.nix
+{
+    stdenv,
+    fetchFromGitHub,
+    # 没有添加的话构建报错没有Imlib2.h
+    # 如果到官网查询imlib2包会发现它在Nixpkgs
+    imlib2,
+    # 没有添加的话构建报错没有X11/Xlib.h
+    # 但是由于官网的包名不一定就是Xlib
+    # 因此安装nix-index包，然后执行"nix-locate Xlib.h"搜索是最快的
+    # 输出：xorg.libX11: /include/X11/Xlib.h
+    # 因此就知道是xorg.libX11了
+    xorg
+}:
+stdenv.mkDerivation {
+    # 包名
+    pname = "icat";
+    # 包版本
+    version = "v0.5";
+
+    # 从github下载源码归档文件用fetchFromGitHub
+    # 指示Nix要用fetchFromGitHub来下载源码归档文件
+    # fetchFromGitHub的参数是没有url属性的
+    src = fetchFromGitHub {
+        # 应用源码归档文件地址：https://github.com/atextor/icat/archive/refs/tags/v0.5.tar.gz
+        owner = "atextor";
+        repo = "icat";
+        rev = "v0.5";
+        # 在源码归档文件被下载和解压之前，是不知道hash是什么的
+        # 如果提供一个错误的hashNix将会报错
+        # 先将hash属性设置为空字符串，然后根据报错信息填写正确的hash
+        # 或者用nix-prefetch-url直接计算hash然后填上去
+        sha256 = "0wyy2ksxp95vnh71ybj1bbmqd5ggp13x3mk37pzr99ljs9awy8ka";
+    };
+
+    # 添加依赖buildInputs列表
+    buildInputs = [ imlib2 xorg.libX11 ];
+
+    # 解决了依赖问题，到最后还是会报错：make: *** No rule to make target 'install'.  Stop.
+    # 因为stdenv尝试运行make install，Makefile是没有install目标的，icat仓库的README也没有提到安装的事情
+    # 因此可以添加installPhase属性，它包含了很多命令来执行安装
+    # 由于make已经成功完成，icat可执行文件已经生成到构建路径，只要将它复制到输出路径就可以了
+    # 输出路径保存在$out变量中，这个变量在derivation’s builder执行环境是可访问的
+    # 创建一个在$out目录下创建bin子目录，然后将icat二进制文件复制到里面（实际上就是安装了）
+    installPhase = ''
+        mkdir -p $out/bin
+        cp icat $out/bin
+    '';
+}
+```
+
+```sh
+# 获取hash，将获取到的hash设置到上面去
+# --unpack，先解压，然后再对解压后的内容计算哈希
+# --type sha256，计算算sha256
+nix-prefetch-url --unpack https://github.com/atextor/icat/archive/refs/tags/v0.5.tar.gz --type sha256
+```
+
+- 构建打包
+
+```sh
+nix-build -A icat
+```
+
+- 构建结果
+
+```sh
+# 输出：default.nix icat.nix result
+# result/bin/icat就是构建结果了
+# 如果执行nix-build时不指定属性，如果hello.nix也在当前目录，并且default.nix也配置了hello的安装
+# 将会按照default.nix文件中pkgs.callPackage的声明顺序，
+# 得到：result/bin/hello，result-2/bin/icat
+# 如果声明了n个pkgs.callPackage，就会有result-n/bin/somename
+ls
+```
+
+### Phases and hooks
+
+stdenv.mkDerivation派生构建被分成很多个阶段，每个阶段控制构建过程的某一方面
+
+上面的例子，stdenv.mkDerivation自动完成了buildPhase，安装阶段手动定义了installPhase
+
+在派生构建实现过程中，有很多shell方法（即hooks，在Nixpkgs中）会在每个派生构建阶段中执行，hooks做的事情有如设置变量，寻源文件，创建路径等
+
+下面的例子是手动调用installPhase的相应hooks
+
+```sh
+# icat.nix
+
+# ...
+    installPhase = ''
+        runHook preInstall
+        mkdir -p $out/bin
+        cp icat $out/bin
+        runHook postInstall
+    '';
+# ...
 ```
