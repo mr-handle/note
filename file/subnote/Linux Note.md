@@ -5230,3 +5230,48 @@ nix-instantiate --eval file.nix --arg lib '(import <nixpkgs> {}).lib'
 
 # 由于历史原因，一些和pkgs.lib同名的builtins方法，功能是一样的
 ```
+
+#### 路径
+
+每当在字符串插值中使用文件系统路径时，该文件的内容会被复制到文件系统中的一个特殊位置，即Nix store
+
+然后计算字符串插值后，得到的字符串包含分配给该文件的Nix Store路径
+
+说人话就是会复制字符串插值所指向的文件到Nix Store中，插值计算的结果是副本的路径`/nix/store/<hash>-<name>`
+
+如果字符串插值指向的是一个路径，则整个路径（里面的文件和子目录）都会复制到Nix store，
+插值计算结果变成该路径副本的路径
+
+```sh
+# 定义data文件的内容
+echo 123 > data
+
+# 插值表达式的计算结果必须是字符串
+# 它代表对应的Nix store路径：/nix/store/<hash>-<name>
+# 插值表达式会输出："/nix/store/h1qj5h5n05b5dl5q4nldrqq8mdg7dhqk-data"
+"${./data}"
+```
+
+#### Fetchers
+
+作为构建输入的文件不是必须来自文件系统的
+
+Nix语言提供了一些用于在求值期间从网络获取文件的方法
+
+|序号|方法|
+|:-|:-|
+|1|builtins.fetchurl|
+|2|builtins.fetchTarball|
+|3|builtins.fetchGit|
+|4|builtins.fetchClosure|
+
+这些方法最终都会计算为文件在Nix store中的路径
+
+```sh
+# 输出："/nix/store/7dhgs330clj36384akg86140fqkgh8zf-7c3ab5751568a0bc63430b33a5169c5e4784a0ff.tar.gz"
+builtins.fetchurl "https://github.com/NixOS/nix/archive/7c3ab5751568a0bc63430b33a5169c5e4784a0ff.tar.gz"
+
+# 自动解压
+# 输出："/nix/store/d59llm96vgis5fy231x6m7nrijs0ww36-source"
+builtins.fetchTarball "https://github.com/NixOS/nix/archive/7c3ab5751568a0bc63430b33a5169c5e4784a0ff.tar.gz"
+```
