@@ -10,6 +10,17 @@ software RAID devices：把多块硬盘组合成一个更安全或更快的虚�
     - 第四层：卷组 VG（Volume Group）
     - 第五层：逻辑卷 LV（Logical Volume）：是一个虚拟分区，传统分区如：/dev/sda1、/dev/sda2不能扩扩缩容，但是虚拟分区可以
 
+```sh
+# 创建物理卷
+pvcreate
+
+# 创建卷组
+vgcreate
+
+# 创建逻辑卷
+lvcreate
+```
+
 ## inode
 
 - 硬盘以扇区（sector）为最小物理存储单位，而操作系统和文件系统以块（block）为单位进行读写，块由多个扇区组成
@@ -4532,7 +4543,7 @@ fdisk -l
 # 创建一个新的文件系统（即格式化为指定的文件系统），前提是该分区必须已经卸载
 # 不同文件系统对应不同的命令，以分区/dev/sda1为例
 # -L，标签
-mkfs.ext4 -L archlinux /dev/sda1
+mkfs.ext4 -L os /dev/sda1
 mkfs.exfat /dev/sda1
 mkfs.fat -F 32 /dev/sda1
 ```
@@ -4546,12 +4557,21 @@ mkfs.fat -F 32 /dev/sda1
 # --mkdir：当还没创建/mnt/data目录时，自动创建该目录
 mount --mkdir /dev/sda1 /mnt/data
 
+# 如果给分区设置了label
+# 在/dev/disk/by-label目录下就会出现一个和labelName同名的符号链接
+# 可以用下面的命令进行挂载
+mount --mkdir /dev/disk/by-label/labelName /mnt/data
+
+
 # 卸载一个文件系统，以分区/dev/sda1，挂载点/mnt/data为例
 # 方法1：通过指定分区名称卸载
 umount /dev/sda1
 
 # 方法2：通过指定挂载点卸载
 umount /mnt/data
+
+# 方法3：通过分区label卸载
+umount /dev/disk/by-label/labelName
 
 # 列出所有已挂载的文件系统，可以加上分区名进行筛选，不然内容太多了
 findmnt [/dev/sda1]
