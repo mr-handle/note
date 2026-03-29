@@ -1,6 +1,15 @@
 
 # Linux Note
 
+software RAID devices：把多块硬盘组合成一个更安全或更快的虚拟设备，例如把/dev/sda和/dev/sdb做成/dev/md0
+
+- LVM volumes：
+    - 第一层：物理硬盘（Physical Disk）
+    - 第二层：物理分区，如/dev/sda1、/dev/sda2
+    - 第三层：物理卷 PV（Physical Volume），物理分区可以变成物理卷
+    - 第四层：卷组 VG（Volume Group）
+    - 第五层：逻辑卷 LV（Logical Volume）：是一个虚拟分区，传统分区如：/dev/sda1、/dev/sda2不能扩扩缩容，但是虚拟分区可以
+
 ## inode
 
 - 硬盘以扇区（sector）为最小物理存储单位，而操作系统和文件系统以块（block）为单位进行读写，块由多个扇区组成
@@ -4619,6 +4628,8 @@ passwd nixos
 复制客户机的ssh公钥文件到live系统的`/home/nixos/.ssh/authorized_keys` 或 `/root/.ssh/authorized_keys`目录下
 
 - 分区定义、格式化、挂载略过，可参考archlinux的安装教程
+
+- When the install is complete, remove the USB flash drive and reboot into your new system!
 
 #### 生成初始配置文件
 
