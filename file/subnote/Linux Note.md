@@ -4602,7 +4602,44 @@ Nix：包管理器
 
 Nixpkgs： Nix包仓库，这个地址包含了可用的包仓库版本：<https://channels.nixos.org/>
 
-nixpkgs channel：指向某个版本的包仓库的引用
+nixpkgs channel：指向某个版本的包仓库的引用，相当于NixOS channels的具体实例
+
+- NixOS channels：是包管理器用来发布包定义和二进制包的机制
+    - 理解成发布管道吧，分为：
+        - Stable channels，如：nixos-25.11，通常是minor更新，比较保守，维护时间为直到下个稳定分支创建，系统更新推荐用这个发布管道
+
+        - The unstable channel，如：nixos-unstable，对应NixOS的主开发分支，因此可能会在更新时看到激进的改动，不推荐在生产系统使用
+
+        - Small channels，如： nixos-25.11-small，nixos-unstable-small，分别跟上述发布管道相对应
+            - 它们包含的二进制包很少，更新比常规发布管道更快，但构建的时候可能需要更多的包
+            - 它们包含很少的GUI应用，更适合用在服务器环境
+    - 在安装NixOS的时候，会自动订阅跟系统版本对应的发布管道
+
+```sh
+# 查看订阅的发布管道
+sudo nix-channel --list | grep nixos
+
+# 切换发布管道，最后不要忘了写nixos参数
+sudo nix-channel --add https://channels.nixos.org/channel-name nixos
+
+# 升级系统到指定发布管道的最新版本
+# 相当于：执行nix-channel --update nixos后执行nixos-rebuild switch
+# 新系统往往有新的包管理器，将导致包管理器数据库方案的升级，这个不是简单能完成的
+# 因此升级后往往不能回退到旧的发布管道了
+sudo nixos-rebuild switch --upgrade
+```
+
+```nix
+# 自动升级
+# 将定期执行nixos-upgrade.service（systemd服务）
+system.autoUpgrade.enable = true;
+# 如果为false，在当前发布管道执行nixos-rebuild switch --upgrade
+# 如果为true，如果新generation包含不同的内核，initrd或内核模块，系统将自动重启
+system.autoUpgrade.allowReboot = true;
+
+# 指定发布管道
+system.autoUpgrade.channel = "https://channels.nixos.org/nixos-25.11";
+```
 
 核心配置文件：/etc/nixos/configuration.nix
 
@@ -4758,7 +4795,7 @@ users.users.alice.extraGroups = [ "networkmanager" ];
 
 ##### 配置国内加速
 
-在挂载分区后安装之前，先配置国内加速
+在挂载分区后安装之前，先配置国内加速，但是目前在虚拟机的效果是设置没有生效
 
 ```sh
 # 编辑主配置文件，再虚拟机试了一下没生效，不知道什么原因
@@ -4833,6 +4870,62 @@ nixos-enter --root /mnt -c 'passwd alice'
 
 ```sh
 reboot
+```
+
+### NixOS配置文件
+
+- 基本结构
+
+```nix
+# config包含了所有模块整合后的配置
+{ config, pkgs, ... }:
+
+{
+  # option definitions
+  someName = someValue;
+}
+```
+
+### 模块性
+
+configuration.nix本身也是一个模块
+
+当文件太大时，可以分成多个文件然后导入
+
+或者也可以提取模块共同的内容到一个common.nix
+
+```nix
+{ config, pkgs, ... }:
+
+{
+    imports = [
+        # 导入其它模块
+        ./subfile1.nix
+        ./subfile2.nix
+    ];
+    services.httpd.enable = true;
+    # 对于列表类型的选项，如果在子模块也有定义，NixOS会合并，默认configuration.nix文件的选项会放在最后
+    # 如果想要放到最前面，可以用mkBefore
+    # 如：boot.kernelModules = mkBefore [ "kvm-intel" ];
+    # 对于其它类型的选项，如果在子模块也定义了，则nixos-rebuild会报错
+    # 可以使用pkgs.lib.mkForce设置优先级来解决
+    # 如：services.httpd.adminAddr = pkgs.lib.mkForce "bob@example.org";
+    environment.systemPackages = [ pkgs.emacs ];
+    # ...
+}
+```
+
+使用多模块配置的时候，某个配置项的值不能明显地知道，可以用nixos-option查看
+
+```sh
+nixos-option services.xserver.enable
+
+# 也可以用交互式环境确认
+nix repl '<nixpkgs/nixos>'
+
+# 然后输入选项，就得到输入了
+# 输出："具体hostName"
+config.networking.hostName
 ```
 
 ### nix-shell
