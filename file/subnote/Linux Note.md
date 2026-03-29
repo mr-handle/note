@@ -4872,6 +4872,31 @@ nixos-enter --root /mnt -c 'passwd alice'
 reboot
 ```
 
+### 包管理
+
+- 1.将需要的包写到configuration.nix的environment.systemPackages的选项里面（需要确认这个选项存在），不需要就从选项里移除就行了，然后执行`nixos-rebuild switch`让修改生效
+
+```nix
+environment.systemPackages = [ pkgs.thunderbird ];
+
+# 通过nixpkgs.config选项来配置Nixpkgs
+# 只对“使用这个 NixOS 配置构建出来的系统”生效
+# 不影响nix-build、nix-env、nix-shell等命令
+nixpkgs.config.allowUnfree = true;
+```
+
+```nix
+# emacs有个依赖是gtk2，但是我想用gtk3，可以这样写
+environment.systemPackages = [ (pkgs.emacs.override { gtk = pkgs.gtk3; }) ]; 
+```
+
+- 2.Ad hoc，通过`nix-env`命令安装、更新、卸载包，这种方式允许不同版本包仓库的包混合安装，它也是非root用户安装的选择
+
+```sh
+# 获取可用包列表
+nix-env -qaP '*' --description
+```
+
 ### NixOS配置文件
 
 - 基本结构
