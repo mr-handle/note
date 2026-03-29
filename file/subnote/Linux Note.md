@@ -2803,8 +2803,11 @@ mount /dev/root_partition /mnt
 # 挂载efi系统分区，使用--mkdir创建/mnt/boot目录，并将efi分区挂载在/mnt/boot目录下
 mount --mkdir /dev/efi_system_partition /mnt/boot
 
-# 挂载swap分区
+# 挂载swap分区，挂载后，swap对live系统也是有用的，而不仅仅是给新系统用的噢
 swapon /dev/swap_partition
+
+# 如果给swap分区设置了label，也可以通过label挂载
+swapon /dev/disk/by-label/swapLabelName
 ```
 
 #### 安装基础系统包
@@ -4651,14 +4654,63 @@ passwd nixos
 
 - When the install is complete, remove the USB flash drive and reboot into your new system!
 
-#### 生成初始配置文件
+#### 定义系统配置
+
+- 生成配置文件
 
 ```sh
-# 会在/mnt/etc/nixos生成configuration.nix和hardware-configuration.nix文件
+# 会在/mnt/etc/nixos目录下生成configuration.nix和hardware-configuration.nix文件
+# 它生成的是最小可用配置，可以根据需要增加配置
 sudo nixos-generate-config --root /mnt
 ```
 
-#### 配置国内加速
+根据需要决定是否编辑`/mnt/etc/nixos/configuration.nix`文件
+
+##### 设置引导（了解，nixos-generate-config自动完成）
+
+###### BIOS systems（很少用了）
+
+```nix
+# 指定GRUB引导加载器安装的磁盘，注意是设备而不是分区
+boot.loader.grub.device = "/dev/sda";
+
+# 如果有双系统以上
+boot.loader.grub.useOSProber = true;
+```
+
+###### UEFI systems(主流)
+
+- 用systemd-boot
+
+```nix
+boot.loader.systemd-boot.enable = true;
+```
+
+- 用GRUB
+
+```nix
+boot.loader.grub.device = "nodev";
+boot.loader.grub.efiSupport = true;
+
+# 如果有双系统以上，会检查windows系统
+# 如果是双linux系统以上，GRUB在多Linux系统下容易出现配置冲突
+# 官方建议用systemd-boot
+boot.loader.grub.useOSProber = true;
+```
+
+##### 配置wifi（如果新系统要用Wi‑Fi）
+
+```sh
+# 使用networkmanager简化网络配置
+networking.networkmanager.enable = true;
+
+# 所有需要配置网络的用户必须加入networkmanager组
+users.users.alice.extraGroups = [ "networkmanager" ]; 
+
+# 然后就可以通过nmcli或nmtui来连接wifi了（对于gnome和kde桌面）
+```
+
+##### 配置国内加速
 
 在挂载分区后安装之前，先配置国内加速
 
@@ -4679,19 +4731,62 @@ nix.settings = {
 };
 ```
 
+##### Secure shell (SSH)配置（可选）
+
+```nix
+services.openssh.enable = true; 
+
+# 默认不允许root通过ssh登录，可以将其设置为no来允许，但不推荐
+services.openssh.settings.PermitRootLogin = "no";
+
+# PermitRootLogin不允许root通过ssh登录的情况下，可以通过这种方式允许通过SSH key登录root
+# 当然普通用户也可以这么用
+users.users.用户名.openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAB3NzaC1kc3MAAACBAPIkGWVEt4..." ];
+```
+
 #### 开始安装
 
 ```sh
 # 安装
+# 如果配置文件报错，修改好后重新执行nixos-install安装
 # 中断安装ctrl + c，不会损坏已下载内容
 sudo nixos-install
 
+# 如果用的是基于flake的配置
+# 配置文件：path/to/flake.nix
+# default generated flake用nixos
+nixos-install --flake 'path/to/flake.nix#nixos'
+
+# 无监管安装，不会提示设置root密码
+nixos-install --no-root-passwd
 
 # 也可以不改主配置文件，安装时通过选项指定多个源
 # 貌似是Graphical ISO才可以，待确认
 sudo nixos-install \
   --option substituters "https://mirrors.ustc.edu.cn/nix-channels/store https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/" \
   --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+```
+
+##### 设置root密码
+
+安装最后会提示你设置root密码，根据提示操作即可
+
+如果在configuration.nix文件定义了登录用户和密码
+
+也要在这时候修改其密码，以handle用户为例
+
+```sh
+nixos-enter --root /mnt -c 'passwd alice'
+```
+
+注意：如果除了root用户没有添加其他用户，一些图形显示管理器如sddm默认是不允许root登录的
+
+##### 重启电脑进入NixOS
+
+如果所有安装步骤都完成了，就可以重启进入新系统了
+
+```sh
+reboot
 ```
 
 ### nix-shell
