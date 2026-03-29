@@ -4596,11 +4596,57 @@ sudo fdisk -l
 
 ## NixOS
 
+### 基本概念
+
+Nix：包管理器
+
+Nixpkgs： Nix包仓库，这个地址包含了可用的包仓库版本：<https://channels.nixos.org/>
+
+nixpkgs channel：指向某个版本的包仓库的引用
+
 核心配置文件：/etc/nixos/configuration.nix
 
 ```sh
-# 修改核心配置文件后重建
+# 修改核心配置文件后重建generations
+# 刷新（重新加载）用户级 systemd 服务的配置文件，想要应用新的用户服务配置必须手动restart
 sudo nixos-rebuild switch
+
+# 重建配置并切换，但是不设置为默认引导项
+# 因此如果配置锁了当前的系统，可以通过重启恢复到可用的配置
+sudo nixos-rebuild test
+
+# 重建配置并且设置为默认引导项，但是不立即切换（直到下次启动才真正生效）
+sudo nixos-rebuild boot
+
+# -p test，让配置在grub2的引导菜单项显示test，便于跟stable配置区分
+sudo nixos-rebuild switch -p test
+
+# repl，交互式解释器，可以实时查看调试NixOS配置
+sudo nixos-rebuild repl
+
+# 只构建generations，不切换
+sudo nixos-rebuild build
+
+# 测试新配置的另一种方式
+# 根据当前的NixOS配置构建一个“可直接运行的虚拟机镜像”
+# 但是这个虚拟机不会从物理机继承用户帐号和home目录
+# 除非在configuration.nix设置：users.mutableUsers = false;
+# 或在configuration.nix设置：users.users.your-user.initialHashedPassword = "test";
+# 如果已经启动过build-vm生成的虚拟机，那么$hostname.qcow2里已经包含旧的用户数据
+# 之后你再修改configuration.nix，虚拟机不会自动更新这些用户，除非你删除旧的qcow2文件
+sudo nixos-rebuild build-vm
+# 启动这个虚拟机
+./result/bin/run-*-vm
+
+# 端口转发只能访问虚拟机里绑定在 “0.0.0.0” 或 “虚拟网卡 IP” 上的端口
+# 而不能访问只绑定在 127.0.0.1（loopback）上的端口
+# 换句话说：如果VM里的服务只监听127.0.0.1，那么端口转发是连不进去的
+# 宿主机和虚拟机端口映射，宿主机端口2222，虚拟机端口22
+QEMU_NET_OPTS="hostfwd=tcp:127.0.0.1:2222-:22" ./result/bin/run-*-vm
+
+# 通过ssh登录虚拟机
+# 假设已经正确设置密码或ssh key，并且虚拟机的防火墙已经放行端口
+ssh -p 2222 localhost
 
 # 查看当前系统generations
 sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
