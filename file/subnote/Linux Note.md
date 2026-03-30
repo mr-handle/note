@@ -4721,7 +4721,7 @@ setfont ter-v32n
 nmtui
 ```
 
-- 通过ssh远程安装（可选）
+#### 通过ssh远程安装（可选）
 
 ```sh
 # 先开启sshd服务，在live系统执行
@@ -4798,18 +4798,21 @@ users.users.alice.extraGroups = [ "networkmanager" ];
 在挂载分区后安装之前，先配置国内加速，但是目前在虚拟机的效果是设置没有生效
 
 ```sh
-# 编辑主配置文件，再虚拟机试了一下没生效，不知道什么原因
+# 编辑主配置文件，在虚拟机试了一下没生效，不知道什么原因
 sudo vim /mnt/etc/nixos/configuration.nix
 
 # 在imports = [ ./hardware-configuration.nix ];后添加
+# 这个配置只对安装好的新系统生效
+# 可以多写一些，因为有些包在某个源是没有的，而在另外的源可能有，如果都没有会去官网下载，不过会很慢
+# 安装系统是指定国内源加速安装后面会给出
 nix.settings = {
     substituters = [
-        "https://mirrors.ustc.edu.cn/nix-channels/store"
+        # 清华源，目前（26.04）未提供nix-darwin的二进制缓存，管网说请使用官方源或上海交大源
         "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
-        "https://cache.nixos.org/"
-    ];
-    trusted-public-keys = [
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        # 上海交通大学源
+        "https://mirrors.sjtu.edu.cn/nix-channels/store"
+        # 中国科学技术大学
+        "https://mirrors.ustc.edu.cn/nix-channels/store"
     ];
 };
 ```
@@ -4831,9 +4834,12 @@ users.users.用户名.openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAB3NzaC1kc
 
 ```sh
 # 安装
-# 如果配置文件报错，修改好后重新执行nixos-install安装
-# 中断安装ctrl + c，不会损坏已下载内容
-sudo nixos-install
+# 通过选项临时指定源，多个源可以用空格分开
+# 如果不指定国内源安装会很慢
+# 以后执行nixos-rebuild时也可以像这样临时指定源
+# 如果配置文件报错，修改好后重新执行
+# 中断安装（ctrl + c）不会损坏已下载内容
+sudo nixos-install --option substituters "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
 
 # 如果用的是基于flake的配置
 # 配置文件：path/to/flake.nix
@@ -4842,12 +4848,6 @@ nixos-install --flake 'path/to/flake.nix#nixos'
 
 # 无监管安装，不会提示设置root密码
 nixos-install --no-root-passwd
-
-# 也可以不改主配置文件，安装时通过选项指定多个源
-# 貌似是Graphical ISO才可以，待确认
-sudo nixos-install \
-  --option substituters "https://mirrors.ustc.edu.cn/nix-channels/store https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store https://cache.nixos.org/" \
-  --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
 ```
 
 ##### 设置root密码
@@ -4859,7 +4859,7 @@ sudo nixos-install \
 也要在这时候修改其密码，以handle用户为例
 
 ```sh
-nixos-enter --root /mnt -c 'passwd alice'
+nixos-enter --root /mnt -c 'passwd handle'
 ```
 
 注意：如果除了root用户没有添加其他用户，一些图形显示管理器如sddm默认是不允许root登录的
@@ -4870,6 +4870,25 @@ nixos-enter --root /mnt -c 'passwd alice'
 
 ```sh
 reboot
+```
+
+### 安装英伟达显卡驱动
+
+```nix
+# 由于英伟达显卡驱动是闭源的，要先允许安装unfree包
+nixpkgs.config.allowUnfree = true;
+
+# 指定使用英伟达显卡驱动
+services.xserver.videoDrivers = [ "nvidia" ];
+
+# 如果显卡比较老旧，先去官网根据显卡型号查询驱动版本，如：580.xxx
+# 然后查询NixOS配置集有没有对应的版本选项，如：config.boot.kernelPackages.nvidiaPackages.legacy_580
+# 例如：执行nixos-option hardware.nvidia.package，会看到有580xxx的描述
+# 如果有则填写上去
+hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
+
+# 让OpenGL支持32位的应用，如：wine
+hardware.graphics.enable32Bit = true;
 ```
 
 ### 包管理
@@ -4894,7 +4913,7 @@ environment.systemPackages = [ (pkgs.emacs.override { gtk = pkgs.gtk3; }) ];
 
 ```sh
 # 获取可用包列表
-nix-env -qaP '*' --description
+nix-env -qaP '*' --description | grep 关键字
 ```
 
 ### NixOS配置文件
@@ -4911,7 +4930,7 @@ nix-env -qaP '*' --description
 }
 ```
 
-### 模块性
+#### 模块性
 
 configuration.nix本身也是一个模块
 
@@ -4951,6 +4970,20 @@ nix repl '<nixpkgs/nixos>'
 # 然后输入选项，就得到输入了
 # 输出："具体hostName"
 config.networking.hostName
+```
+
+#### appimage支持配置
+
+```nix
+programs.appimage.enable = true;
+programs.appimage.binfmt = true;
+
+# 如果运行appimage时缺失共享库，将其添加到如下位置
+programs.appimage.package = pkgs.appimage-run.override {
+    extraPkgs = pkgs: [
+      # missing libraries here, e.g.: `pkgs.libepoxy`
+    ];
+};
 ```
 
 ### nix-shell
@@ -5020,6 +5053,14 @@ pkgs.mkShellNoCC {
 { pkgs ? import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/06278c77b5d162e62df170fec307e83f1812d94b.tar.gz") {}
 }:
 ```
+
+### nixos-kde的桌面快捷方式
+
+如果直接在Application Launcher选择应用，鼠标右键添加到桌面，nixos-rebuild后，如果执行了nix-collect-garbage -d，则这些链接会失效
+
+因为这些链接是指向旧的系统代的具体链接（带hash）
+
+要解决这个问题，进入`/run/current-system/sw/share/applications`目录，将对应的桌面快捷方式文件拖到桌面就行了
 
 ### 使用Home Manager
 
