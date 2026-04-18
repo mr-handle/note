@@ -10,6 +10,8 @@
 
 - [Windows笔记](/file/subnote/Windows%20Note.md "点击链接查看Windows笔记")
 
+- [安卓笔记](/file/subnote/Android%20Note.md "点击链接查看安卓笔记")
+
 ## Markdown语法
 
 ```md

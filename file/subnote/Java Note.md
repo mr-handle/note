@@ -2052,6 +2052,26 @@ public void testTransmittableThreadLocal() throws InterruptedException {
 }
 ```
 
+#### CAS
+
+CAS 即比较并替换（Compare And Swap）是实现并发算法时常用到的一种技术
+
+CAS 操作包含三个操作数——内存位置、预期原值及新值
+
+执行 CAS 操作的时候，将内存位置的值与预期原值比较，如果相匹配，那么处理器会自动将该位置值更新为新值，否则，处理器不做任何操作
+
+ABA 问题： CAS 操作本身存在 ABA 问题（一个值从 A 变为 B，再变回 A，CAS 检查时会认为值没有变过）
+
+在某些场景下，如果值的变化历史很重要，可能需要使用 AtomicStampedReference 来解决
+
+自旋逻辑： compareAndSwapInt 方法本身只执行一次比较和交换操作，并立即返回结果。
+
+因此，为了确保操作最终成功（在值符合预期的情况下），我们需要在代码中显式地实现自旋逻辑（如 while(true) 循环），不断尝试直到 CAS 操作成功
+
+CPU 消耗： 长时间的自旋会消耗 CPU 资源
+
+在竞争激烈或条件长时间不满足的情况下，可以考虑加入更复杂的退避策略（如 Thread.sleep() 或 LockSupport.parkNanos()）来优化
+
 ### 代理模式
 
 #### 静态代理
