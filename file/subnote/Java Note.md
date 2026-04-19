@@ -709,6 +709,8 @@ Assertions.assertEquals(16, Character.SIZE);
 Assertions.assertEquals(2, Character.BYTES);
 ```
 
+装箱过程是通过调用包装器的 `valueOf` 方法实现的，而拆箱过程是通过调用包装器的 `xxxValue` 方法实现的
+
 #### String
 
 ##### 字符串常量池
@@ -987,6 +989,25 @@ List<Integer> list = IntStream.rangeClosed(1, 3).boxed().toList();
 List<Integer> list = Stream.iterate(0, n -> n + 1)
     .limit(3)
     .collect(Collectors.toList());
+```
+
+- 删除列表元素
+
+```java
+List<Integer> list = IntStream.of(1, 2, 3).boxed().collect(Collectors.toList());
+
+// 方法1
+Iterator<Integer> iterator = list.iterator();
+while (iterator.hasNext()) {
+    if (Objects.equals(iterator.next(), 2)) {
+        iterator.remove();
+    }
+}
+
+// 方法2
+list.removeIf(item -> Objects.equals(item, 2));
+
+System.out.println(list);
 ```
 
 #### 队列
@@ -1304,6 +1325,12 @@ Map safeMap = Collections.synchronizedMap(unsafeMap);
 ```
 
 但是它实际上是用一个包装类包装了非线程安全的`Map`，然后对所有读写方法都用`synchronized`加锁，这样获得的线程安全集合的性能比`java.util.concurrent`集合要低很多，所以不推荐使用。
+
+#### Comparable接口和Comparator接口
+
+Comparable接口出自java.lang包，它有一个 compareTo(Object obj)方法
+
+Comparator接口出自java.util包，它有一个compare(Object obj1, Object obj2)方法
 
 #### 日期/时间
 
