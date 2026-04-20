@@ -2449,15 +2449,25 @@ Integer[] array = list.toArray(Integer[]::new);
 ```java
 Integer[] array = {1, 2, 3};
 
-// 数组元素不支持增删
-List<Integer> list1 = Arrays.asList(array);
+// 不支持修改数组
+List<Integer> list0 = Arrays.asList(array);
 
-// 数组元素支持增删，数据量不大时适用
+// 不支持修改数组
+List<Integer> list1 = List.of(array);
+
+// 支持修改数组，数据量不大时适用
 List<Integer> list2 = new ArrayList<>(Arrays.asList(array));
 
-// 数组元素支持增删，数据量大时推荐使用
+// 支持修改数组，数据量大时推荐使用
 List<Integer> list3 = new ArrayList<>(array.length);
 Collections.addAll(list3, array);
+
+// 支持修改数组
+List<Integer> list4 = Arrays.stream(array).collect(Collectors.toList());
+
+// 如果是基本数据类型数组，则的到的list只有一个元素，即array2
+int[] array2 = {1, 2, 3};
+List list5 = Arrays.asList(array2);
 ```
 
 #### String与byte[]互转

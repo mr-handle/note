@@ -12,6 +12,8 @@
 
 - [安卓笔记](/file/subnote/Android%20Note.md "点击链接查看安卓笔记")
 
+- [Kotlin笔记](/file/subnote/Kotlin%20Note.md "点击链接查看Kotlin笔记")
+
 ## Markdown语法
 
 ```md
