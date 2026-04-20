@@ -1844,11 +1844,9 @@ public void test() {
 }
 ```
 
-##### Spring的线程池
+###### Spring Boot配置虚拟线程
 
-- 自带优雅关闭线程池的骚操作
-
-###### 配置文件
+- 配置文件
 
 ```yaml
 spring:
@@ -1860,6 +1858,52 @@ spring:
         # This ensures that the JVM is kept alive, even if all threads are virtual threads
         keep-alive: true
 ```
+
+- 自定义一个AsyncTaskExecutor，以便在Spring MVC中使用
+
+```java
+@Slf4j
+@Setter
+@ConfigurationProperties("thread.pool.task.executor")
+@Configuration
+public class ThreadPoolConfiguration {
+    private int maxPoolSize;
+
+    @Bean("applicationTaskExecutor")
+    public SimpleAsyncTaskExecutor applicationTaskExecutor() {
+        // 不能像ThreadPoolTaskExecutor那样自定义异常处理，只可以设置最大线程数、线程名称前缀
+        SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor("application-");
+        simpleAsyncTaskExecutor.setVirtualThreads(true);
+        simpleAsyncTaskExecutor.setConcurrencyLimit(maxPoolSize);
+        return simpleAsyncTaskExecutor;
+    }
+}
+```
+
+- 使用虚拟线程
+
+```java
+// 使用的是自定义的虚拟线程，线程名称前缀是自定义的前缀：pplication-
+@Resource(name = "applicationTaskExecutor")
+private SimpleAsyncTaskExecutor simpleAsyncTaskExecutor;
+
+@Test
+public void test() {
+    simpleAsyncTaskExecutor.execute(() -> System.out.println("hello virtual thread"));
+    simpleAsyncTaskExecutor.execute(() -> System.out.println(Thread.currentThread().isVirtual()));
+}
+
+// 使用的是spring.threads.virtual.enabled=true配置的虚拟线程
+// 线程名称前缀是：tomcat-handler-
+@Async
+public void asyncMethod() {
+    // todo
+}
+```
+
+##### Spring的线程池
+
+- 自带优雅关闭线程池的骚操作
 
 ###### ThreadPoolTaskExecutor
 
@@ -1960,38 +2004,6 @@ public class ApplicationTest {
             int i = 1/0;
         });
     }
-}
-```
-
-###### SimpleAsyncTaskExecutor  
-
-- 创建虚拟线程池
-
-```java
-@Slf4j
-@Setter
-@ConfigurationProperties("thread.pool.task.executor")
-@Configuration
-public class ThreadPoolConfiguration {
-    private int maxPoolSize;
-
-    @Bean
-    public SimpleAsyncTaskExecutor simpleAsyncTaskExecutor() {
-        // 不能像ThreadPoolTaskExecutor那样自定义异常处理，只可以设置最大线程数
-        SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor();
-        simpleAsyncTaskExecutor.setVirtualThreads(true);
-        simpleAsyncTaskExecutor.setConcurrencyLimit(maxPoolSize);
-        return simpleAsyncTaskExecutor;
-    }
-}
-
-@Resource
-private SimpleAsyncTaskExecutor simpleAsyncTaskExecutor;
-
-@Test
-public void test() {
-    simpleAsyncTaskExecutor.execute(() -> System.out.println("hello virtual thread"));
-    simpleAsyncTaskExecutor.execute(() -> System.out.println(Thread.currentThread().isVirtual()));
 }
 ```
 
