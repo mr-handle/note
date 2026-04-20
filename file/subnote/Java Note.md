@@ -6828,6 +6828,8 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
 - 修改maven下载源
     - 在`GRADLE_HOME/init.d`目录下创建init.gradle文件，内容如下
 
+- gradle-8.x版本这样写
+
 ```groovy
 allprojects {
     // 项目依赖的下载地址
@@ -6847,6 +6849,43 @@ allprojects {
                 name "aliyun";
                 url "https://maven.aliyun.com/repository/public"
             }
+            mavenCentral()
+        }
+    }
+}
+```
+
+- gradle-9.x版本这样写
+
+```groovy
+settingsEvaluated { settings ->
+    settings.dependencyResolutionManagement {
+        // Android项目会将这里的仓库整合到settings.gradle的仓库配置
+        // Java项目还是相当于全局配置
+        repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+        // 项目依赖的下载地址
+        repositories {
+            mavenLocal()
+            maven {
+                name "aliyun";
+                url "https://maven.aliyun.com/repository/public"
+            }
+            google()
+            mavenCentral()
+        }
+    }
+}
+
+allprojects {
+    // build.gradle构建脚本使用的依赖的下载地址，一般是各种插件的下载地址
+    buildscript {
+        repositories {
+            mavenLocal()
+            maven {
+                name "aliyun";
+                url "https://maven.aliyun.com/repository/public"
+            }
+            google()
             mavenCentral()
         }
     }
