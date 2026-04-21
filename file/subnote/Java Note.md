@@ -1787,11 +1787,22 @@ public class ForiJoinDemoTest {
 #### 线程池
 
 - 处理器核的数目：cpuNumbers = Runtime.getRuntime().availableProcessors();
-- CPU利用率：cpuUsage = `(0, 1]`
-- 等待时间：waitTime
-- 计算时间：computeTime
+- CPU利用率：cpuUsage = `(0, 1]`，通常设置为0.8 ~ 0.9
+    - 如果设为 1.0，意味着 CPU 将全速运转，没有任何空闲周期来处理操作系统中断、后台进程或其他突发的高优先级任务，这会导致系统响应变慢甚至假死
+    - 设置为0.8 ~ 0.9，既能保证 CPU 资源被充分利用（不浪费钱），又能保留 10%-20% 的缓冲空间，防止因瞬间流量洪峰导致 CPU 飙升到 100% 从而引发系统雪崩
+- 线程等待时间：waitTime = 线程运行总时间 - 线程计算时间
+- 线程计算时间：computeTime
 - 建议线程池大小：`threadSize = cpuNumbers * cpuUsage * (1 + waitTime / computeTime)`
-- 建议设置线程大小上限：maxThreadSize = 100
+    - 可以通过VisualVM 来查看 waitTime / computeTime 比例
+    - CPU 密集型任务，几乎没有等待，waitTime约等于0，CPU利用率又期望达到100%，公式就变成了threadSize = cpuNumbers + 1
+        - 加1是因为即使是 CPU 密集型任务，线程偶尔也会因为以下原因暂停
+            - 缺页中断 (Page Fault)： 需要从内存加载数据
+            - 上下文切换： 操作系统调度
+            - 如果线程数严格等于核心数，一旦某个线程因为缺页中断暂停了，CPU 就会空闲下来
+            - 多加的那“1”个线程，就是为了在这个空隙中填补上来，确保 CPU 始终有事可做
+    - I/O 密集型任务，会有大量等待，waitTime / computeTime就会很大，CPU利用率需要留缓冲，就完全套用上面的公式了
+        - 一个简单并且适用面比较广的公式就是：threadSize = 2 * cpuNumbers
+- 建议设置线程大小上限：maxThreadSize = 100，不知道这个说法是参考哪里的了，还是套用上面的公式来计算吧
 
 ##### 自定义线程池
 
