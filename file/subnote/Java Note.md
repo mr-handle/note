@@ -1456,7 +1456,44 @@ public final class DateTimeUtil {
 
 ### 多线程
 
-#### 同步块
+#### synchronized
+
+synchronized 同步语句块的实现使用的是 monitorenter 和 monitorexit 指令
+
+其中 monitorenter 指令指向同步代码块的开始位置，monitorexit 指令则指明同步代码块的结束位置
+
+如果有第二个monitorexit 指令，这是为了保证锁在同步代码块代码出现异常的情况下锁能被正确释放
+
+synchronized 修饰的方法并没有 monitorenter 指令和 monitorexit 指令，取而代之的是 ACC_SYNCHRONIZED 标识，该标识指明了该方法是一个同步方法
+
+不过，两者的本质都是对对象监视器 monitor 的获取
+
+- 修饰实例方法，锁当前对象实例
+
+```java
+public synchronized void method() {
+    // todo
+}
+```
+
+- 修饰静态方法，锁当前类的class实例
+
+```java
+public synchronized static void method() {
+    // todo
+}
+```
+
+- 修饰代码块（锁指定对象/类的class实例）
+
+```java
+// 尽量不要使用 synchronized(String a) 因为 JVM 中，字符串常量池具有缓存功能
+synchronized(object/clazz) {
+    // todo
+}
+```
+
+- 加锁二次判断
 
 ```java
 private static volatile ObjectMapper objectMapper;
@@ -1472,6 +1509,32 @@ public static void methodName() {
     }
 }
 ```
+
+#### ReentrantLock
+
+ReentrantLock 实现了 Lock 接口，是一个可重入且独占式的锁，和 synchronized 关键字类似
+
+不过，ReentrantLock 更灵活、更强大，增加了轮询、超时、中断、公平锁和非公平锁等高级功能
+
+synchronized 依赖于 JVM 而 ReentrantLock 依赖于 API
+
+synchronized和ReentrantLock都是不可中断锁，但是ReentrantLock的lockInterruptibly()和tryLock(long time, TimeUnit unit) 是可中断的
+
+公平锁 : 锁被释放之后，先申请的线程先得到锁。性能较差一些，因为公平锁为了保证时间上的绝对顺序，上下文切换更频繁。
+
+非公平锁：锁被释放之后，后申请的线程可能会先获取到锁，是随机或者按照其他优先级排序的。性能更好，但可能会导致某些线程永远无法获取到锁。
+
+notifyAll()方法，会通知所有处于等待状态的线程
+
+signalAll()方法，只会唤醒注册在该Condition实例中的所有等待线程
+
+#### ReentrantReadWriteLock
+
+适合读多写少的场景
+
+#### StampedLock
+
+适合读多写少的场景，但它是不可重入锁，性能比ReentrantReadWriteLock好
 
 #### CountDownLatch
 
@@ -6275,6 +6338,16 @@ java -DmyVariable=myValue -jar myApp.jar
 // 指定文件名和路径编码。处理非 ASCII 字符文件名时很重要
 java -Dsun.jnu.encoding=UTF-8 myApp.jar
 ```
+
+### JMM（Java 内存模型）
+
+![jmm](/images/jmm.png)
+
+volatile 关键字可以保证变量的可见性，将变量声明为 volatile ，这就指示 JVM，这个变量是共享且不稳定的，每次使用它都到主存中进行读取
+
+volatile 还有一个重要的作用就是防止 JVM 的指令重排序，在对这个变量进行读写操作的时候，会通过插入特定的 内存屏障 的方式来禁止指令重排序
+
+volatile 关键字能保证数据的可见性，但不能保证数据的原子性。synchronized 关键字两者都能保证
 
 ## 项目管理工具
 

@@ -21,3 +21,28 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 ```
+
+## 视图控件（View）
+
+### 视图的宽高
+
+layout_width、layout_height属性指定视图的宽高
+
+- 属性值包括：
+    - match_parent，表示与上级视图保持一致
+    - wrap_content，表示与内容自适应
+    - 以dp为单位的具体尺寸
+
+### 视图的间距
+
+layout_margin、layout_marginLeft、layout_marginTop、layout_marginRight、layout_marginBottom属性，指定当前视图与周围平级视图之间的距离
+
+padding、paddingLeft、paddingTop、paddingRight、paddingBottom属性，指定当前视图与内部下级视图之间的距离
+
+### 视图的对齐方式
+
+layout_gravity属性指定当前视图相对于上级视图的对齐方式
+
+gravity属性指定下级视图相对于当前视图的对齐方式
+
+它们的属性值包括：left、top、right、bottom，还可以用竖线连接属性值，如："left|top"表示左上
