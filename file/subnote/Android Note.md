@@ -47,6 +47,59 @@ gravity属性指定下级视图相对于当前视图的对齐方式
 
 它们的属性值包括：left、top、right、bottom，还可以用竖线连接属性值，如："left|top"表示左上
 
+## 布局
+
+### LinearLayout（线性布局）
+
+- orientation属性
+    - vertical，内部视图在垂直方向从上往下排列
+    - horizontal，内部视图在水平方向从左往右排列，默认排列方式
+
+- layout_weight属性，指线性布局的下级视图各自拥有多大比例的宽高
+    - layout_weight属性不在LinearLayout节点设置，而是在其直接下级视图设置
+    - layout_width填0dp时，layout_weight表示水平方向的宽度比例
+    - layout_height填0dp时，layout_weight表示垂直方向的高度比例
+
+### RelativeLayout（相对布局）
+
+相对布局的下级视图位置由其它视图（作为参照物）决定
+
+- 作为参照物的视图分两种
+    - 与该视图平级的视图
+    - 该视图的上级视图（也就是该视图归属的RelativeLayout）
+
+如果不设置参照物，那么该视图默认显示在RelativeLayout内部的左上角
+
+|相对位置的属性|描述|
+|:-|:-|
+|layout_toLeftOf|当前视图在指定视图的左边|
+|layout_toRightOf|当前视图在指定视图的右边|
+|layout_above|当前视图在指定视图的上方|
+|layout_below|当前视图在指定视图的下方|
+|layout_alignLeft|当前视图与指定视图的左侧对齐|
+|layout_alignRight|当前视图与指定视图的右侧对齐|
+|layout_alignTop|当前视图与指定视图的顶部对齐|
+|layout_alignBottom|当前视图与指定视图的底部对齐|
+|layout_centerInParent|当前视图在上级视图中间|
+|layout_centerHorizontal|当前视图在上级视图的水平方向居中|
+|layout_centerVertical|当前视图在上级视图的垂直方向居中|
+|layout_alignParentLeft|当前视图与上级视图的左侧对齐|
+|layout_alignParentRight|当前视图与上级视图的右侧对齐|
+|layout_alignParentTop|当前视图与上级视图的顶部对齐|
+|layout_alignParentBottom|当前视图与上级视图的底部对齐|
+
+写法例子：android:layout_toLeftOf="@id/指定视图的id"
+
+### GridLayout（网格布局）
+
+网格布局支持多行多列的表格排列，默认从左往右、从上到下排列
+
+columnCount属性指定网格的列数，即每行能放多少个视图
+
+rowCount属性指定网格的行数，即每列能放多少个视图
+
+还可以用layout_columnWeight、layout_rowWeight这两个权重来来配置宽高比例
+
 ## USB调试
 
 手机开启开发者模式，然后设置开发者选项，打开USB调试，将数据线插上手机端和电脑端（也可以用无线连接进行调试），然后手机端要选择文件传输模式
