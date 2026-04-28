@@ -5533,7 +5533,7 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 垃圾收集器的选项参数根据具体的垃圾收集器来设置
 
 ```sh
-# 将 -Xms 和 -Xmx 设为一致，避免调整开销
+# 根据具体物理内存情况，将 -Xms 和 -Xmx 设为一致，避免调整开销
 # 指定堆的最小内存和初始内存(单位：g、m、k)
 # memory start
 -Xms4g
@@ -5549,7 +5549,7 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 # 适用于存在大量重复字符串的场景
 -XX:+UseStringDeduplication
 
-# 禁止代码中显式调用 System.gc()，避免人为触发不必要的 Full GC
+# 禁止代码中显式调用 System.gc()，避免人为触发不必要的 Full GC，默认
 -XX:+DisableExplicitGC
 ```
 
@@ -5983,7 +5983,7 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 
 ##### 性能调优工具
 
-###### jps
+###### jps(JVM Process Status）
 
 ```sh
 # jps（Java Process Status）查看当前正在运行的java进程信息
@@ -5996,10 +5996,10 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 # 比如虽然设置了可信主机或网络的访问，但是也容易受到ip地址欺诈攻击
 # 除了-q只能单独使用外其它参数可以组合使用
 # 如果进程使用了-XX:-UsePerfData参数，则jpa、jstat将无法获取到该进程
-jps
+jps -lmv
 ```
 
-###### jstat
+###### jstat（JVM Statistics Monitoring Tool）
 
 jstat：JVM Statistics Monitoring Tool
 
@@ -6063,7 +6063,7 @@ jstat [指定option] [-t] -h[指定行数] 进程id [指定interval] [指定coun
     - FGCT：Full GC花费的时间
     - GCT：总的GC时间（Young GC花费的时间 + Full GC花费的时间）
 
-###### jinfo
+###### jinfo (Configuration Info for Java)
 
 jinfo：Configuration Info for Java
 
@@ -6090,7 +6090,7 @@ jinfo -flag 参数名（比如NewRatio） 进程id
 java -XX:+PrintFlagsFinal -version | grep manageable
 ```
 
-###### jmap
+###### jmap(Memory Map for Java)
 
 jmap将访问堆中所有对象，为保证在此过程中不被应用线程干扰，jmap需要借助安全点机制
 
@@ -6157,7 +6157,7 @@ jmap -dump:live,format=b,file=dumpfile.hprof 进程id
 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=dumpfile.hprof
 ```
 
-###### jstack
+###### jstack(Stack Trace for Java)
 
 jstack：JVM Stack Trace
 
