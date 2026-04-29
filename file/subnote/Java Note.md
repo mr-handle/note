@@ -18635,6 +18635,8 @@ setnx k1 v1
 # 当且仅当k1不存在时设置k1的过期时间和值
 setnx k1 30 v1
 
+set key value nx px timeout
+
 # 当且仅当k1存在时设置k1的过期时间和值
 setex k1 30 v1
 
