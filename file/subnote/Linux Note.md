@@ -3968,6 +3968,7 @@ steam
 
 ```sh
 # 需要启用multilib仓库来兼容32位的软件运行
+# 安装wine-mono时会安装wine
 sudo pacman -S wine
 
 # 安装Wine的.NET替代运行环境，用于运行依赖.NET 的Windows程序（推荐）
@@ -4022,6 +4023,45 @@ wine uninstaller
 
 # wine配置
 winecfg
+```
+
+#### 安装protonhax
+
+protonhax是一个运行游戏修改器的工具，作用于steam的proton兼容层下运行的游戏
+
+官网：<https://github.com/jcnils/protonhax>
+
+##### 安装方式1
+
+protonhax是一个bash脚本，可以直接下载这个文件
+
+然后添加到$PATH，如`$HOME/.local/bin/protonhax`
+
+最后赋予执行权限`chmod 755 protonhax`就可以使用了
+
+##### 安装方式2
+
+```sh
+yay -S protonhax
+```
+
+##### 使用
+
+- 在steam游戏属性，运行选项里面添加`protonhax init %COMMAND%`，然后运行游戏
+
+- 打开终端，执行`protonhax ls`查看游戏id
+
+- 启动修改器`protonhax run 游戏id /path/to/修改器.exe`
+
+##### 卸载
+
+如果`修改器.exe`是一个安装包，`protonhax run 游戏id /path/to/修改器.exe`执行了安装步骤
+
+不需要这个修改器了可以通过下面的命令卸载该修改器
+
+```sh
+# 使用指定版本的Proton自带的wine，打开指定的虚拟Windows系统的“添加/删除程序”卸载器
+WINEPREFIX="/mnt/toshiba1t/SteamLibrary/steamapps/compatdata/601150/pfx" "/mnt/toshiba1t/SteamLibrary/steamapps/common/Proton - Experimental/files/bin/wine" uninstaller
 ```
 
 #### 安装qemu和virt-manager
