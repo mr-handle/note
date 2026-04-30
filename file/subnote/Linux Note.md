@@ -4061,7 +4061,7 @@ yay -S protonhax
 
 ```sh
 # 使用指定版本的Proton自带的wine，打开指定的虚拟Windows系统的“添加/删除程序”卸载器
-WINEPREFIX="/mnt/toshiba1t/SteamLibrary/steamapps/compatdata/601150/pfx" "/mnt/toshiba1t/SteamLibrary/steamapps/common/Proton - Experimental/files/bin/wine" uninstaller
+WINEPREFIX="/path/to/SteamLibrary/steamapps/compatdata/游戏id/pfx" "/path/to/SteamLibrary/steamapps/common/Proton - Experimental/files/bin/wine" uninstaller
 ```
 
 #### 安装qemu和virt-manager
