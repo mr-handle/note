@@ -2721,8 +2721,10 @@ apt list --manual-installed
 sudo pacman -Syu
 
 # 从远程仓库拉取软件安装
+# --disable-download-timeout：use relaxed timeouts for download
 # --noconfirm：静默安装，不询问
-sudo pacman -S 包名 [--noconfirm]
+# --needed：do not reinstall up to date packages
+sudo pacman -S [--disable-download-timeout] [--noconfirm] [--needed] 包名 [包名2 包名3 ...] 
 
 # 安装本地.pkg.tar.zst安装包或.pacman安装包
 sudo pacman -U /path/to/pkg.tar.zst安装包或.pacman安装包
@@ -3342,16 +3344,16 @@ sudo usb_modeswitch -v 0bda -p 1a2b -M "5553424312345678000000000000061b00000002
 
 Monospace：等宽，一个汉字=两个ASCII字母的宽度，全宽字符：宽度等于一个汉字的宽度，半宽字符：宽度等于半个汉字的宽度
 
-Serif：有衬线，笔画末端有小装饰线
+Serif：有衬线，笔画末端有小装饰线，如宋体
 
 Sans-serif：无衬线，笔画末端没有装饰，线条简洁
 
 ![衬线和无衬线对比图](/images/Sans-Serif.png)
 
-- 安装谷歌版的思源黑体（等比例/等宽）
+##### 安装noto-fonts-cjk和ttf-hanazono
 
 ```sh
-# noto-fonts-cjk：谷歌版的思源黑体，覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
+# noto-fonts-cjk：谷歌版的思源黑体（包含了等比例/等宽字体），覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
 # 不安装中文会乱码，装一个够了，不够用再找别的字体
 sudo pacman -S noto-fonts-cjk
 
@@ -3366,7 +3368,45 @@ sudo pacman -S ttf-hanazono
 fc-cache -fv
 ```
 
-- 系统字体设置
+##### 配置字体优先级
+
+因为noto-fonts-cjk默认是日文优先，有些汉字显示为日文很别扭，需要进行额外的配置
+
+- 方法1（推荐）：设置字体优先级：创建文件`~/.config/fontconfig/conf.d/10-fonts-priority.conf`，10表示优先级，数字越小优先级越高，内容如下
+
+```xml
+<?xml version='1.0'?>
+<!DOCTYPE fontconfig SYSTEM 'urn:fontconfig:fonts.dtd'>
+<fontconfig>
+    <!-- 设置无衬线字体（如大部分UI界面）的优先级 -->
+    <alias>
+        <family>sans-serif</family>
+        <prefer>
+            <family>Noto Sans CJK SC</family>
+            <family>Noto Sans CJK TC</family>
+        </prefer>
+    </alias>
+
+    <!-- 设置等宽字体（如终端、代码编辑器）的优先级 -->
+    <alias>
+        <family>monospace</family>
+        <prefer>
+            <family>Noto Sans Mono CJK SC</family>
+            <family>Noto Sans Mono CJK TC</family>
+        </prefer>
+    </alias>
+</fontconfig>
+```
+
+- 方法2
+
+```sh
+# 再安装一个adobe版的思源黑体中文，然后在系统设置里面设置它为默认字体就行了，甚至不用设置都会优先用它显示中文了
+# 简单但是浪费存储空间
+sudo pacman -S adobe-source-han-sans-cn-fonts
+```
+
+##### 系统字体设置
 
 字体大小跟系统默认一样，除了Fixed width设置为"Noto Sans Mono CJK SC"，其它都用"Noto Sans CJK SC"，
 
