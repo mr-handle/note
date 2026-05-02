@@ -3350,17 +3350,27 @@ Sans-serif：无衬线，笔画末端没有装饰，线条简洁
 
 ![衬线和无衬线对比图](/images/Sans-Serif.png)
 
-##### 安装noto-fonts-cjk和ttf-hanazono
+##### 安装思源字体和ttf-hanazono
+
+至于为什么不安装adobe版的思源黑体（adobe-source-han-sans-cn-fonts）和思源宋体（adobe-source-han-serif-cn-fonts）呢？
+
+- 目前的主要原因：
+    - 第一是adobe版的是分开一个一个包的，不像谷歌版的只要安装一个包就可以了
+    - 等宽字体（adobe-source-han-mono-cn-fonts）目前不在archlinux官方包仓库，只能从aur仓库下载
 
 ```sh
-# noto-fonts-cjk：谷歌版的思源黑体（包含了等比例/等宽字体），覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
+# 选择一：谷歌版的思源黑体（包含了等比例/等宽字体），覆盖简体、繁体、日文、韩文（cjk分别是中日韩的英文首字母）
 # 不安装中文会乱码，装一个够了，不够用再找别的字体
 sudo pacman -S noto-fonts-cjk
+
+# 选择二：adobe版的思源字体，安装中文三件套（等比例的有衬线和无衬线，等宽）就行了，占用的磁盘空间会更小
+yay -S adobe-source-han-sans-cn-fonts adobe-source-han-serif-cn-fonts adobe-source-han-mono-cn-fonts
 
 # 包含更多的汉字特别是生僻字和繁体字（据说是unicode包含的全部汉字），根据需要安装
 # 笔者建议安装，因为fcitx5的候选字就有很多是生僻字的，不安装的话会显示为相应的unicode码
 sudo pacman -S ttf-hanazono
 
+# 了解即可，建议还是重启
 # 然后用来刷新和重建系统的字体缓存（只能刷新部分字体缓存，如fcitx5的候选字就不会马上生效，需要重启才行）
 # fc-cache：Fontconfig
 # -f (force)：强制刷新，即使缓存已经存在也会重新生成
