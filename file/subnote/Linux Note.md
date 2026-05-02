@@ -3370,6 +3370,7 @@ yay -S adobe-source-han-sans-cn-fonts adobe-source-han-serif-cn-fonts adobe-sour
 
 # 包含更多的汉字特别是生僻字和繁体字（据说是unicode包含的全部汉字），根据需要安装
 # 笔者建议安装，因为fcitx5的候选字就有很多是生僻字的，不安装的话会显示为相应的unicode码
+# 它只有衬线字体，没有无衬线和等宽字体
 sudo pacman -S ttf-hanazono
 
 # 了解即可，建议还是重启
@@ -3396,6 +3397,8 @@ fc-cache -fv
         <prefer>
             <family>Noto Sans CJK SC</family>
             <family>Noto Sans CJK TC</family>
+            <family>HanaMinA</family>
+            <family>HanaMinB</family>
         </prefer>
     </alias>
 
@@ -3405,6 +3408,8 @@ fc-cache -fv
         <prefer>
             <family>Noto Serif CJK SC</family>
             <family>Noto Serif CJK TC</family>
+            <family>HanaMinA</family>
+            <family>HanaMinB</family>
         </prefer>
     </alias>
 
@@ -3414,6 +3419,8 @@ fc-cache -fv
         <prefer>
             <family>Noto Sans Mono CJK SC</family>
             <family>Noto Sans Mono CJK TC</family>
+            <family>HanaMinA</family>
+            <family>HanaMinB</family>
         </prefer>
     </alias>
 </fontconfig>
