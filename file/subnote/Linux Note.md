@@ -3342,6 +3342,8 @@ sudo usb_modeswitch -v 0bda -p 1a2b -M "5553424312345678000000000000061b00000002
 
 #### 安装中文字体
 
+Proportional Fonts：比例字体，也就是非等宽字体，每个字符宽度不同，比如：i比m窄
+
 Monospace：等宽，一个汉字=两个ASCII字母的宽度，全宽字符：宽度等于一个汉字的宽度，半宽字符：宽度等于半个汉字的宽度
 
 Serif：有衬线，笔画末端有小装饰线，如宋体
@@ -3355,7 +3357,7 @@ Sans-serif：无衬线，笔画末端没有装饰，线条简洁
 至于为什么不安装adobe版的思源黑体（adobe-source-han-sans-cn-fonts）和思源宋体（adobe-source-han-serif-cn-fonts）呢？
 
 - 目前的主要原因：
-    - 第一是adobe版的是分开一个一个包的，不像谷歌版的只要安装一个包就可以了
+    - 第一是adobe版的是分开一个一个包的，不像谷歌版的只要安装一个包就可以了，单单下载中文字体还好才三个包，要是想兼容其它语言要安装的包就多了
     - 等宽字体（adobe-source-han-mono-cn-fonts）目前不在archlinux官方包仓库，只能从aur仓库下载
 
 ```sh
@@ -3378,7 +3380,7 @@ sudo pacman -S ttf-hanazono
 fc-cache -fv
 ```
 
-##### 配置字体优先级
+##### noto-fonts-cjk需额外配置字体优先级
 
 因为noto-fonts-cjk默认是日文优先，有些汉字显示为日文很别扭，需要进行额外的配置
 
@@ -3388,7 +3390,7 @@ fc-cache -fv
 <?xml version='1.0'?>
 <!DOCTYPE fontconfig SYSTEM 'urn:fontconfig:fonts.dtd'>
 <fontconfig>
-    <!-- 设置无衬线字体（如大部分UI界面）的优先级 -->
+    <!-- 设置无衬线字体（大部分UI界面）的优先级 -->
     <alias>
         <family>sans-serif</family>
         <prefer>
@@ -3397,7 +3399,16 @@ fc-cache -fv
         </prefer>
     </alias>
 
-    <!-- 设置等宽字体（如终端、代码编辑器）的优先级 -->
+    <!-- 设置有衬线字体的优先级 -->
+    <alias>
+        <family>serif</family>
+        <prefer>
+            <family>Noto Serif CJK SC</family>
+            <family>Noto Serif CJK TC</family>
+        </prefer>
+    </alias>
+
+    <!-- 设置等宽字体（终端、代码编辑器）的优先级 -->
     <alias>
         <family>monospace</family>
         <prefer>
