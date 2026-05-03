@@ -3385,7 +3385,65 @@ fc-cache -fv
 
 因为noto-fonts-cjk默认是日文优先，有些汉字显示为日文很别扭，需要进行额外的配置
 
-- 方法1（推荐）：设置字体优先级：创建文件`~/.config/fontconfig/conf.d/10-fonts-priority.conf`，10表示优先级，数字越小优先级越高，内容如下
+创建文件`~/.config/fontconfig/conf.d/99-fonts-priority.conf`
+
+- 文件名前缀`00- ~ 99-`，系统会按照00到99的顺序读取这些文件，后读取的文件配置可能会覆盖先读取的文件配置，输入文件内容如下
+
+- 方法1（推荐）：只修改非未指定语言或非日文下时的优先级，不会覆盖noto-fonts-cjk的其它默认配置
+
+```xml
+<?xml version='1.0'?>
+<!DOCTYPE fontconfig SYSTEM 'urn:fontconfig:fonts.dtd'>
+<fontconfig>
+    <!-- 当语言属性未指定或非日文时，优先使用简体中文字体，最后HanaMinA和HanaMinB做兜底 -->
+    <!-- 为无衬线字体(sans-serif)设置默认优先级 -->
+    <match target="pattern">
+        <test name="family">
+            <string>sans-serif</string>
+        </test>
+        <test name="lang" compare="not_contains">
+            <string>ja</string>
+        </test>
+        <edit name="family" mode="prepend" binding="strong">
+            <string>Noto Sans CJK SC</string>
+            <string>HanaMinA</string>
+            <string>HanaMinB</string>
+        </edit>
+    </match>
+
+    <!-- 为有衬线字体(serif)设置默认优先级 -->
+    <match target="pattern">
+        <test name="family">
+            <string>serif</string>
+        </test>
+        <test name="lang" compare="not_contains">
+            <string>ja</string>
+        </test>
+        <edit name="family" mode="prepend" binding="strong">
+            <string>Noto Serif CJK SC</string>
+            <string>HanaMinA</string>
+            <string>HanaMinB</string>
+        </edit>
+    </match>
+
+    <!-- 为等宽字体(monospace)设置默认优先级 -->
+    <match target="pattern">
+        <test name="family">
+            <string>monospace</string>
+        </test>
+        <test name="lang" compare="not_contains">
+            <string>ja</string>
+        </test>
+        <edit name="family" mode="prepend" binding="strong">
+            <string>Noto Sans Mono CJK SC</string>
+            <string>HanaMinA</string>
+            <string>HanaMinB</string>
+        </edit>
+    </match>
+</fontconfig>
+```
+
+- 方法2：会覆盖noto-fonts-cjk的默认全局配置，简单粗暴，但是不推荐
 
 ```xml
 <?xml version='1.0'?>
@@ -3426,7 +3484,7 @@ fc-cache -fv
 </fontconfig>
 ```
 
-- 方法2
+- 方法3
 
 ```sh
 # 再安装一个adobe版的思源黑体中文，然后在系统设置里面设置它为默认字体就行了，甚至不用设置都会优先用它显示中文了
