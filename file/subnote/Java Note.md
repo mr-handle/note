@@ -8006,6 +8006,9 @@ public class MybatisConfiguration {
 
 ```sql
 select account_id as accountId from Account
+
+-- 可以省略as
+select account_id accountId from Account
 ```
 
 #### 3.resultMap自定义映射
@@ -16972,7 +16975,10 @@ postgresql:
     environment:
         - POSTGRES_PASSWORD=postgres123
     volumes:
+        # PostgreSQL数据库版本17及以下的版本
         - /handle/data/postgresql:/var/lib/postgresql/data
+        # PostgreSQL数据库版本18及以上的版本
+        - /handle/data/postgresql:/var/lib/postgresql
     networks: 
         - my-docker-net
     restart: always
@@ -17360,6 +17366,8 @@ char: 定长，非常适合存储密码的MD5值
 
 varchar: 字符串列的最大长度比平均长度大很多，列的更新很少时使用
 
+![mysql数据类型](/images/mysql数据类型.png)
+
 #### MySQL用户操作
 
 ```sql
@@ -17548,6 +17556,10 @@ where name in (
 
 -- join连接查询
 -- sql先根据on生成一张临时表，然后再根据where对临时表进行筛选
+-- inner join：内连接（默认连接方式），只有当两个表都存在满足条件的记录时才会返回行
+-- left [outer] join： 左(外)连接，返回左表中的所有行，即使右表中没有满足条件的行也是如此
+-- right [outer] join：右(外)连接，返回右表中的所有行，即使左表中没有满足条件的行也是如此
+-- full [outer] join ：全(外)连接，只要其中有一个表存在满足条件的记录，就返回行
 select account.*,user.* 
 from account
 inner join user
@@ -17867,7 +17879,7 @@ select count(distinct columnName) / count(*) as columnName_rate from tableName
 
 ##### 事务隔离级别
 
-读未提交、读已提交、可重复读、可序列化
+读未提交、读已提交、可重复读、可串行化
 
 - 脏读：一个事务会读到另一个事务更新后但未提交的数据，如果另一个事务回滚，那么当前事务读到的数据就是脏数据，这就是脏读
 - 不可重复读：在一个事务内，多次读同一数据，在这个事务还没有结束时，如果另一个事务恰好修改了这个数据，那么，在第一个事务中，两次读取的数据就可能不一致
@@ -17923,7 +17935,17 @@ insert into account (name,password) values('nintendo','nn134');
 rollback;
 ```
 
-#### 锁
+#### 并发事务的控制方式
+
+MySQL 中并发事务的控制方式无非就两种：锁 和 MVCC
+
+锁可以看作是悲观控制的模式
+
+多版本并发控制（MVCC，Multiversion concurrency control）可以看作是乐观控制的模式
+
+##### 锁
+
+锁控制方式下会通过锁来显式控制共享资源而不是通过调度手段，MySQL 中主要是通过`读写锁`来实现并发控制
 
 - InnoDB的行锁是通过锁住索引来实现的
 
@@ -17941,7 +17963,11 @@ update user set user_name = #{userName} where id=#{id}
 update user set user_name = #{userName} where user_age=#{userAge}
 ```
 
-##### 共享锁和排它锁
+###### 共享锁和排它锁
+
+共享锁（S 锁）：又称读锁，事务在读取记录的时候获取共享锁，允许多个事务同时获取（锁兼容）
+
+排他锁（X 锁）：又称写锁/独占锁，事务在修改记录的时候获取排他锁，不允许多个事务同时获取。如果一个记录已经被加了排他锁，那其他事务不能再对这条记录加任何类型的锁
 
 ```sql
 -- 共享锁
@@ -17949,6 +17975,72 @@ select ... lock in share mode;
 
 -- 排他锁
 select ... for update;
+```
+
+##### 意向锁（Intention Lock）
+
+意向锁用来快速判断是否可以对某个表使用表锁
+
+意向锁是由数据引擎自己维护的，用户无法手动操作意向锁，在为数据行加共享/排他锁之前，InnoDB 会先获取该数据行所在在数据表的对应意向锁
+
+意向共享锁（Intention Shared Lock，IS 锁）：事务有意向对表中的某些记录加共享锁（S 锁），加共享锁前必须先取得该表的 IS 锁
+
+意向排他锁（Intention Exclusive Lock，IX 锁）：事务有意向对表中的某些记录加排他锁（X 锁），加排他锁之前必须先取得该表的 IX 锁
+
+##### InnoDB的行锁
+
+记录锁（Record Lock）：属于单个行记录上的锁
+
+间隙锁（Gap Lock）：锁定一个范围，不包括记录本身
+
+临键锁（Next-Key Lock）：Record Lock+Gap Lock，锁定一个范围，包含记录本身，主要目的是为了解决幻读问题。记录锁只能锁住已经存在的记录，为了避免插入新记录，需要依赖间隙锁
+
+在 InnoDB 默认的隔离级别 REPEATABLE-READ 下，行锁默认使用的是 Next-Key Lock
+
+但是，如果操作的索引是唯一索引或主键，InnoDB 会对 Next-Key Lock 进行优化，将其降级为 Record Lock，即仅锁住索引本身，而不是范围
+
+##### MVCC
+
+MVCC 是多版本并发控制方法，即对一份数据会存储多个版本，通过事务的可见性来保证事务能看到自己应该看到的版本
+
+通常会有一个全局的版本分配器来为每一行数据设置版本号，版本号是唯一的
+
+MVCC 在 MySQL 中实现所依赖的手段主要是: 隐藏字段、read view、undo log
+
+undo log : 用于记录某行数据的多个版本的数据
+
+read view 和 隐藏字段 : 用来判断当前版本数据的可见性
+
+##### 当前读和快照读
+
+快照读（一致性非锁定读）就是单纯的 SELECT 语句
+
+快照读的情况下，如果读取的记录正在执行 UPDATE/DELETE 操作，读取操作不会因此去等待记录上 X 锁的释放，而是会去读取行的一个快照
+
+只有在事务隔离级别读已提交和可重读下，InnoDB 才会使用一致性非锁定读：
+
+在 读已提交 级别下，对于快照数据，一致性非锁定读总是读取被锁定行的最新一份快照数据
+
+在 可重读 级别下，对于快照数据，一致性非锁定读总是读取本事务开始时的行数据版本
+
+快照读比较适合对于数据一致性要求不是特别高且追求极致性能的业务场景
+
+当前读 （一致性锁定读）就是给行记录加 X 锁或 S 锁，常见sql如下
+
+```sql
+-- 对读的记录加一个X锁
+select ... for update
+
+-- 对读的记录加一个S锁
+select...lock in share mode
+
+-- 对读的记录加一个S锁
+select...for share
+
+-- 对修改的记录加一个X锁
+insert ...
+update ...
+delete ...
 ```
 
 #### 删除重复数据
@@ -17985,6 +18077,37 @@ delete from tableName where id not in (
 
 - where从句中禁止对列进行函数转换和计算，会导致索引失效
 - 没有重复值时用union all
+
+##### SQL的执行计划
+
+执行计划是指一条 SQL 语句在经过 MySQL 查询优化器的优化会后，具体的执行方式
+
+可以使用 EXPLAIN 命令来分析 SQL 的 执行计划
+
+EXPLAIN 并不会真的去执行相关的语句，而是通过 查询优化器 对语句进行分析，找出最优的查询方案，并显示对应的信息。
+
+EXPLAIN 适用于 SELECT, DELETE, INSERT, REPLACE, 和 UPDATE语句，我们一般分析 SELECT 查询较多
+
+```sql
+explain select语句
+```
+
+- explain输出的各个列的含义
+
+|列名|描述|
+|:-|:-|
+|id|select 查询的序列标识符|
+|select_type|select 关键字对应的查询类型|
+|table|用到的表名|
+|partitions|匹配的分区，对于未分区的表，值为 NULL|
+|type|表的访问方法|
+|possible_keys|可能用到的索引|
+|key|实际用到的索引|
+|key_len|所选索引的长度|
+|ref|当使用索引等值查询时，与索引作比较的列或常量|
+|rows|预计要读取的行数|
+|filtered|按表条件过滤后，留存的记录数的百分比|
+|Extra|附加信息|
 
 #### 存储过程
 
