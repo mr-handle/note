@@ -17,6 +17,8 @@
     - 如果持久层是关系型数据库，那么，数据表中的每个字段（或若干个）就对应PO的一个（或若干个）属性
 - 不用public、protected、private修饰的字段和方法就是包作用域。位于同一个包的类，可以访问包作用域的字段和方法
 
+- 定义数据字典/下拉选项/枚举时，0作为all，其它值从1开始，这样更统一
+
 ### JDK
 
 - `JRE` 是 Java 运行时环境（Java Runtime Environment）
@@ -9234,6 +9236,10 @@ public class MainConfiguration {}
 
 Spring的三大依赖注入方式：构造器注入、字段注入、Setter注入
 
+构造器注入适合处理必需的依赖项
+
+而Setter注入则更适合可选的依赖项，这些依赖项可以有默认值或在对象生命周期中动态设置
+
 ```java
 // 构造器注入，依赖字段可以定义为final（官方推荐）
 @Controller
@@ -9433,6 +9439,33 @@ public class ApplicationConfiguration {
 }
 ```
 
+##### @Primary
+
+解决同一类型存在多个Bean实例的注入问题
+
+在Bean定义时（例如使用 @Bean 或类注解）添加 @Primary 注解
+
+表示该 Bean 是首选的注入对象。
+
+当进行 @Autowired 注入时，如果没有使用 @Qualifier 指定名称，Spring 将优先选择带有 @Primary 的 Bean
+
+```java
+// 将 UserServiceImpl1 设为首选注入对象
+@Primary 
+@Service
+public class UserServiceImpl1 implements UserService {}
+
+@Service
+public class UserServiceImpl2 implements UserService {}
+
+@Controller
+public class UserController {
+    // 自动注入 UserServiceImpl1
+    @AutoWired
+    private UserService userService;
+}
+```
+
 ##### @Resource
 
 - jdk11以上或jdk8以下版本需要导入依赖
@@ -9446,8 +9479,11 @@ public class ApplicationConfiguration {
 ```
 
 - 根据名称进行匹配
+
 - 如果没有指定name属性，先根据所注解的成员变量名查找Spring容器中的Bean
     - 没有对应的Bean，会再根据类型进行查找
+
+- 只能注解在字段和Setter方法上，不支持构造器注入
 
 ```java
 @Controller
@@ -17362,11 +17398,34 @@ spring.datasource.password=mysql123
 
 #### 数据类型
 
-char: 定长，非常适合存储密码的MD5值
+![mysql数据类型](/images/mysql数据类型.png)
+
+char: 定长，非常适合存储密码的哈希值
 
 varchar: 字符串列的最大长度比平均长度大很多，列的更新很少时使用
 
-![mysql数据类型](/images/mysql数据类型.png)
+- 同财务相关的金额类数据必须使用 decimal 类型（精准浮点数，在计算时不会丢失精度）
+
+- 存储时间两种方式
+    - DATETIME + UTC：最推荐的“折中方案”
+        - 存入时，应用层把用户时间转为 UTC，然后以标准格式（如 '2024-01-01 00:00:00'）写入 DATETIME 字段
+        - 读取时：数据库原样返回 '2024-01-01 00:00:00'，应用层知道“这是 UTC 时间”，再转回用户本地时间
+        - 可读性强：如果你直接去数据库查表（SELECT *），你看到的 2024-01-01 00:00:00 是人能看懂的格式，方便排查问题
+    - BIGINT + UTC：极致的“性能方案”
+        - 存入时：应用层计算时间戳数值（如 1704067200000），直接存入 BIGINT
+        - 读取时：拿到数字，前端 JS 直接 new Date(1704067200000) 就能自动根据浏览器时区显示
+        - 人眼不可读：如果你直接去数据库查表（SELECT *），看到 1704067200 是一脸懵的，必须写函数转换才能看懂
+
+```sql
+select 
+  -- 1. 先除以1000转为秒（MySQL只认秒级）
+  -- 2. from_unixtime 转为日期格式
+  -- 3. convert_tz 从 UTC 转到 北京时间
+  -- convert_tz 的第二个参数（源时区）必须明确
+  -- 如果你的 from_unixtime 默认输出的是 UTC 时间，这里就填 'UTC'；如果数据库本身配置成了东八区，这里就要填 '+08:00'
+  convert_tz(from_unixtime(create_time_ms / 1000), 'UTC', 'Asia/Shanghai') AS beijing_time
+from tableName;
+```
 
 #### MySQL用户操作
 
@@ -18491,6 +18550,8 @@ CP：Redis、Mongodb
 BASE：基本可用（Basically Available）、软状态（Soft state）、最终一致（Eventually consistent）
 
 #### Redis安装
+
+key命名：`表名:列名:主键名:主键值`
 
 ##### 修改配置
 
