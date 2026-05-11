@@ -7870,6 +7870,44 @@ public static void initStatic() {
 }
 ```
 
+##### @ActiveProfiles
+
+一般作用于测试类上， 用于声明生效的 Spring 配置文件
+
+```java
+// 指定在 RANDOM_PORT 上启动应用上下文，并激活 "test" profile
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
+@Slf4j
+public abstract class ApplicationTest {
+    // todo
+}
+```
+
+##### @WithMockUser
+
+@WithMockUser 是 Spring Security Test 模块提供的注解，用于在测试期间模拟一个已认证的用户。
+
+可以方便地指定用户名、密码、角色（authorities）等信息，从而测试受安全保护的端点或方法。
+
+```java
+// 指定在 RANDOM_PORT 上启动应用上下文，并激活 "test" profile
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
+@Slf4j
+public abstract class ApplicationTest {
+    @Test
+    // 测试数据将回滚
+    @Transactional 
+    // 模拟一个名为 "test-user"，拥有 TEACHER 角色和 read 权限的用户
+    @WithMockUser(username = "test-user", authorities = { "ROLE_TEACHER", "read" }) 
+    public void test() throws Exception {
+        // ... 测试逻辑 ...
+        // 这里可以调用需要 "ROLE_TEACHER" 权限的服务方法
+    }
+}
+```
+
 #### Junit5执行顺序
 
 - 1.@BeforeAll
@@ -8657,6 +8695,29 @@ UserDO user = userDAO.queryUser(userId);
 // 当没有用户年龄为userAge的记录时，users不为null，其长度为0
 List<UserDO> users = userDAO.queryUsers(userAge);
 ```
+
+### Executor
+
+- MyBatis 有三种基本的 Executor 执行器：
+    - SimpleExecutor： 每执行一次 update 或 select，就开启一个 Statement 对象，用完立刻关闭 Statement 对象。
+    - ReuseExecutor： 执行 update 或 select，以 sql 作为 key 查找 Statement 对象，存在就使用，不存在就创建，用完后，不关闭 Statement 对象，而是放置于 Map<String, Statement>内，供下一次使用。简言之，就是重复使用 Statement 对象。
+    - BatchExecutor：执行 update（没有 select，JDBC 批处理不支持 select），将所有 sql 都添加到批处理中（addBatch()），等待统一执行（executeBatch()），它缓存了多个 Statement 对象，每个 Statement 对象都是 addBatch()完毕后，等待逐一执行 executeBatch()批处理。与 JDBC 批处理相同。
+
+作用范围：Executor 的这些特点，都严格限制在 SqlSession 生命周期范围内。
+
+在 MyBatis 配置文件中，可以指定默认的 ExecutorType 执行器类型，也可以手动给 DefaultSqlSessionFactory 的创建 SqlSession 的方法传递 ExecutorType 类型参数
+
+### MyBatis插件
+
+MyBatis 仅可以编写针对 ParameterHandler、 ResultSetHandler、 StatementHandler、 Executor 这 4 种接口的插件
+
+MyBatis 使用 JDK 的动态代理，为需要拦截的接口生成代理对象以实现接口方法拦截功能，每当执行这 4 种接口对象的方法时，就会进入拦截方法
+
+具体就是 InvocationHandler 的 invoke() 方法，当然，只会拦截那些你指定需要拦截的方法。
+
+实现 MyBatis 的 Interceptor 接口并复写 intercept() 方法，然后再给插件编写注解，指定要拦截哪一个接口的哪些方法即可
+
+最后在配置文件中配置你编写的插件
 
 ### IDEA插件
 
@@ -12925,7 +12986,11 @@ management.tracing.sampling.probability:1.0
 
 - 请求链路追踪：一条链路通过trace id唯一标识， span表示发起的请求信息，各span通过parent id 关联起来
 
-### Gateway
+### Spring Cloud Gateway
+
+客户端的请求先通过匹配规则找到合适的路由，就能映射到具体的服务
+
+然后请求经过过滤器处理后转发给具体的服务，服务处理后，再次经过过滤器处理，最后返回给客户端
 
 #### 三大核心
 
@@ -13939,6 +14004,89 @@ seata.data-source-proxy-mode=AT
 ## Spring Data
 
 ## Jackson
+
+- @JsonIgnoreProperties 作用在类上用于过滤掉特定字段不返回或者不解析
+
+```java
+@Getter
+@Setter
+@ToString
+@JsonIgnoreProperties({"userRoles"})
+public class UserVO {
+    private String userNo;
+
+    private String userName;
+
+    private List<UserRole> userRoles = new ArrayList<>();
+}
+```
+
+- @JsonIgnore 作用于字段或getter/setter 方法级别，用于指定在序列化或反序列化时忽略该特定属性
+
+```java
+@Getter
+@Setter
+@ToString
+public class UserVO {
+    private String userNo;
+
+    private String userName;
+
+    @JsonIgnore 
+    private List<UserRole> userRoles = new ArrayList<>();
+}
+```
+
+- @JsonFormat 用于指定属性在序列化和反序列化时的格式。常用于日期时间类型的格式化。
+
+```java
+@Getter
+@Setter
+@ToString
+public class UserVO {
+    private String userNo;
+
+    private String userName;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd 'T' HH:mm:ss", timezone = "GMT+8") 
+    private LocalDateTime createTime;
+}
+```
+
+- @JsonUnwrapped 注解作用于字段上，用于在序列化时将其嵌套对象的属性“提升”到当前对象的层级，反序列化时执行相反操作。这可以使 JSON 结构更扁平。
+
+```java
+@Getter
+@Setter
+@ToString
+public class UserVO {
+    private String userNo;
+
+    private String userName;
+
+    @JsonUnwrapped
+    private PageInfo pageInfo;
+
+    @Getter
+    @Setter
+    @ToString
+    public static class PageInfo {
+        private Integer currentPage;
+
+        private Integer pageSize;
+    }
+}
+```
+
+```json
+// 扁平化后的JSON结构为
+{
+  "userNo": "0101",
+  "userName": "handle",
+  "currentPage": "1",
+  "pageSize": "15"
+}
+```
 
 ### 常规使用
 
