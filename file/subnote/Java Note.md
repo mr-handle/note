@@ -10380,6 +10380,8 @@ public String getAccount(String name, int age) {
 
 获取请求体
 
+系统会使用HttpMessageConverter或者自定义的HttpMessageConverter将请求的body中的json字符串转换为java对象
+
 - 由于java原生api只支持路径参数和param参数（request.getParameter("key")），不支持json，所以用@RequestBody接收json数据时，需要导入json处理的依赖，并且在HandlerAdapter配置json转换器
 
 ```java
@@ -10820,6 +10822,29 @@ public class SpringMvcConfiguration implements WebMvcConfigurer{
 
 ### 参数校验
 
+- Bean Validation 是一套定义 JavaBean 参数校验标准的规范 (JSR 303, 349, 380)，它提供了一系列注解，可以直接用于 JavaBean 的属性上，从而实现便捷的参数校验
+    - JSR 303 (Bean Validation 1.0): 奠定了基础，引入了核心校验注解（如 @NotNull、@Size、@Min、@Max 等），定义了如何通过注解的方式对 JavaBean 的属性进行校验，并支持嵌套对象校验和自定义校验器。
+    - JSR 349 (Bean Validation 1.1): 在 1.0 基础上进行扩展，例如引入了对方法参数和返回值校验的支持、增强了对分组校验（Group Validation）的处理。
+    - JSR 380 (Bean Validation 2.0): 拥抱 Java 8 的新特性，并进行了一些改进，例如支持 java.time 包中的日期和时间类型、引入了一些新的校验注解（如 @NotEmpty, @NotBlank等）。
+
+Bean Validation 本身只是一套规范（接口和注解），我们需要一个实现了这套规范的具体框架来执行校验逻辑
+
+目前，Hibernate Validator 是 Bean Validation 规范最权威、使用最广泛的参考实现
+
+需要注意的是：所有的注解，推荐使用 JSR 注解，即`javax.validation.constraints`，而不是`org.hibernate.validator.constraints`
+
+- springboot依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+- 非 SpringBoot 项目需要自行引入相关依赖包
+    - Hibernate Validator 6.x 及更高版本实现了 Bean Validation 2.0 (JSR 380)
+
 ```xml
 <dependency>
     <groupId>org.hibernate.validator</groupId>
@@ -10833,11 +10858,14 @@ public class SpringMvcConfiguration implements WebMvcConfigurer{
 </dependency>
 ```
 
-- JSR-303是Java提供，hibernate实现的，springmvc支持这套实现
+#### 验证请求体
 
-#### 定义实体类
+当 Controller 方法使用 @RequestBody 注解来接收请求体并将其绑定到一个对象时，可以在该参数前添加 @Valid 注解来触发对该对象的校验。
 
-```java
+如果验证失败，它将抛出MethodArgumentNotValidException。
+
+##### 定义实体类
+
 ```java
 @Getter
 @Setter
@@ -10862,9 +10890,21 @@ public class User {
 }
 ```
 
-#### 定义控制器
+##### 定义控制器
 
 ```java
+@RequestMapping("/user")
+@RestController
+public class UserController {
+    @PostMapping("/updateUser")
+    public void updateUser(@RequestBody @Valid User user) {
+        // todo
+    }
+}
+```
+
+```java
+// 下面的@Validated注解是之前的笔记，应该是不规范的，没有验证过，先留着吧
 @RequestMapping("/user")
 @RestController
 public class UserController {
@@ -10874,6 +10914,29 @@ public class UserController {
         if (result.hasErrors()) {
             // todo
         }
+    }
+}
+```
+
+#### 验证请求参数
+
+- 对于直接映射到方法参数的简单类型数据（如路径变量 @PathVariable 或请求参数 @RequestParam），校验方式略有不同：
+    - 在 Controller 类上添加 `@Validated` 注解：这个注解是 Spring 提供的（非 JSR 标准），它使得 Spring 能够处理方法级别的参数校验注解。这是必需步骤。
+    - 将校验注解直接放在方法参数上：将 @Min, @Max, @Size, @Pattern 等校验注解直接应用于对应的 @PathVariable 或 @RequestParam 参数。
+
+```java
+// 在类上添加@Validated注解
+@Validated
+@RequestMapping("/user")
+@RestController
+public class UserController {
+    @PostMapping("/getUserByName")
+    public void getUserByName(
+        @RequestParam("name")
+        @NotBlank(message = "姓名不能为空")
+        @Size(max = 10, message = "姓名长度不能超过 10")
+        String name) {
+        // todo
     }
 }
 ```
