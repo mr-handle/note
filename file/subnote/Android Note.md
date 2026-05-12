@@ -1,5 +1,41 @@
 # Android Note
 
+## Android Studio
+
+AVD：Android Virtual Device
+
+### 安卓虚拟机镜像介绍
+
+- Google Play Store 镜像
+    - 内置了完整的 Google Mobile Services (GMS)，包括 Google Play 商店、Google Play 服务、Google 地图、登录等全套 Google 官方应用和 API
+    - 体积大
+    - 无法获取 Root 权限
+    - 用于海外应用开发、Google 生态测试
+
+- Android Open Source (AOSP) 镜像
+    - 仅包含 Android 开源项目（Android Open Source Project）的原生系统，完全没有任何 Google 的专有应用或服务
+    - 体积小
+    - 支持获取 Root 权限
+    - 用于国内应用开发、基础调试、去Google化测试
+
+### 运行日志
+
+- Android采用Log工具打印日志，各类日志划分为5个等级
+    - Log.e：错误日志，比如可能导致程序崩溃的异常
+    - Log.w：警告日志
+    - Log.i：一般日志
+    - Log.d：调试日志，可以把程序运行时的变量值打印出来，方便跟踪调试
+    - Log.v：冗余日志
+
+- 在Android Studio的左下角点击Logcat可以查看日志
+
+```java
+// debugLog是自定义标签，用于通过标签过滤日志信息
+Log.d("debugLog", "app start!");
+```
+
+#### 安卓应用
+
 ```java
 // 普通类MainActivity继承了AppCompatActivity就具有了Activity的特性了
 // Activity就相当于一个窗口
@@ -99,6 +135,24 @@ columnCount属性指定网格的列数，即每行能放多少个视图
 rowCount属性指定网格的行数，即每列能放多少个视图
 
 还可以用layout_columnWeight、layout_rowWeight这两个权重来来配置宽高比例
+
+### 滚动视图
+
+#### ScrollView
+
+垂直滚动视图
+
+layout_width设置为match_parent
+
+layout_height设置为wrap_content
+
+#### HorizontalScrollView
+
+水平滚动视图
+
+layout_width设置为wrap_content
+
+layout_height设置为match_parent
 
 ## USB调试
 
