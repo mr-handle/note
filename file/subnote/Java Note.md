@@ -14332,6 +14332,24 @@ public final class JacksonUtil {
 }
 ```
 
+### 超过16位的Long类型的字段序列化
+
+```java
+@Getter
+@Setter
+@ToString
+public class UserVo {
+    // 对于Long类型的数值超过16位时，直接序列化传给前端js将会丢失精度，需要先转为String类型来让js接收
+    // 反序列化不用特殊处理，Jackson会自动将前端传来的String类型数值转换为Long类型
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long id;
+
+    // 基本类型也可以，但是强烈不建议这样写的
+    @JsonSerialize(using = ToStringSerializer.class)
+    private long id;
+}
+```
+
 ## swagger
 
 - 依赖
@@ -17180,6 +17198,9 @@ git stash pop: 从Git栈中读取最近一次保存的内容，恢复工作区�
 ```sql
 -- 注释内容，注意双减号后有空格
 ```
+
+- 如果考虑到后期会进行数据库迁移，可以用Long类型来定义时间字段
+    - 如：create_at_utc_milli，直接点明了时区基准（零时区），避免了夏令时和跨地域部署的坑，数据单位和精度（毫秒级）
 
 ### PostgreSQL
 

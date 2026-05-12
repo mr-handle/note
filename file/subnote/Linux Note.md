@@ -2783,12 +2783,16 @@ sudo pacman -S fuse2
 - 复制软件包里面的图标文件
 
 ```sh
+# 需要先赋予appimage文件执行权限
 # 执行这个命令后会输出一个挂载路径，如：/tmp/.mount_xxxxx
 /path/to/file.AppImage --appimage-mount
 
-# 然后新开一个终端并进入这个路径，找到图标文件然后复制到一个可以找得到的路径下
-# 最后关闭这个终端，以及在最开始的那个终端Ctrl+C，结束挂载
+# 然后新开一个终端并进入这个路径
 cd /tmp/.mount_xxxxx
+
+# 找到图标文件，比如可能在：/tmp/.mount_xxxxx/usr/share/icons/hicolor/512x512/apps/file.png
+# 然后复制到一个可以找得到的路径下
+# 最后关闭这个终端，以及在最开始的那个终端Ctrl+C，结束挂载
 ```
 
 ### .run软件包
@@ -4816,6 +4820,7 @@ sudo chmod u=rwx,g=rx,o=rx /mnt/data
 ```content
 [Desktop Entry]
 Type=Application
+# 指定桌面快捷方式图标下方显示的默认名称
 Name=WeChat
 Exec=/home/handle/Applications/WeChat.AppImage
 Icon=/home/handle/Applications/WeChat.png
