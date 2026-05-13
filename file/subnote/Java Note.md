@@ -18453,7 +18453,7 @@ mysqldump -u root -p -P 3306 handle account employee spidata --single-transactio
 mysql -u root -p -P 3306 handle < d:/handle_backup.sql
 ```
 
-### 找回mysql的root密码
+#### 找回mysql的root密码
 
 ```sh
 # 适用mysql5.7
@@ -18484,6 +18484,56 @@ vim /etc/my.cnf
 # 重启
 systemctl restart mysqld
 ```
+
+#### 读写分离
+
+部署多台数据库，选择其中的一台作为主数据库，其他的一台或者多台作为从数据库。
+
+保证主数据库和从数据库之间的数据是实时同步的，这个过程也就是我们常说的主从复制。
+
+系统将写请求交给主数据库处理，读请求交给从数据库处理。
+
+- 实现方式有两种
+    - 代理方式：如使用MySQL Router
+    - 组件方式（推荐，用得最多）：如使用ShardingSphere-JDBC
+
+#### 主从复制原理
+
+MySQL binlog(binary log 即二进制日志文件) 主要记录了 MySQL 数据库中数据的所有变化(数据库执行的所有 DDL 和 DML 语句)
+
+因此，根据主库的 MySQL binlog 日志就能够将主库的数据同步到从库中
+
+当然，除了主从复制之外，binlog 还能帮助我们实现数据恢复
+
+- 主从复制过程
+    - 主库将数据库中数据的变化写入到 binlog
+
+    - 从库连接主库
+
+    - 从库会创建一个 I/O 线程向主库请求更新的 binlog
+
+    - 主库会创建一个 binlog dump 线程来发送 binlog ，从库中的 I/O 线程负责接收
+
+    - 从库的 I/O 线程将接收的 binlog 写入到 relay log 中
+
+    - 从库的 SQL 线程读取 relay log 同步数据到本地（也就是再执行一遍 SQL ）
+
+MySQL 主从复制是依赖于 binlog 。另外，常见的一些同步 MySQL 数据到其他数据源的工具（比如 canal）的底层一般也是依赖 binlog
+
+Redis 也是通过主从复制实现的读写分离
+
+#### 如何避免主从延迟
+
+- 对于极少数必须强一致的业务，强制将读请求路由到主库处理
+
+```java
+// ShardingSphere-JDBC 强制读主库
+HintManager hintManager = HintManager.getInstance();
+hintManager.setMasterRouteOnly();
+// 继续JDBC操作
+```
+
+- 延迟读取，在完成写请求之后，避免立即进行请求操作。比如你支付成功之后，跳转到一个支付成功的页面，当你点击返回之后才返回自己的账户。
 
 ### SQL Server
 
