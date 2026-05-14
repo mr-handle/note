@@ -3939,7 +3939,29 @@ sudo vim /etc/pacman.conf
 #Include = /etc/pacman.d/mirrorlist
 ```
 
-- 根据显卡类型安装显卡驱动
+###### 安装AMD显卡驱动
+
+Linux系统的AMD显卡驱动是开源的，教程官网：<https://wiki.archlinux.org/title/Graphics_processing_unit#Installation>
+
+```sh
+# 先查看显卡信息
+# ::03表示"Display controller PCI device class"
+# xx 表示 "any subclass of the class"
+lspci -vnnd ::03xx
+
+# 然后根据显卡的家族，到教程官网查看表格，选择对应的驱动包进行安装
+# 为了支持32位应用，先开启multilib
+# mesa和lib32-mesa提供DRI驱动（应该就是OpenGL）和VA-API/VDPAU驱动，分别用于3D加速和图像/视频解码加速
+# 这两个包一般内核自带了，安装时可以先确认是否已经存在，不存在再安装
+# 硬件特定的 Device Dependent X (DDX) 驱动已经过时
+# xorg-server中有更通用modesetting DDX 驱动，它使用kernel mode setting并能在现代硬件上运行很好 
+# modesetting DDX 驱动使用Glamor来进行2D 加速，这需要OpenGL 
+# 因此很多情况下（比如说在安装了xorg环境或Wayland环境的时候）是不用安装DDX驱动的，也就是不用安装xf86-video-amdgpu 
+# 通常必须安装的只有vulkan-radeon和lib32-vulkan-radeon，它们提供vulkan支持
+sudo pacman -S [mesa lib32-mesa] [xf86-video-amdgpu] vulkan-radeon  lib32-vulkan-radeon 
+```
+
+###### 安装英伟达显卡驱动
 
 ```sh
 # 这一步可能还要摸索，笔者装了英特尔和英伟达的后，重启黑屏了，然后切换tty又装了optimus-manager，然后重启又正常了
@@ -3968,17 +3990,6 @@ sudo pacman -S nvidia-open lib32-nvidia-utils nvidia-settings
 # 对于老版本的驱动，设置modeset=1
 # 可以执行如下命令确认，输出应该为Y
 sudo cat /sys/module/nvidia_drm/parameters/modeset
-
-# AMD（开源）
-# 官网教程：https://wiki.archlinux.org/title/Xorg#AMD
-sudo pacman -S xf86-video-amdgpu mesa
-
-# Intel（开源）
-# 官网教程：https://wiki.archlinux.org/title/Intel_graphics
-# mesa OpenGL 支持
-# libva-intel-driver 视频加速（VA-API）
-# vulkan-intel Vulkan 支持（如游戏、图形加速）
-sudo pacman -S mesa libva-intel-driver vulkan-intel
 ```
 
 ###### 安装GTX 1060显卡驱动
@@ -4015,6 +4026,18 @@ yay -S nvidia-prime
 
 # 用独显启动指定程序
 prime-run 程序名
+```
+
+###### 安装英特尔显卡驱动
+
+Linux系统的Intel显卡驱动是开源的，教程官网：<https://wiki.archlinux.org/title/Intel_graphics>
+
+```sh
+# mesa和lib32-mesa提供OpenGL支持
+# 这两个包一般内核自带了，安装时可以先确认是否已经存在，不存在再安装
+# libva-intel-driver 视频加速（VA-API）
+# vulkan-intel Vulkan 支持（如游戏、图形加速）
+sudo pacman -S [mesa lib32-mesa] libva-intel-driver vulkan-intel
 ```
 
 ##### 安装其它常用软件
