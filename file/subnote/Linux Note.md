@@ -4108,7 +4108,8 @@ steam游戏存档位置：`~/.local/share/Steam/userdata/[SteamID]/[AppID]/remot
 # 需要启用multilib仓库
 # 安装过程中会提示让你选择为lib32-vulkan-driver选择依赖
 # nvidia-open选择lib32-nvidia-utils
-# nvidia-580xx-dkms选择lib32-vulkan-swrast
+# nvidia-580xx-dkms选择lib32-vulkan-swrast（不要选lib32-vulkan-nouveau，性能比lib32-vulkan-swrast还差，游戏游戏甚至启动不了）
+# 对于amd显卡，安装驱动的时候安装了lib32-vulkan-radeon，因此不会弹出选择依赖选项
 sudo pacman -S steam
 
 # 安装完后首次用命令启动，不然可能弹不出界面，都不知道什么问题
@@ -4871,7 +4872,11 @@ sha512sum /path/to/file
 
 ### 系统启动美化
 
-试了一下就重启的时候比较明显，开机的时候根本看不到，没什么卵用的，不建议安装
+需要在系统设置plymouth-kcm那里另外下载主题，默认的主题显示不出来
+
+试了一下就关机/重启的时候看起来比较有感觉
+
+但是开机的时候，显示两行初始化的日志文本，到显示开机动画期间，会看到花屏，要么就是根本没显示开机动画，体验感很差，不建议安装
 
 - 安装plymouth和GUI
 
@@ -4895,7 +4900,7 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 - 修改 initramfs HOOKS
 
 ```sh
-# HOOKS=(... plymouth ...)
+# HOOKS=(...systemd...plymouth...encrypt sd-encrypt...)
 # 如果用的是systemd，则plymouth要放在其后面
 # 如果系统用dm-crypt加密，则plymouth要放在encrypt or sd-encrypt之前
 sudo vim /etc/mkinitcpio.conf
