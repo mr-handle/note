@@ -3096,6 +3096,8 @@ pacstrap通常只用来安装基础系统包，安装完之后，可以用genfst
 # linux-hardened：安全强化版，安全性最高
 # 注意：如果后期要安装headers包，需要根据安装的内核包选择对应的headers包进行安装
 # 如linux包选择linux-headers，linux-lts包选择linux-lts-headers
+# 如果前期只安装了一种内核包，后期想再安装另一种内核包，安装完后需要执行"sudo grub-mkconfig -o /boot/grub/grub.cfg"
+# 这样grub菜单选项才会包含该内核
 pacstrap -K /mnt base linux linux-firmware
 ```
 
