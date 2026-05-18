@@ -4020,6 +4020,16 @@ yay -S nvidia-580xx-dkms
 # sudo cat /sys/module/nvidia_drm/parameters/modeset
 ```
 
+###### 安装RTX 3050显卡驱动
+
+```sh
+# linux内核安装
+yay -S nvidia-open
+
+# linux-lts内核安装
+yay -S nvidia-open-lts
+```
+
 ###### 对于笔记本使用独显启动指定程序
 
 ```sh
