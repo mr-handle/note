@@ -24,6 +24,28 @@
 [超链接显示名](超链接地址 "超链接title，当鼠标悬停在链接上时会出现的文字")
 ```
 
+## 技嘉B360M POWER刷BIOS
+
+- 去技嘉官网下载BIOS最新的更新包（包含了前面版本的所有更新），如`F17a`
+
+- 解压更新包，得到`B360MPOWER.F17a`文件，将其复制到fat32文件系统的U盘的根目录下
+
+- 重启电脑，进入BIOS，按下`F8`进入Q-Flash（Q‑Flash 是技嘉 BIOS 内置的刷写工具）
+
+- 选择更新BIOS，然后选择U盘的`B360MPOWER.F17a`文件，选择一个更新模式，如fast更新或intact（完整）更新
+    - fast更新：跳过部分 BIOS 镜像校验步骤，刷写速度更快，如果 BIOS 文件损坏、U 盘读写不稳定，Fast 模式更容易刷坏
+    - intact（完整）更新：会对 BIOS 文件做完整校验，刷写前做更多安全检查，安全，但数度稍慢
+
+- 刷写完成后会自动重启
+    - 如果刷写完成后第一次自动重启后，显示一下主板logo后屏幕就只剩下了一个不闪烁的光标，等个十来分钟还是那样，就按电源键重启，然后进入BIOS
+    - 如果Boot Option和Boot Overwrite不见了，就再刷一次BIOS更新，这次更新会比第一次更快，然后会自动重启两三次，然后会进到BIOS
+    - 然后可以看到Boot Option和Boot Overwrite出现了，但是引导选项丢失了
+    - 插上Live CD 启动盘，重写引导选项就可以了，如
+        - 进入Live系统后先挂载系统分区然后挂载efi分区
+        - 然后arch-chroot进入archlinux系统，执行grub-install安装grub引导，最后grub-mkconfig生成grub配置
+        - 退出arch-chroot，卸载分区，最后重启就可以了
+        - 进入BIOS，确认引导顺序，就可以重启然后正常进入系统了
+
 ## 国内AI使用心得
 
 deepseek信息落后
