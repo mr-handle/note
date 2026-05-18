@@ -4022,15 +4022,32 @@ yay -S nvidia-580xx-dkms
 
 ###### 安装RTX 3050显卡驱动
 
+RTX 3050 可以安装两种驱动：nvidia-open或者nvidia-580xx-dkms，推荐后者
+
+因为arch维基说前者在某些情况下会崩溃
+
+- 方法一
+
 ```sh
 # linux内核安装
 yay -S nvidia-open
 
 # linux-lts内核安装
+# 笔者安装linux-lts和linux-lts-headers后，
+# 首次启动没问题，重启后电脑会卡在loading linux linux-lts...界面
+# linux和linux-headers不会有这种情况，但是也不推荐使用
 yay -S nvidia-open-lts
 ```
 
-###### 对于笔记本使用独显启动指定程序
+- 方法二：推荐
+
+```sh
+yay -S nvidia-580xx-dkms
+```
+
+###### 笔记本有独显和集显的还要额外安装工具指定使用哪个显卡
+
+- 方法一：安装nvidia-prime，它依赖nvidia-utils，因此安装nvidia-open驱动的显卡才支持
 
 ```sh
 # 安装nvidia-prime
@@ -4038,6 +4055,21 @@ yay -S nvidia-prime
 
 # 用独显启动指定程序
 prime-run 程序名
+```
+
+- 方法二：通用方式（推荐）
+
+```sh
+yay -S optimus-manager-git
+
+# 设置开机启动
+systemctl enable optimus-manager
+
+# 启动
+systemctl start optimus-manager
+
+# 设置显卡模式：nvidia，integrated，hybrid（相当于windows系统那种集显独显根据应用来确定的模式）
+optimus-manager --switch hybrid
 ```
 
 ###### 安装英特尔显卡驱动
