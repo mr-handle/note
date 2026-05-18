@@ -3286,6 +3286,14 @@ sudo vim /etc/default/grub
 GRUB_TIMEOUT=0
 GRUB_TIMEOUT_STYLE=hidden
 
+# 设置图形终端的分辨率
+# 可以在GRUB环境中使用"videoinfo"命令查看图形卡支持的模式有哪些
+# auto作为保留，当前面的模式都不能用的时候就会fallback，自动选择可用的模式
+GRUB_GFXMODE=1920x1080,1600x900,1280x720,auto
+
+# 让内核使用的分辨率和grub的一样
+GRUB_GFXPAYLOAD_LINUX=keep
+
 # 生成grub主配置文件/boot/grub/grub.cfg
 # 默认情况下，生成脚本自动将所有已安装的Arch Linux内核的菜单项，添加到生成的grub主配置文件中
 # 只要改动了/etc/default/grub或/etc/grub.d/，或者添加/删除了内核，都需要再次执行此命令重新生成grub主配置文件
