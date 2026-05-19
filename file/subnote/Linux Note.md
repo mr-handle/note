@@ -4114,8 +4114,12 @@ sudo pacman -S gwenview
 # gst-libav：默认不支持ape格式的音乐播放，装了这个就可以了
 sudo pacman -S strawberry gst-libav
 
-# 视频播放器
+# haruna视频播放器：相当于给mpv加了皮肤，可以自定义设置和快捷键等
 sudo pacman -S haruna
+
+# vlc视频播放器
+# vlc-plugin-ffmpeg：ffempeg插件，装了就可以播放大多数格式的视频了（只装vlc播放H.264的mp4格式视频是没有画面的，会提示相关错误）
+sudo pacman -S vlc vlc-plugin-ffmpeg
 
 # 录屏软件
 sudo pacman -S obs-studio
