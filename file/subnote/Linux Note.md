@@ -1453,6 +1453,12 @@ systemctl <start|stop|restart|reload|status> 服务名
 # 开启/关闭自启动
 systemctl <enable|disable> 服务名
 
+# 相当于执行了enable和start
+systemctl enable --now 服务名
+
+# 相当于执行了disable和stop
+systemctl disable --now 服务名
+
 # 列出所有/符合条件的服务的开机自启动状态
 systemctl list-unit-files [| grep 服务名关键字]
 
@@ -4090,6 +4096,20 @@ Linux系统的Intel显卡驱动是开源的，教程官网：<https://wiki.archl
 # libva-intel-driver 视频加速（VA-API）
 # vulkan-intel Vulkan 支持（如游戏、图形加速）
 sudo pacman -S [mesa lib32-mesa] libva-intel-driver vulkan-intel
+```
+
+###### 安装Linux显卡配置工具
+
+lact：Linux显卡配置工具，英伟达显卡、amd显卡、英特尔显卡都可以配置
+
+官网：<https://github.com/ilya-zlobintsev/LACT>
+
+```sh
+# 安装lact
+sudo pacman -S lact
+
+# 设置lactd服务开机启动并立刻启动
+sudo systemctl enable --now lactd
 ```
 
 ##### 安装其它常用软件

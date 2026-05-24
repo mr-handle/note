@@ -67,3 +67,45 @@ deepseek信息落后
     - 不能显示推理过程
 
 紫东太初相应慢，网页版如果末尾不加`？`会吞掉末尾用户输入内容，并且部分对话不带问号就发不出去，会提示请输入问题，比较难用
+
+## index-tts本地部署
+
+官网：<https://github.com/index-tts/index-tts>
+
+```sh
+# 先安装git、git-lfs和uv
+sudo pacman -S git git-lfs uv
+
+# 启用lfs
+git lfs install
+
+# 下载源码
+git clone https://github.com/index-tts/index-tts.git && cd index-tts
+
+# 下载大文件
+git lfs pull
+
+# 安装依赖，这里指定了国内镜像（可选）
+# --all-extras：安装全部可选功能。可去除自定义。
+# --extra webui：安装WebUI支持（推荐）。
+# --extra deepspeed：安装DeepSpeed加速。
+uv sync --all-extras --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
+# 先设置镜像源，以防HuggingFace下载很慢
+export HF_ENDPOINT="https://hf-mirror.com"
+
+# 通过uv安装 HuggingFace CLI
+uv tool install "huggingface-hub[cli,hf_xet]"
+
+# 下载模型
+hf download IndexTeam/IndexTTS-2 --local-dir=checkpoints
+
+# PyTorch GPU 加速检测（可选），如果没有GPU加速就会用CPU
+uv run tools/gpu_check.py
+
+# 启动
+uv run webui.py
+
+# 启动完成访问http://127.0.0.1:7860
+# 然后上传某个人的声音，然后指定文本，就可以生成语言了
+```
