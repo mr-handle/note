@@ -85,6 +85,10 @@ git clone https://github.com/index-tts/index-tts.git && cd index-tts
 # 下载大文件
 git lfs pull
 
+# 对于不能用显卡加速的情况，修改pyproject.toml
+# 将url = "https://download.pytorch.org/whl/cu128"替换为
+url = "https://download.pytorch.org/whl/cpu"
+
 # 安装依赖，这里指定了国内镜像（可选）
 # --all-extras：安装全部可选功能。可去除自定义。
 # --extra webui：安装WebUI支持（推荐）。
