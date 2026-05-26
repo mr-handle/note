@@ -95,10 +95,16 @@ uv sync --all-extras --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/
 export HF_ENDPOINT="https://hf-mirror.com"
 
 # 通过uv安装 HuggingFace CLI
-uv tool install "huggingface-hub[cli,hf_xet]"
+# uv tool install "huggingface-hub[cli,hf_xet]"
 
-# 下载模型
-hf download IndexTeam/IndexTTS-2 --local-dir=checkpoints
+# 用huggingface下载模型
+# hf download IndexTeam/IndexTTS-2 --local-dir=checkpoints
+
+# 通过uv安装modelscope
+uv tool install "modelscope"
+
+# 用modelscope下载模型（推荐）
+modelscope download --model IndexTeam/IndexTTS-2 --local_dir checkpoints
 
 # PyTorch GPU 加速检测（可选），如果没有GPU加速就会用CPU
 uv run tools/gpu_check.py
@@ -107,5 +113,36 @@ uv run tools/gpu_check.py
 uv run webui.py
 
 # 启动完成访问http://127.0.0.1:7860
-# 然后上传某个人的声音，然后指定文本，就可以生成语言了
+# 然后上传某个人的声音，然后指定文本，就可以生成语音了
+```
+
+```sh
+# ImportError: TorchCodec is required for save_with_torchcodec. Please install torchcodec to use this function.
+uv pip install torchcodec --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+```
+
+## coqui-TTS本地部署
+
+```sh
+git clone https://github.com/coqui-ai/TTS.git
+
+cd TTS
+
+uv venv
+
+uv pip install -e .[all] --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+
+
+
+# 注意tacotron2-DDC-GST不能生成英文，生成英文要用英文的模型
+# tts_models/zh-CN/baker/tacotron2-DDC-GST会报错
+# 如：In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`....
+# 这时候设置环境变量，执行export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1，后面就可以正常生成了
+# 或者根据报错信息：TTS/utils/io.py", line 54, in load_fsspec return torch.load(f, map_location=map_location, **kwargs)
+# 直接改这一行为return torch.load(f, map_location=map_location, weights_only=False, **kwargs)
+# 推荐后面这一种写法
+uv run tts --text "你好，世界！我是爱坤，喂我花生！" --model_name "tts_models/zh-CN/baker/tacotron2-DDC-GST" --out_path /home/handle/Downloads/output.wav
+
+uv run tts --text "hello,world!" --model_name "tts_models/en/multi-dataset/tortoise-v2" --out_path /home/handle/Downloads/output.wav
 ```

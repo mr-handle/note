@@ -14719,6 +14719,13 @@ sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin dock
 sudo systemctl status docker
 ```
 
+#### 将当前用户加入docker用户组
+
+```sh
+# 将当前用户加入docker用户组并立即生效
+sudo usermod -aG docker $USER && newgrp docker
+```
+
 #### 配置国内镜像源
 
 - 1.配置文件`/etc/docker/daemon.json`中加入

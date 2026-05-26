@@ -3977,6 +3977,16 @@ lspci -vnnd ::03xx
 sudo pacman -S [mesa lib32-mesa] [xf86-video-amdgpu] vulkan-radeon  lib32-vulkan-radeon 
 ```
 
+###### 安装ROCm（可选）
+
+如果在本地部署AI模型，还可以安装ROCm来充分使用GPU性能
+
+```sh
+# rocm-hip-sdk：Develop applications using HIP and libraries for AMD platforms
+# 像python-pytorch-opt-rocm应该在具体的环境中安装
+sudo pacman -S rocm-hip-sdk
+```
+
 ###### 安装英伟达显卡驱动
 
 ```sh
@@ -5144,6 +5154,64 @@ sudo fdisk -l
 # 对于ext4的分区，下面两个命令都可以
 e2label /dev/partition_name labelName
 tune2fs -L labelName /dev/partition_name
+```
+
+### uv的使用
+
+包管理器：uv pip
+
+```sh
+# archlinux安装uv
+sudo pacman -S uv
+
+# 创建一个新项目（python环境）
+uv init
+
+# 创建一个环境，比如在项目中删除.venv文件夹后可以执行，这样就重新创建一个环境了
+# --python 3.9：指定python版本
+uv venv [--python 3.9]
+
+# 在新项目中添加依赖
+uv add
+
+# 在新项目中删除依赖
+uv remove   
+
+# 更新项目环境
+# 指定国内源
+uv sync --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
+# 清空缓存
+uv cache clean
+```
+
+### miniforge的使用
+
+miniforge可以看成是增强版的miniconda，跟uv一样把它当成包管理器就行了
+
+它用的是mamba命令，conda命令执行的语句都可以将conda替换为mamba
+
+```sh
+# 安装miniforge
+yay -S miniforge
+
+# 安装完成为当前用户执行
+echo "[ -f /opt/miniforge/etc/profile.d/conda.sh ] && source /opt/miniforge/etc/profile.d/conda.sh" >> ~/.bashrc
+
+# 测试
+mamba --version
+
+mamba create -p /home/handle/Applications/miniforge/envs/cosyvoice -y python=3.10
+
+# 报'mamba' is running as a subprocess and can't modify the parent shell.
+# Thus you must initialize your shell before using activate and deactivate.
+# 就根据提示如执行下面的命令
+eval "$(mamba shell hook --shell bash)"
+
+mamba activate /home/handle/Applications/miniforge/envs/cosyvoice
+
+# 删除环境
+mamba env remove -p /home/handle/Applications/miniforge/envs/GPTSoVits
 ```
 
 ## NixOS
