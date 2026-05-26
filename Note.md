@@ -132,17 +132,32 @@ uv venv
 
 uv pip install -e .[all] --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
-
-
-
 # 注意tacotron2-DDC-GST不能生成英文，生成英文要用英文的模型
 # tts_models/zh-CN/baker/tacotron2-DDC-GST会报错
 # 如：In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`....
 # 这时候设置环境变量，执行export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1，后面就可以正常生成了
 # 或者根据报错信息：TTS/utils/io.py", line 54, in load_fsspec return torch.load(f, map_location=map_location, **kwargs)
 # 直接改这一行为return torch.load(f, map_location=map_location, weights_only=False, **kwargs)
-# 推荐后面这一种写法
-uv run tts --text "你好，世界！我是爱坤，喂我花生！" --model_name "tts_models/zh-CN/baker/tacotron2-DDC-GST" --out_path /home/handle/Downloads/output.wav
+# 推荐后面这一种写法，目前只有这个模型是可商用的中文模型
+uv run tts --text "你好，世界！我是爱坤，喂我花生！" --model_name "tts_models/zh-CN/baker/tacotron2-DDC-GST" --out_path ~/Downloads/output.wav
 
-uv run tts --text "hello,world!" --model_name "tts_models/en/multi-dataset/tortoise-v2" --out_path /home/handle/Downloads/output.wav
+# tts_models/en/multi-dataset/tortoise-v2：这个模型很大并且生成语音文件要好久，不推荐使用
+# tts_models/en/ljspeech/glow-tts：生成速度块并且不会漏字，推荐
+uv run tts --text "hello,world! I'm kunJack!" --model_name "tts_models/en/ljspeech/glow-tts" --out_path ~/Downloads/output.wav
+
+# tts_models/multilingual/multi-dataset/your_tts可以将自己的声音作为输入，例子暂时不列出来，目前没有那个需求
+uv run tts --text "hello,world! I'm aikun!" --model_name "tts_models/multilingual/multi-dataset/your_tts" --out_path ~/Downloads/output.wav --speaker_idx "female-en-5" --language_idx "en" 
+
+# 列出多人语音模型的可选语音列表
+uv run tts --model_name "tts_models/multilingual/multi-dataset/your_tts" --list_speaker_idxs
+
+# 列出多人语音模型的可选语言列表
+# 'female-en-5': 0, 'female-en-5\n': 1, 'female-pt-4\n': 2, 'male-en-2': 3, 'male-en-2\n': 4, 'male-pt-3\n': 5
+uv run tts --model_name "tts_models/multilingual/multi-dataset/your_tts" --list_language_idxs
+
+# 当使用某个模型报错时比如说：from transformers import LogitsWarper失败，就看依赖文件选个没有大改变的稳定版本安装
+uv pip install transformers==4.36.2 --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+# 当某个模型用uv run tts --list_models 显示已下载但是又报错说找不到就将该模型文件夹删了
+rm -rf ~/.local/share/tts/问题模型
 ```
