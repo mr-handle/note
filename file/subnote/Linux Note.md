@@ -4337,7 +4337,9 @@ sudo pacman -S openbsd-netcat
 # 设置身份验证
 # 如果Arch Linux用户已经加入到wheel用户组了就可以跳过，会在启动virt-manager的时候提示输入密码
 # 如果没有加入wheel用户组，则将用户加入wheel组或libvirt组就行了
+# 如果加入libvirt组了，在启动virt-manager的时候可以不用输入密码，还是推荐加入吧
 usermod -aG libvirt 用户名
+sudo usermod -aG libvirt $USER && newgrp libvirt
 
 # 设置开机自启动，然后重启
 sudo systemctl enable libvirtd

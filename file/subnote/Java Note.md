@@ -3433,21 +3433,78 @@ public void test() throws NoSuchAlgorithmException, InvalidKeyException, Signatu
 
 - 在Java程序中，数字证书存储在一种Java专用的key store文件中，JDK提供了一系列命令来创建和管理keystore
 
-- 创建一个keystore
-
 ```sh
-# storepass 指定口令
-# genkeypair 生成公钥/私钥对
-# keyalg 指定加密算法
-# keysize 指定密钥长度/位数
-# sigalg 指定签名算法
-# validity 指定有效天数
-# alias 指定证书别名
-# keystore 指定keystore名称
+# 创建一个keystore
+# -storepass：指定keystore口令
+# -genkeypair：生成公钥/私钥对
+# -keyalg：指定加密算法
+# -keysize：指定密钥长度/位数
+# -sigalg：指定签名算法
+# -validity：指定有效天数
+# -alias：指定密钥和证书别名，一个keystore文件中可以存储多个不同的密钥对。为了区分它们，每一个存入的条目都必须有一个独一无二的别名
+# -storetype：指定keystore的类型，直接设置为PKCS12就可以，它是通用的
+# -keystore：指定keystore名称
 # dname 最重要的CN=www.sample.com指定了Common Name，如果证书用在HTTPS中，这个名称必须与域名完全一致
+# CN (Common Name)：通用名称。这是最重要的字段！如果是本地测试，填localhost；如果是正式网站或服务，必须填写你的域名（如www.handle.com）或服务器的 IP 地址。
+# OU (Organization Unit)：组织单位名称（比如具体的部门，如 IT Dept）。
+# O (Organization)：组织或公司全称（如 MyCompany Inc.）。
+# L (Locality)：城市或地区名称（如 Beijing）。
+# ST (State/Province)：省份或州（如 Beijing 或 Guangdong）。
+# C (Country)：国家的双字母代码（中国为 CN，美国为 US）。
 # 此命令在当前目录创建一个my.keystore文件，并存储创建成功的一个私钥和一个证书到文件中
 # 有了keystore存储的数字证书，我们就可以进行加解密和签名
-keytool -storepass handle123 -genkeypair -keyalg RSA -keysize 2048 -sigalg SHA256withRSA -validity 180 -alias mycert -keystore my.keystore -dname "CN=www.handle.com.cn, OU=handle, O=handle, L=BJ, ST=BJ, C=CN"
+keytool -storepass 'changeit' \
+    -genkeypair \
+    -keyalg RSA \
+    -keysize 2048 \
+    -sigalg SHA256withRSA \
+    -validity 9999 \
+    -alias vaultServer \
+    -storetype PKCS12 \
+    -keystore vaultServer.p12 \
+    -dname 'CN=www.example.com, OU=Handle Studio, O=Handle Studio, L=Shenzhen, ST=Guangdong, C=CN'
+
+# 从keystore（包含私钥和公钥证书），导出公钥证书（.crt证书）
+# -exportcert：指定操作（导出证书）
+# -alias：keystore文件里其实可以存放好几对不同的密钥和证书，需要通过别名来指定具体要导出哪一个
+# -keystore 用来指定要从哪个keystore文件导出公钥证书
+# -file，指定提取出来的公钥证书的名称路径
+# 不加 -rfc（默认情况）：keytool 导出的是 DER 格式（二进制编码），加上 -rfc：keytool 导出的是 PEM 格式（Base64 编码的 ASCII 文本）
+# 用记事本打开就能清晰看到以 -----BEGIN CERTIFICATE----- 开头、-----END CERTIFICATE----- 结尾的可读文本
+# .pem、.crt、.cer 这些后缀的文件，只要它们内部是这种带 BEGIN/END CERTIFICATE 的文本格式，它们在本质上都是完全一样的，可以随意互换后缀名使用
+# -storepass：keystore口令，.p12是个加密的保险箱，想要打开它并读取里面的内容，必须提供正确密码
+keytool -exportcert -alias vaultServer -keystore vaultServer.p12 -file vaultServer.crt -rfc -storepass 'changeit'
+
+# 或用openssl提取完整的公钥证书链
+openssl pkcs12 -in vaultServer.p12 -nokeys -out publicKey.pem
+
+# keytool无法导出私钥，我们需要使用 openssl导出不带密码的私钥
+openssl pkcs12 -in vaultServer.p12 -nocerts -nodes -out privateKey.pem
+
+# 用openssl直接创建公钥和私钥文件
+# req -x509：直接输出一个自签名的 X.509 证书，而不是生成 CSR
+# -newkey rsa:2048：同时生成一个新的 2048 位 RSA 私钥
+# nodes：(no DES) 表示不对生成的私钥文件进行加密（即不需要输入密码），这在服务器自动化配置时非常方便
+# -keyout server.key：指定生成的私钥文件名
+# -out server.crt：指定生成的公钥证书文件名
+# -days 365：设置证书的有效期为 9999 天
+# -subj：自动填写证书的主体信息，避免交互式输入
+openssl req -x509 \
+    -newkey rsa:2048 \
+    -nodes \
+    -keyout privateKey.pem \
+    -out publicKey.pem \
+    -days 9999 \
+    -subj "/C=CN/ST=Guangdong/L=Shenzhen/O=Handle Studio/OU=Handle Studio/CN=www.example.com"
+
+# 由公钥文件和私钥文件生成keystore
+# -in server.crt：指定公钥证书文件
+# -inkey server.key：指定私钥文件
+# -out keystore.p12：指定生成的密钥库文件名
+# -name myalias：为你的证书指定一个别名（alias）
+# -passout 'pass:yourpassword'：keystore口令，如果没有这个选项参数
+# 则执行命令后，终端会提示你设置一个 Export Password。请牢记这个密码，它就是后续 Spring Boot 配置中的 key-store-password
+openssl pkcs12 -export -in server.crt -inkey server.key -out keystore.p12 -name myalias -passout 'pass:yourpassword'
 ```
 
 - 使用数字证书
@@ -13353,6 +13410,142 @@ vault官网：<https://github.com/hashicorp/vault>
 docker pull hashicorp/vault:1.19.2
 ```
 
+- compose.yaml
+
+```yaml
+services: 
+    vault:
+        image: hashicorp/vault:1.19.2
+        container_name: vault
+        command: server
+        ports:
+            - "8200:8200"
+        cap_add:
+            - IPC_LOCK
+        environment:
+            VAULT_LOCAL_CONFIG: >-
+                { 
+                    "storage": {
+                        "file": {
+                            "path": "/vault/file"
+                        }
+                    }, 
+                    "listener": [
+                        {
+                            "tcp": { 
+                                "address": "0.0.0.0:8200",
+                                "tls_disable": false,
+                                "tls_cert_file": "/vault/config.d/vaultPublicKey.pem",
+                                "tls_key_file": "/vault/config.d/vaultPrivateKey.pem"
+
+                            }
+                        }
+                    ], 
+                    "default_lease_ttl": "168h", 
+                    "max_lease_ttl": "720h", 
+                    "ui": true
+                }
+        volumes:
+            - vaultData:/vault/file
+            # 这里使用目录映射，记得将vaultPublicKey.pem和vaultPrivateKey.pem文件复制到/path/to/data/vault/config
+            - /path/to/data/vault/config:/vault/config.d
+volumes: 
+    vaultData:
+        name: vaultData
+```
+
+- 访问：<http://10.0.2.15:8200>
+    - Key shares设置为1
+    - Key threshold设置为1
+    - 点击初始化
+    - 点击Download keys，下载保存好root token（相当于登录vault的密码）和Key1（相当于密钥，vault管理的密码是经过加密了的，需要用它解密）
+    - Unseal Vault的时候用Key1
+    - Sign in to Vault默认是token，这时候用root token就行
+    - 登录进去后，看到的Secrets Engines就是存储密钥的仓库
+    - 导航栏选择Secrets Engines，点击"Enable new engine +"
+    - 选择KV，它以键值对方式加密存储信息，如帐号和密码
+    - Path输入框固定输入secret就行
+    - Maximum number of versions，这是版本控制，会记录这个数据最近N次的变化，如填个10
+    - 点击Enable Engine，启用这个KV加密引擎
+    - 点击"Create secret +"，"Path for this secret"填个应用名称就行
+    - Secret data中填写要添加的键值对，如key：mysql.username，value：具体mysql用户名，最后点击Save保存
+
+### Spring Cloud 集成Vault
+
+- 依赖
+
+```xml
+<!-- 在应用启动的时候自动连接到vault服务器，把需要的数据拉到本地从而注入到环境变量中 -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-vault-config</artifactId>
+</dependency>
+
+<!-- 在应用启动前完成配置信息的拉取 -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bootstrap</artifactId>
+</dependency>
+```
+
+- bootstrap.yaml配置文件
+
+```yaml
+spring.application.name: spring-cloud-vault-demo
+spring.cloud.vault:
+    # vualt服务器地址，如果用的是https，那么生成证书的keystore用的是域名这里也必须是域名，否则会报错
+    host: www.example.com
+    port: 8200
+    # 设置https的话后面必须设置ssl
+    scheme: https
+    # 鉴权方式
+    authentication: TOKEN
+    # vualt的root token权限太大了，应该生成一个只允许访问特定密钥仓库的令牌填到这里
+    token: 你的vault token
+    kv:
+        # vault定义的Secrets Engines的具体Path
+        backend: secret
+    # vault定义的具体backend下的特定Path for this secret
+    application-name: dubhe
+    # 设置ssl
+    ssl:
+        # 记得将vaultPublicKey.pem复制到resources目录下
+        trust-store: classpath:vaultPublicKey.pem
+        trust-store-type: PEM
+        # 设置启用的SSL/TLS协议列表
+        enabled-protocols: TLSv1.2,TLSv1.3
+        # 设置启用的SSL/TLS密码套件列表
+        enabled-cipher-suites: TLS_AES_128_GCM_SHA256
+```
+
+- application.properties配置文件
+
+```properties
+# 获取vault中的配置的key的value值，mysql.username是vault中的key
+username=${mysql.username}
+password=${mysql.password}
+```
+
+- controller
+
+```java
+@RestController
+public class ApplicationController {
+    // 使用application.properties中的key
+    @Value("${username}")
+    private String username;
+
+    // 也可以直接使用vault中的key
+    @Value("${mysql.password}")
+    private String password;
+
+    @GetMapping("/")
+    public String get() {
+        return "get from vault: \t" + "username: " + username + "\t password: " + password + "\t timestamp: " + Instant.now().toEpochMilli();
+    }
+}
+```
+
 ## Spring Cloud Alibaba
 
 - maven dependency
@@ -15175,6 +15368,14 @@ docker network rm 网络名
 docker inspect 容器id/容器名称 | tail -n 20
 ```
 
+### docker权限
+
+- 在 Docker 中，权限控制通常有三个层级
+    - 默认模式：权限受限，最安全，但无法满足像 Vault 这类特殊应用的需求
+    - cap_add：缺啥补啥，只给容器最必要的特权，是生产环境推荐的最佳实践
+        - 比如设置为IPC_LOCK（全称是“进程间通信锁定”），它的核心作用是允许进程将内存锁定在物理内存（RAM）中，防止这部分内存被操作系统交换（Swap）到硬盘上
+    - privileged: 如果设置为true，赋予容器几乎等同于宿主机 root 的全部权限。虽然能解决问题，但安全风险极高，通常不建议使用。
+
 ### Docker Compose
 
 #### 编写compose.yaml
@@ -15241,7 +15442,7 @@ secrets:
 
 ```sh
 # 自动在当前目录查找compose.yaml、docker-compose.yaml
-docker compose up -d
+docker compose up -d [container1 container2 container3]
 
 # 指定compose文件名批量新建容器并以后台方式启动
 docker compose -f mycompose.yaml up -d
