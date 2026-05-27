@@ -13487,6 +13487,8 @@ volumes:
 
 ### 使用vault-ui
 
+官网：<https://github.com/djenriquez/vault-ui>，代码已经归档好多年了
+
 vault本身的UI界面是限制了创建新Token的功能的，要通过安装vault-ui软件来操作或者通过进入容器使用命令行创建
 
 除了创建创建新Token的功能外，个人感觉其它功能还是官方的UI好用
@@ -15341,11 +15343,14 @@ docker volume ls
 docker volume inspect 卷名
 ```
 
-- 对于容器卷，docker统一放在主机的`/var/lib/docker/volumes/卷名`目录下
+- 对于容器卷，docker统一放在主机的`/var/lib/docker/volumes/卷名`目录下，需要有root权限才可以操作该目录
+
+- 使用经验：对于容器数据用命名卷，对于经常改动的比如配置文件，用目录映射更好
 
 ```sh
 # 目录映射（绑定挂载），可以自定义位置，但是必须先在主机上创建目录，对于配置文件要提前复制一份到主机目录
 -v /data/docker/registry:/tmp/registry
+
 # 卷映射（命名卷），卷名前面不带/，卷映射对于配置文件不用提前复制一份到主机目录
 -v ngconf:/etc/nginx
 ```
