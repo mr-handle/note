@@ -13485,6 +13485,35 @@ volumes:
     - 点击"Create secret +"，"Path for this secret"填个应用名称就行
     - Secret data中填写要添加的键值对，如key：mysql.username，value：具体mysql用户名，最后点击Save保存
 
+### 使用vault-ui
+
+vault本身的UI界面是限制了创建新Token的功能的，要通过安装vault-ui软件来操作或者通过进入容器使用命令行创建
+
+除了创建创建新Token的功能外，个人感觉其它功能还是官方的UI好用
+
+vault-ui还有appimage版本的包，这里介绍docker版本的使用
+
+```sh
+docker pull djenriquez/vault-ui:2.3.0
+```
+
+- compose
+
+```yaml
+services: 
+    vaultUi:
+        image: djenriquez/vault-ui:2.3.0
+        container_name: vaultUi
+        ports:
+            - "8000:8000"
+        environment:
+            # CUSTOM_CA_CERT: /path/to/vaultPublicKey.pem
+            # 如果vault配置了https，需要设置这个环境变量来禁用TLS server side校验，上面的方法也可以，但是没试过，二选一就行了
+            NODE_TLS_REJECT_UNAUTHORIZED: 0
+```
+
+- 访问：<http://yourip:8000/>
+
 ### Spring Cloud 集成Vault
 
 - 依赖
@@ -13560,6 +13589,27 @@ public class ApplicationController {
     }
 }
 ```
+
+### 设置访问策略
+
+- 点击导航栏Policies
+- 点击Create ACL Policies
+- 填写策略
+
+```conf
+# 假设只让这个Token增删改secret/myapp下的键值对
+# 创建secret engine的时候点击Methods Options可以看到KV版本默认是2
+# KV版本是2的引擎读取数据时，路径中需要加上/data/，这个可以在secret engine如secret/app的Overview的API
+# 这样写Spring Boot仍然会去默认路径secret/application下找键值对，因为没有权限而报错，但是不影响运行
+# 如果觉得别扭可以设置为"secret/*"或"secret/data/*"就不会报错了，但是这样设置使用这个策略的token的权限就更大了，具体情况具体分析吧
+path "secret/data/myapp" {
+    capabilities = [ "create", "read", "update", "list" ]
+}
+```
+
+- 点击Create policy
+
+- 创建新Token，将创建的访问策略添加进去就可以了
 
 ## Spring Cloud Alibaba
 
