@@ -11487,6 +11487,21 @@ java -jar [选项] [参数] <jar文件名>
     - 设置最大堆内存：`-Xmx1024m`
     - 设置最小堆内存：`-Xms512m`
 
+### Spring Boot项目安装ssl证书，用https访问
+
+```yaml
+server:
+    port: 8443
+    ssl:
+        enabled: true
+        # 记得将keystore文件复制到resources目录下
+        key-store: classpath:yourKeystore.p12
+        key-store-password: changeit
+        key-store-type: PKCS12
+        # keystore文件只包含一个证书的时候可以不用写别名
+        key-alias: yourKeystoreAlias
+```
+
 ## Spring Security
 
 Spring Security提供3大功能：认证、授权和防御常见攻击
