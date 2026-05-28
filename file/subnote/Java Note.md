@@ -13748,6 +13748,48 @@ storage "raft" {
 }
 ```
 
+### 数据快照
+
+Integrated Storage提供了一个创建数据快照的接口
+
+这些快照如果后期有需要可以用于数据恢复
+
+社区版是没有自动快照功能的，可以通过定时任务来定时创建快照
+
+回到VAULT_ADDR设置为vault_2的地址(<http://127.0.0.2:8200)的终端>
+
+```sh
+# 对当前数据创建快照
+# 在当前目录下会创建一个demo.snapshot文件
+vault operator raft snapshot save demo.snapshot
+```
+
+- 模拟数据丢失
+
+```sh
+# 确认kv/apikey有数据
+vault kv get kv/apikey
+
+# 删除kv/apikey的数据
+vault kv metadata delete kv/apikey
+
+# 确认kv/apikey的数据已删除
+vault kv get kv/apikey
+```
+
+- 从快照恢复数据
+
+```sh
+# 通过恢复demo.snapshot中找到的数据来恢复数据
+vault operator raft snapshot restore demo.snapshot
+
+# 查看当前集群节点（vault_2）的末尾的几行日志
+grep -B3 'snapshot installed' vault_2.log
+
+# 确认数据已恢复
+vault kv get kv/apikey
+```
+
 ## Spring Cloud Alibaba
 
 - maven dependency
