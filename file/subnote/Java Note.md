@@ -13790,6 +13790,113 @@ grep -B3 'snapshot installed' vault_2.log
 vault kv get kv/apikey
 ```
 
+### leader退役（变成follower，其它节点变成leader）
+
+```sh
+# 在VAULT_ADDR为http://127.0.0.2:8200（vault_2)的终端执行
+vault operator step-down
+
+# 然后在VAULT_ADDR为http://127.0.0.3:8200（vault_3)的终端执行
+# 可以看到vault_2变成follower，vault_3晋升变成leader了
+vault operator raft list-peers
+```
+
+### 移除集群成员
+
+为了维护、升级或保存计算资源，从集群中删除节点可能变得很重要
+
+```sh
+# 从集群中移除vault_4节点
+vault operator raft remove-peer vault_4
+
+# 在其它节点执行，确认vault_4已经从集群中移除
+vault operator raft list-peers
+```
+
+### 将vault_4重新添加回集群
+
+```sh
+# 在VAULT_ADDR为http://127.0.0.4:8200（vault_4)的终端执行
+./cluster.sh stop vault_4
+
+# 删除vault_4的数据目录
+rm -rf raft-vault_4
+
+# 重新创建vault_4的数据目录raft-vault_4
+# 因为raft的存储目录在启动vault服务前必须已经存在
+mkdir raft-vault_4
+
+# 启动vault_4
+./cluster.sh start vault_4
+
+# 确认节点已经添加到集群
+vault operator raft list-peers
+```
+
+### 恢复模式
+
+如果由于存储中的条目损坏而导致Vault服务宕机，操作员可能需要在恢复模式下启动Vault
+
+在恢复模式下，Vault以最小的功能运行，并暴露其子集API
+
+```sh
+# 停止集群中的所有存活的节点
+./cluster.sh stop vault_2
+./cluster.sh stop vault_4
+./cluster.sh stop vault_3
+
+# 以恢复模式启动vault_3
+VAULT_TOKEN=$(cat root_token-vault_1) VAULT_ADDR=http://127.0.0.3:8200 \
+            vault server -recovery -config=config-vault_3.hcl
+
+# 打开一个新终端并进入指定目录
+cd $HOME/vault-tutorial/learn-vault-raft/raft-storage/local
+
+# 配置当前shell的环境变量VAULT_ADDR
+export VAULT_ADDR="http://127.0.0.3:8200"
+
+# 生成一个一次性密码(OTP)
+vault operator generate-root -generate-otp -recovery-token
+
+# 使用上一步得到的一次性密码生成恢复令牌(recovery token)
+vault operator generate-root -init \
+    -otp=UPeg0ZMO6F16wawH7XFX9jX2jTud -recovery-token
+
+# 查看在安装vault_3期间生成的recovery key（恢复密钥）
+# 使用恢复密钥而不是解封密钥，因为此集群配置了传输自动解封（集群默认Transit auto-unseal）
+cat recovery_key-vault_2
+
+# 创建一个编码令牌（encoded token），根据交互填入上一步得到的恢复密钥
+vault operator generate-root -recovery-token
+
+# 最后使用编码令牌和一次性密码完成恢复令牌的创建
+# 比如得到恢复令牌：hvr.oK3gSD81MPQs8o3mzbQgpDEy
+vault operator generate-root \
+  -decode=PSYXSV8RfihlAgYPOjEmOw53dTVDCAlVGhAwHQ \
+  -otp=UPeg0ZMO6F16wawH7XFX7jX2jTud \
+  -recovery-token
+
+# 在恢复模式，只能跟原始系统存储进行交互
+# 使用恢复令牌解决问题吧
+# 例子：列出sys/raw/sys的内容
+VAULT_TOKEN=hvr.oK3gSD81MPQs8o3mzbQgpDEy vault list sys/raw/sys
+
+# 解决问题后，继续常规操作
+# 在运行恢复模式的终端按Ctrl+C停止恢复模式
+# 重新启动所有vault节点
+# 因为在恢复模式下启动节点时，它会重置集群成员列表
+# 这意味着在恢复常规操作时，每个节点都需要重新加入集群
+# 笔者在操作的时候发现vault_2死活加入不了vault_3，不知道出了什么问题
+./cluster.sh start vault_3
+./cluster.sh start vault_2
+```
+
+### 清理cluster.sh生成的数据
+
+```sh
+./cluster.sh clean
+```
+
 ## Spring Cloud Alibaba
 
 - maven dependency
