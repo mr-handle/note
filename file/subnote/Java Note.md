@@ -13613,6 +13613,141 @@ path "secret/data/myapp" {
 
 - 创建新Token，将创建的访问策略添加进去就可以了
 
+### Vault集群
+
+教程官网：<https://developer.hashicorp.com/vault/tutorials/raft/raft-storage>
+
+以下教程需要先系统上安装vault，去官网下载压缩包，解压后将vault文件放到/usr/local/bin目录下就可以了
+
+vault集群的配置需要用到cluster.sh脚本，在<https://github.com/hashicorp-education/learn-vault-raft>可以下载，后面会有具体的教程
+
+cluster.sh脚本会配置和启动4个vault服务，如结构下图
+
+![vaultCluster](/images/vaultCluster.png)
+
+脚本初始化并解封vault_1 (<http://127.0.0.1:8200>)，它不加入集群，其root token创建一个自动解封其它vault服务的传输key
+
+脚本初始化并解封vault_2 (<http://127.0.0.2:8200>)，启动后作为集群leader，脚本启用K/V-V2加密引擎作为一个例子
+
+脚本启动vault_3 (<http://127.0.0.3:8200>)，但是需要手动加入集群
+
+脚本启动vault_4 (<http://127.0.0.4:8200>)，但是需要手动加入集群
+
+```sh
+# 1.创建并进入目录$HOME/vault-tutorial
+mkdir $HOME/vault-tutorial && cd $HOME/vault-tutorial
+
+# 2.复制git项目
+git clone https://github.com/hashicorp-education/learn-vault-raft
+
+# 3.进入项目根目录
+cd learn-vault-raft/raft-storage/local
+
+# 4.给脚本添加执行权限，笔者下载下来检查发现已经是有执行权限了
+chmod +x cluster.sh
+
+# 5.为每个vault创建本地回环地址
+# loop back：在计算机里，它指的是数据包发出去后，不会经过物理网卡，而是直接在系统内部“绕一圈”又回到自己这里
+./cluster.sh create network
+
+# 6.为每个vault创建配置文件
+./cluster.sh create config
+
+# 7.检查当前shell是否存在环境变量，如果已存在则必须执行unset VAULT_TOKEN，才能继续后续步骤
+printenv | grep VAULT_TOKEN
+
+# 安装vault_1
+# 如果包jq找不到则安装：sudo apt-get install jq
+# 然后sudo ./cluster.sh clean，回到第5步重新开始
+./cluster.sh setup vault_1
+
+# 安装vault_2
+./cluster.sh setup vault_2
+
+# 安装vault_3
+./cluster.sh setup vault_3
+
+# 可以看到集群中只有一个leader节点vault_2
+export VAULT_ADDR="http://127.0.0.2:8200"
+vault operator raft list-peers
+
+# 打开一个新终端并进入指定目录
+cd $HOME/vault-tutorial/learn-vault-raft/raft-storage/local
+
+# vault_3加入集群
+export VAULT_ADDR="http://127.0.0.3:8200"
+vault operator raft join http://127.0.0.2:8200
+
+# 配置vault CLI的请求使用vault_2的root token
+export VAULT_TOKEN=$(cat root_token-vault_2)
+
+# 可以看到vault_3作为follower出现在集群节点里面
+vault operator raft list-peers
+
+# 查看vault_3日志
+cat vault_3.log
+
+# 最后确认可以读取kv/apikey路径的kv
+vault kv get kv/apikey
+```
+
+接下来，可以像vault_3的步骤一样将vault_4加入集群
+
+但是，如果所有节点的连接明细是事先已经确认的话，可以在配置文件中配置retry_join块来自动加入集群
+
+修改config-vault_4.hcl配置文件，在storage块里面加入retry_join
+
+```conf
+storage "raft" {
+    path    = "<path_to_local>/raft-vault_4/"
+    node_id = "vault_4"
+    # 因为vault_2和vault_3的地址是已知的
+    # 可以在retry_join块里面预定义可能为集群leader的节点地址
+    retry_join {
+        leader_api_addr = "http://127.0.0.2:8200"
+    }
+    retry_join {
+        leader_api_addr = "http://127.0.0.3:8200"
+    }
+}
+```
+
+- 启动vault_4
+
+```sh
+# 启动vault_4
+./cluster.sh start vault_4
+
+# 打开一个新终端并进入指定目录
+cd $HOME/vault-tutorial/learn-vault-raft/raft-storage/local
+
+# 配置当前shell的环境变量VAULT_ADDR
+export VAULT_ADDR="http://127.0.0.4:8200"
+
+# 可以看到vault_4作为follower出现在集群节点里面
+vault operator raft list-peers
+
+# 配置vault CLI的请求使用vault_2的root token
+export VAULT_TOKEN=$(cat root_token-vault_2)
+
+# patch路径kv/apikey的键，设置有效期365天
+vault kv patch kv/apikey expiration="365 days"
+
+# 回到vault_3的终端，执行如下命令，可以看到多了expiration的信息
+vault kv get kv/apikey
+```
+
+- vault配置文件的部分说明
+
+```conf
+# raft表示使用Integrated Storage
+storage "raft" {
+    # Vault数据存储的地方
+    path    = "/path/to/raft-vault_2/"
+    node_id = "vault_2"
+}
+```
+
 ## Spring Cloud Alibaba
 
 - maven dependency
