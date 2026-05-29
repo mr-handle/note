@@ -13419,13 +13419,15 @@ public class GatewayConfiguration {
 
 vault官网：<https://github.com/hashicorp/vault>
 
+vault支持hcl和json两种格式的配置文件
+
 ### 使用docker版本vault
 
 ```sh
 docker pull hashicorp/vault:1.19.2
 ```
 
-- compose.yaml
+- 使用json格式配置的compose.yaml
 
 ```yaml
 services: 
@@ -13469,6 +13471,54 @@ volumes:
         name: vaultData
 ```
 
+- 或者是使用json配置文件的compose.yaml
+
+```yaml
+services: 
+    vault:
+        image: hashicorp/vault:1.19.2
+        container_name: vault
+        command: server -config=/vault/config.d/vault.json
+        ports:
+            - "8200:8200"
+        cap_add:
+            - IPC_LOCK
+        environment:
+        volumes:
+            - vaultData:/vault/file
+            # 这里使用目录映射，记得将vaultPublicKey.pem、vaultPrivateKey.pem和vault.json文件复制到/path/to/data/vault/config
+            - /path/to/data/vault/config:/vault/config.d
+volumes: 
+    vaultData:
+        name: vaultData
+```
+
+- vault.json
+
+```json
+{                                
+    "storage": { 
+        "file": {                
+            "path": "/vault/file"
+        }           
+    },                                    
+    "listener": [                         
+        {                                                        
+            "tcp": {                                             
+                "address": "0.0.0.0:8200",                      
+                "tls_disable": false,                            
+                "tls_cert_file": "/vault/config.d/publicKey.pem",
+                "tls_key_file": "/vault/config.d/privateKey.pem"
+                                
+            }                   
+        }                   
+    ],
+    "default_lease_ttl": "168h",
+    "max_lease_ttl": "720h",
+    "ui": true
+}
+```
+
 - 访问：<http://10.0.2.15:8200>
     - Key shares设置为1
     - Key threshold设置为1
@@ -13484,6 +13534,20 @@ volumes:
     - 点击Enable Engine，启用这个KV加密引擎
     - 点击"Create secret +"，"Path for this secret"填个应用名称就行
     - Secret data中填写要添加的键值对，如key：mysql.username，value：具体mysql用户名，最后点击Save保存
+
+- 如果是进入容器终端环境执行命令
+
+```sh
+# 这里的容器shell是/bin/sh或sh，不能是/bin/bash和bash
+docker exec -it yourVaultName sh
+
+export VAULT_ADDR=https://127.0.0.1:8200
+
+# 如果提示证书验证失败可以这样
+export VAULT_SKIP_VERIFY=true
+
+# 然后就可以输入操作命令了
+```
 
 ### 使用vault-ui
 
@@ -13895,6 +13959,44 @@ VAULT_TOKEN=hvr.oK3gSD81MPQs8o3mzbQgpDEy vault list sys/raw/sys
 
 ```sh
 ./cluster.sh clean
+```
+
+### 不用脚本，手动搭建vault集群
+
+启动vault_node_1后，这里为了简便，用浏览器访问https:vault_node_1_ip:8200，选择"Create a new Raft cluster"
+
+Vault 在初始化时会生成一把能解开所有数据的“总钥匙”（根密钥），但它不会直接把这把钥匙交给你，而是把它拆分成若干份碎片。
+
+Key shares（密钥份额/总份数）：代表 Vault 会把这把“总钥匙”拆分成多少份碎片（Unseal Keys）。
+
+Key threshold（密钥阈值/所需份数）：代表在 Vault 重启或解封时，至少需要凑齐多少份碎片，才能把“总钥匙”重新拼凑出来，从而解开 Vault。
+
+这里都填1就行了，生产环境可以设置根据情况设置，如（Key shares：5，Key threshold：3）
+
+下一步把钥匙下载下来，然后点击继续解封，解封后就可以进入ui了
+
+```sh
+vault operator raft list-peers
+
+# 如果报下面的错
+# Error reading the raft cluster configuration: Error making API request.
+# URL: GET https://127.0.0.1:8200/v1/sys/storage/raft/configuration
+# Code: 403. Errors:
+# * 2 errors occurred:
+#        * permission denied
+#        * invalid token
+# 先用跟令牌登录
+vault login
+```
+
+启动vault_node_2后，这里为了简便，用浏览器访问https:vault_node_2_ip:8200，选择"Join an existing Raft cluster"
+
+```sh
+export VAULT_ADDR=https://127.0.0.1:8200
+
+# 如果提示证书验证失败可以这样
+# tls: failed to verify certificate: x509: cannot validate certificate for 127.0.0.1 because it doesn't contain any IP SANs
+export VAULT_SKIP_VERIFY=true
 ```
 
 ## Spring Cloud Alibaba
@@ -15632,10 +15734,14 @@ docker volume inspect 卷名
 - 使用经验：对于容器数据用命名卷，对于经常改动的比如配置文件，用目录映射更好
 
 ```sh
-# 目录映射（绑定挂载），可以自定义位置，但是必须先在主机上创建目录，对于配置文件要提前复制一份到主机目录
+# 目录映射（绑定挂载），可以自定义位置，但是必须先在主机上创建目录/文件
+# 举个例子：映射的主机上目录是空的，容器里的目录非空，这种情况下，在主机上的该目录是看不到容器里面的内容的（被隐藏了）
+# 因此，对于配置文件要提前复制一份到主机目录
+# 一般情况下，比如说容器目录有config，里面有默认的配置文件了，如果想自定义配置，那么应该映射到容器的一个空目录中，比如config.d，d表示Dynamic
+# 这样就不会顶掉容器中原有目录下的文件
 -v /data/docker/registry:/tmp/registry
 
-# 卷映射（命名卷），卷名前面不带/，卷映射对于配置文件不用提前复制一份到主机目录
+# 卷映射（命名卷），卷名前面不带/，卷映射不需要先在主机上创建目录/文件，比如对于配置文件不用提前复制一份到主机目录，但是配置文件一般不用卷映射
 -v ngconf:/etc/nginx
 ```
 
