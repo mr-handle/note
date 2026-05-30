@@ -3967,7 +3967,7 @@ lspci -vnnd ::03xx
 
 # 然后根据显卡的家族，到教程官网查看表格，选择对应的驱动包进行安装
 # 为了支持32位应用，先开启multilib
-# mesa和lib32-mesa提供DRI驱动（应该就是OpenGL）和VA-API/VDPAU驱动，分别用于3D加速和图像/视频解码加速
+# mesa和lib32-mesa提供DRI驱动（应该就是OpenGL）和VA-API/VDPAU驱动，分别用于3D加速和图像/视频编解码加速
 # 这两个包一般内核自带了，安装时可以先确认是否已经存在，不存在再安装
 # 硬件特定的 Device Dependent X (DDX) 驱动已经过时
 # xorg-server中有更通用modesetting DDX 驱动，它使用kernel mode setting并能在现代硬件上运行很好 
@@ -3975,6 +3975,17 @@ lspci -vnnd ::03xx
 # 因此很多情况下（比如说在安装了xorg环境或Wayland环境的时候）是不用安装DDX驱动的，也就是不用安装xf86-video-amdgpu 
 # 通常必须安装的只有vulkan-radeon和lib32-vulkan-radeon，它们提供vulkan支持
 sudo pacman -S [mesa lib32-mesa] [xf86-video-amdgpu] vulkan-radeon  lib32-vulkan-radeon 
+
+# mesa和lib32-mesa提供的是开源的VA-API用于视频编解码加速
+# 如果想要使用AMD闭源的AMF用于视频编解码加速，需要另外安装
+# 否则执行：ffmpeg -i input.mp4 -c:a copy -c:v av1_amf -quality balanced -b:v 6500k  output.mp4
+# 会报DLL libamfrt64.so.1 failed to open
+# [av1_amf @ 0x55d384932e80] Failed to create  hardware device context (AMF) : Unknown error occurred
+# 使用ffmpeg，同参数下，如
+# ffmpeg -vaapi_device /dev/dri/renderD128 -i input.mp4 -vf 'format=nv12,hwupload' -c:a copy -c:v av1_vaapi -b:v 6500k output.mp4
+# ffmpeg -i input.mp4 -c:a copy -c:v av1_amf -quality balanced -b:v 6500k output.mp4
+# 虽然VA-API的命令更长，但是VA-API比AMF输出视频的速度更快，视频文件更小
+yay -S amf-amdgpu-pro
 ```
 
 ###### 安装ROCm（可选）
