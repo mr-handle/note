@@ -16,6 +16,27 @@
 
 ## ffmpeg
 
+- 关于容器
+    - 容器只是一个“文件封装格式”，规定视频、音频、字幕、元数据如何组织在一个文件里，容器只是提供一个放数据的“槽位”
+    - mp4， 是ISO/IEC (国际标准组织)制定的标准容器，容器规范本身是开放标准，不收专利费
+        - 对最新高分辨率特性支持有限，文件更小，更通用
+    - mkv， Matroska ，是社区驱动的开源容器，BSD 风格许可，容器本身没有任何专利或版权限制
+        - 支持 4K、HDR、多音轨、多字幕、章节标记，文件通常更大，更适合专业场景
+    - 主流的视频编码算法几乎都能同时封装到MP4和MKV容器里
+    - 同参数只是容器不同生成的视频文件大小基本一样，生成时间也是一样的
+    - 个人感觉mp4更商业化，mkv更加开源友好
+- 开源、免版税、可商用的视频编解码
+    - 优先AV1（前身VP9），以下的了解一下就好了，26年3月杜比告了snapchat关于AV1侵犯其专利，目前还没有结果，先插眼
+    - 现已推出AV2但是还没那么快普及，并且AV2需要的算力更加多
+    - VP8（对标H.264）商用最安全，涉及的专利问题Google已与MPEG LA 和解，VP8 已经免版税，如果杜比胜了就看情况用VP8吧哈哈
+    - VP9（对标H.265）曾被 Sisvel 专利池挑战，但不了了之，因此商用风险低一些
+
+- 开源、免版税、可商用的音频编解码
+    - 独立保存的音频优先flac，然后ALAC（苹果开源的），它们都是无损压缩的
+    - 视频里面的音频编解码优先Opus，然后Vorbis（ogg，兼容旧生态，了解一下就行），它们都是有损压缩
+
+- 综上就是视频文件用AV1和Opus，生成mkv格式就行了
+
 - av1编码器
     - cpu编码器
         - libsvtav1，兼顾速度与画质，最推荐
@@ -23,31 +44,34 @@
         - libaom-av1，最慢，但画质最好
     - 显卡编码器
         - av1_amf，amd显卡编码器
+- opus编码器
+    - libopus（调用opus官方库）
+    - opus，ffmpeg内置的简化实现，主要用于解码，编码质量和灵活性不如 libopus，不推荐用于编码
 
 ```sh
 # 查看视频文件的信息，包括音频和视频信息，码率、帧数等
-ffprobe -i input.mp4
+ffprobe -i input.mkv
 
 # -vaapi_device /dev/dri/renderD128，告诉 FFmpeg 用哪个 GPU 渲染节点，AMD固定这个写法
 
 # -vf/-filter:v，Video Filter（视频滤镜），告诉FFmpeg需要对输入的视频画面进行一系列的处理或特效加工（比如缩放、格式转换、上传到显卡等）
-# -vf 'format=nv12,hwupload'，先把画面转成显卡能听懂的nv12格式，再把它送进显卡的显存里准备开工
+# -vf 'format=nv12,hwupload'，先把画面转成显卡能听懂的nv12格式，再把它送进显卡的显存里准备开工，这里也是固定写法
 # format=nv12，把视频画面的像素格式统一转换成nv12格式，VAAPI 编码器只接受NV12/P010格式，必须先转成 NV12再上传到GPU
 # hwupload：把处理好的画面从系统内存（CPU）搬运到显存（GPU）里，交给显卡去编码
 
 # -c/-codec，指定编解码器codec（coder/decoder），位于输入文件前表示解码器，位于输出文件前表示编码器，紧接着的:a或:v，指定音频流或视频流
-# -c:a copy，直接复制原视频的音频流
+# -c:a libopus，用libopus编码音频，也可以指定为copy，直接复制原视频的音频流
 # -c:v av1_vaapi，使用av1_vaapi编码器（amd显卡）来编码视频流
 
 # -b:v 6500k，指定输出视频码率，单位是k（bps）
 # 在保持相同画质的前提下根据原视频编码、原视频的码率和输出视频编码计算出一个值
 # 比如原视频是H.264编码的，输出视频用AV1编码，那么用原视频的码率*(50%-70%，干脆折中取60%)作为目标码率
-ffmpeg -vaapi_device /dev/dri/renderD128 -i input.mp4 -vf 'format=nv12,hwupload' -c:a copy -c:v av1_vaapi -b:v 6500k output.mp4
+ffmpeg -vaapi_device /dev/dri/renderD128 -i input.mp4 -vf 'format=nv12,hwupload' -c:a libopus -c:v av1_vaapi -b:v 6500k output.mkv
 
 # -c:v av1_amf，使用av1_amf编码器（amd显卡）来编码视频流
 # -quality，指定编码的质量/速度，取值有speed，balanced，quality，high_quality，编码的速度由快到慢，但是同码率下画质由低到高
 # 它是av1_amf的私有选项，可以这样查看av1_amf的私有选项：ffmpeg -h encoder=av1_amf
-ffmpeg -i input.mp4 -c:a copy -c:v av1_amf -quality balanced -b:v 6500k output.mp4
+ffmpeg -i input.mp4 -c:a libopus -c:v av1_amf -quality balanced -b:v 6500k output.mkv
 ```
 
 ## Markdown语法
