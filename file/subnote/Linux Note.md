@@ -3975,8 +3975,15 @@ lspci -vnnd ::03xx
 # 因此很多情况下（比如说在安装了xorg环境或Wayland环境的时候）是不用安装DDX驱动的，也就是不用安装xf86-video-amdgpu 
 # 通常必须安装的只有vulkan-radeon和lib32-vulkan-radeon，它们提供vulkan支持
 sudo pacman -S [mesa lib32-mesa] [xf86-video-amdgpu] vulkan-radeon  lib32-vulkan-radeon 
+```
 
-# mesa和lib32-mesa提供的是开源的VA-API用于视频编解码加速
+###### 安装视频加速（Video acceleration），可选
+
+mesa和lib32-mesa提供的是开源的VA-API用于视频编解码加速
+
+此外还可以安装AMD闭源的AMF用于视频编解码加速，只需要安装amf-amdgpu-pro包就行了
+
+```sh
 # 如果想要使用AMD闭源的AMF用于视频编解码加速，需要另外安装
 # 否则执行：ffmpeg -i input.mp4 -c:a copy -c:v av1_amf -quality balanced -b:v 6500k  output.mp4
 # 会报DLL libamfrt64.so.1 failed to open
@@ -3986,6 +3993,18 @@ sudo pacman -S [mesa lib32-mesa] [xf86-video-amdgpu] vulkan-radeon  lib32-vulkan
 # ffmpeg -i input.mp4 -c:a copy -c:v av1_amf -quality balanced -b:v 6500k output.mp4
 # 虽然VA-API的命令更长，但是VA-API比AMF输出视频的速度更快，视频文件更小
 yay -S amf-amdgpu-pro
+
+# libva-utils包的vainfo命令可以查看VA-API信息，如下面的AV1格式的信息
+# VAProfileAV1Profile0            : VAEntrypointVLD
+# VAProfileAV1Profile0            : VAEntrypointEncSlice
+# VAEntrypointVLD 意味着显卡支持该格式的解码
+# VAEntrypointEncSlice 意味着显卡支持该格式的编码 
+sudo pacman -S libva-utils
+
+# 安装vulkan-tools（kinfocenter和lact包都依赖它），
+# 用"vulkaninfo | grep VK_KHR_video_"命令确认视频处理扩展可用，如
+# VK_KHR_video_decode_av1                       : extension revision 1
+sudo pacman -S vulkan-tools
 ```
 
 ###### 安装ROCm（可选）

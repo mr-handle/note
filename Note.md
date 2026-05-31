@@ -24,7 +24,7 @@
         - 支持 4K、HDR、多音轨、多字幕、章节标记，比mp4更多的编码器支持，更适合专业场景
     - 主流的视频编码算法几乎都能同时封装到MP4和MKV容器里
     - 同参数只是容器不同生成的视频文件大小基本一样，生成时间也是一样的
-    - 个人感觉mp4更商业化，mkv更加开源友好
+    - 个人感觉mp4更商业化，mkv更加开源友好，但是mkv用ffprobe命令看不到音频的平均码率，而mp4可以，因此还是更建议用mp4
 - 开源、免版税、可商用的视频编解码
     - 优先AV1（前身VP9），以下的了解一下就好了，26年3月杜比告了snapchat关于AV1侵犯其专利，目前还没有结果，先插眼
     - 现已推出AV2但是还没那么快普及，并且AV2需要的算力更加多
@@ -39,8 +39,6 @@
     - 独立保存的音频优先flac，然后ALAC（苹果开源的），它们都是无损压缩的
     - 视频里面的音频编解码优先Opus，然后Vorbis（ogg，兼容旧生态，了解一下就行），它们都是有损压缩
 
-- 综上就是视频文件用AV1和Opus，生成mkv格式就行了
-
 - av1编码器
     - cpu编码器
         - libsvtav1，兼顾速度与画质，最推荐
@@ -51,10 +49,13 @@
 - opus编码器
     - libopus（调用opus官方库）
     - opus，ffmpeg内置的简化实现，主要用于解码，编码质量和灵活性不如 libopus，不推荐用于编码
+    - Opus 的比特率通常是AAC的60%~75%左右，128kbps的Opus≈192kbps的AAC（甚至接近 256 kbps），但是为了opus和aac互转的兼容性，统一设置为192k吧
+
+- 综上就是视频文件用AV1和Opus，生成mp4格式就行了
 
 ```sh
 # 查看视频文件的信息，包括音频和视频信息，码率、帧数等
-ffprobe -i input.mkv
+ffprobe -i input.mp4
 
 # -vaapi_device /dev/dri/renderD128，告诉 FFmpeg 用哪个 GPU 渲染节点，AMD固定这个写法
 
@@ -67,15 +68,22 @@ ffprobe -i input.mkv
 # -c:a libopus，用libopus编码音频，也可以指定为copy，直接复制原视频的音频流
 # -c:v av1_vaapi，使用av1_vaapi编码器（amd显卡）来编码视频流
 
-# -b:v 6500k，指定输出视频码率，单位是k（bps）
+# -b，指定比特率（码率），单位是k（bps）
+# -b:a 192k，指定输出音频的比特率.
+# -b:v 6500k，指定输出视频比特率
 # 在保持相同画质的前提下根据原视频编码、原视频的码率和输出视频编码计算出一个值
 # 比如原视频是H.264编码的，输出视频用AV1编码，那么用原视频的码率*(50%-70%，干脆折中取60%)作为目标码率
-ffmpeg -vaapi_device /dev/dri/renderD128 -i input.mp4 -vf 'format=nv12,hwupload' -c:a libopus -c:v av1_vaapi -b:v 6500k output.mkv
+ffmpeg -vaapi_device /dev/dri/renderD128 \
+    -i input.mp4 \
+    -vf 'format=nv12,hwupload' \
+    -c:a libopus -b:a 192k \
+    -c:v av1_vaapi -b:v 6500k \
+    output.mp4
 
 # -c:v av1_amf，使用av1_amf编码器（amd显卡）来编码视频流
 # -quality，指定编码的质量/速度，取值有speed，balanced，quality，high_quality，编码的速度由快到慢，但是同码率下画质由低到高
 # 它是av1_amf的私有选项，可以这样查看av1_amf的私有选项：ffmpeg -h encoder=av1_amf
-ffmpeg -i input.mp4 -c:a libopus -c:v av1_amf -quality balanced -b:v 6500k output.mkv
+ffmpeg -i input.mp4 -c:a libopus -b:a 192k -c:v av1_amf -quality balanced -b:v 6500k output.mp4
 
 # vp8不支持rx9000系列显卡加速，并且不支持mp4格式，同画质下，码率要是h264的1.1~1.3倍，文件更大了
 ffmpeg -i input.mp4 -c:a copy -c:v libvpx -b:v 10783k output_vp8acc.mkv
@@ -86,14 +94,11 @@ ffmpeg -i input.mp4 -c:a copy -c:v libvpx-vp9 -b:v 6500k output_vp9acc.mp4
 
 ## 关于声音的知识
 
-- 人耳能感知的频率范围是 20Hz到20kHz
-
-- 奈奎斯特采样定理：要完整还原最高频率为 f 的信号，采样率必须 ≥ 2f
-    - 人耳最高能听到约 20 kHz → 理论上采样率至少要 40 kHz
-    - 但是实际工程中不会选刚好 40 kHz，因为需要留出 滤波余量，避免高频 aliasing（混叠失真）
-
 - 采样率 (Sample Rate)：每秒采多少次音频波形点，单位 Hz。比如 48,000 Hz 就是每秒采 48,000 个点
-    - 常见采样率（44.1kHz、48kHz、96kHz）
+    - 奈奎斯特采样定理：要完整还原最高频率为 f 的信号，采样率必须 ≥ 2f
+    - 人耳能感知的频率范围是 20Hz到20kHz → 理论上采样率至少要 40 kHz
+    - 但是实际工程中不会选刚好 40 kHz，因为需要留出 滤波余量，避免高频 aliasing（混叠失真）
+    - 常见采样率
         - CD 音频：44.1kHz
             - 因为早期数字录音机用视频磁带存储音频，和 NTSC/PAL 视频行频率匹配后得到的最合适采样率就是 44.1 kHz
             - 比 40 kHz 多出 4.1 kHz 的余量，方便滤波器在 20 kHz 附近逐渐衰减，避免混叠
@@ -104,7 +109,7 @@ ffmpeg -i input.mp4 -c:a copy -c:v libvpx-vp9 -b:v 6500k output_vp9acc.mp4
         - 专业录音：96kHz/192 kHz
             - 主要用于专业录音和后期制作，日常录屏和直播没有必要，反而增加 CPU/GPU 压力和文件大小
 
-- 位深（Bit Depth）其实就是 每个采样点用多少位来表示振幅大小，它决定了音频的 动态范围 和 精度
+- 位深（Bit Depth）：每个采样点用多少位来表示振幅大小，它决定了音频的动态范围和精度
     - 常见位深：16bit、24bit，常见最高是 24 位，因为它已经超过人耳可感知的动态范围
         - CD 音频：16bit
         - 专业录音：24bit
