@@ -58,6 +58,7 @@
 ffprobe -i input.mp4
 
 # -vaapi_device /dev/dri/renderD128，告诉 FFmpeg 用哪个 GPU 渲染节点，AMD固定这个写法
+# 等价于：-init_hw_device vaapi=vaapi0:/dev/dri/renderD128 -filter_hw_device vaapi0
 
 # -vf/-filter:v，Video Filter（视频滤镜），告诉FFmpeg需要对输入的视频画面进行一系列的处理或特效加工（比如缩放、格式转换、上传到显卡等）
 # -vf 'format=nv12,hwupload'，先把画面转成显卡能听懂的nv12格式，再把它送进显卡的显存里准备开工，这里也是固定写法
