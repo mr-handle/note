@@ -73,9 +73,35 @@ ffprobe -i input.mp4
 # -b:v 6500k，指定输出视频比特率
 # 在保持相同画质的前提下根据原视频编码、原视频的码率和输出视频编码计算出一个值
 # 比如原视频是H.264编码的，输出视频用AV1编码，那么用原视频的码率*(50%-70%，干脆折中取60%)作为目标码率
+# 方式一：使用默认的解码器（cpu）解码原文件，然后上传帧给gpu，按指定编码器编码为输出文件
+# 笔者的rx9070的测试结果是最适合用这个方式
 ffmpeg -vaapi_device /dev/dri/renderD128 \
     -i input.mp4 \
     -vf 'format=nv12,hwupload' \
+    -c:a libopus -b:a 192k \
+    -c:v av1_vaapi -b:v 6500k \
+    output.mp4
+
+# 方式二：如果已知原文件可以用gpu解码，编解码都用gpu（一条龙）
+# -hwaccel vaapi，指定硬件解码器加速方式用vaapi，这样输入视频流会尽量用GPU的VAAPI 解码器来处理，而不是用CPU的软件解码器
+# -hwaccel_output_format vaapi，指定硬件解码器的输出格式为 VAAPI surface（即 GPU 内存中的帧）
+# 这样解码出来的帧不会先落到系统内存，而是直接保存在 GPU 的 VAAPI surface 中，方便后续滤镜或编码器继续在 GPU 上处理
+# -hwaccel_device /dev/dri/renderD128，指定硬件加速解码时所使用的具体GPU设备节点
+# 笔者的rx9070的测试结果是花的时间比方式一更多
+ffmpeg -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device /dev/dri/renderD128 \
+    -i input.mp4 \
+    -c:a libopus -b:a 192k \
+    -c:v av1_vaapi -b:v 6500k \
+    output.mp4
+
+# 方式三：当原文件可能可以用gpu解码时
+# -init_hw_device vaapi=foo:/dev/dri/renderD128，必须紧跟着ffmpeg
+# 表示给硬件设备/dev/dri/renderD128（实际的 GPU 渲染节点文件）定义一个全局名称foo，之后可以用foo来引用它，而不用重复写路径
+# vaapi表示驱动类型，将vaapi驱动绑定到这个硬件设备
+# 笔者的rx9070的测试结果是花的时间比方式一更多，因为存在nv12|vaapi判断，花的时间比方式二还多
+ffmpeg -init_hw_device vaapi=foo:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device foo \
+    -i input.mp4 \
+    -filter_hw_device foo -vf 'format=nv12|vaapi,hwupload' \
     -c:a libopus -b:a 192k \
     -c:v av1_vaapi -b:v 6500k \
     output.mp4
@@ -110,9 +136,12 @@ ffmpeg -i input.mp4 -c:a copy -c:v libvpx-vp9 -b:v 6500k output_vp9acc.mp4
             - 主要用于专业录音和后期制作，日常录屏和直播没有必要，反而增加 CPU/GPU 压力和文件大小
 
 - 位深（Bit Depth）：每个采样点用多少位来表示振幅大小，它决定了音频的动态范围和精度
-    - 常见位深：16bit、24bit，常见最高是 24 位，因为它已经超过人耳可感知的动态范围
-        - CD 音频：16bit
-        - 专业录音：24bit
+    - 16位音频能提供约 96分贝（dB） 的动态范围，而 24位音频的理论动态范围高达 144分贝
+    - 人耳的听觉极限大约在 120分贝左右，而我们日常聆听音乐的房间（即使非常安静），其背景底噪通常也有 30到40分贝
+    - 这意味着，16位的动态范围已经完全覆盖并远远超出了我们在普通房间里能听到的声音跨度
+    - 24位多出来的那些极低噪音细节，早已被房间里的空调声、电脑风扇声等环境噪音彻底淹没了
+    - CD 音频：16bit，平时用16位就够了
+    - 专业录音：24bit
     - 位深越高，能表示的音量范围越大，采样点的数值越精细，声音细节更丰富，失真更小，量化噪声越低，安静部分更干净
 
 - 声道数（单声道、立体声）
