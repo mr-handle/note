@@ -5244,6 +5244,9 @@ mamba activate /home/handle/Applications/miniforge/envs/cosyvoice
 
 # 删除环境
 mamba env remove -p /home/handle/Applications/miniforge/envs/GPTSoVits
+
+# 清理所有未使用的包和缓存
+mamba clean -y --all
 ```
 
 ## NixOS

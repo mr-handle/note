@@ -3902,9 +3902,77 @@ jlink.exe --module-path jmods --add-modules java.base --output jre
 
 #### 生成可执行文件graalvm
 
-`关闭360`
+- 父pom
+
+```xml
+<properties>
+    <native.maven.plugin.version>1.1.1</native.maven.plugin.version>
+</properties>
+
+<build>
+    <pluginManagement>
+        <plugins>
+            <!--锁定插件版本和通用配置-->
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>${native.maven.plugin.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>build-native</id>
+                        <goals>
+                            <!--compile-no-fork目标在package阶段构建本机可执行文件，避免启动maven的第二个生命周期-->
+                            <goal>compile-no-fork</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+</build>
+<profiles>
+    <profile>
+        <id>native</id>
+        <build>
+            <plugins>
+                <!-- 在这里引用插件，子模块激活该 profile 时就会生效 -->
+                <plugin>
+                    <groupId>org.graalvm.buildtools</groupId>
+                    <artifactId>native-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+</profiles>
+```
+
+- 子pom
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+            <configuration>
+                <!--指定主类-->
+                <mainClass>com.handle.nativeImage.Application</mainClass>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+- 用native-image工具生成可执行文件
 
 ```sh
+# graalvm的bin目录下的native-image工具，依赖本地工具链：header files for the C library, glibc-devel, zlib, gcc, and/or libstdc++-static
+# archlinux直接安装base-devel就行了，笔者发现自己的电脑上已经有zlib了，不知道什么时候安装的
+sudo pacman -S base-devel [zlib]
+
+# 如果是windows系统要先关闭`360`
 mvn -Pnative native:compile
 
 # 如果报Execution of ..\jdk-xxx\bin\native-image.cmd @target\tmp\native-image-xxxxxxxxxx.args returned non-zero result
