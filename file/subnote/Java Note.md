@@ -3622,6 +3622,103 @@ public class LogHomeConfiguration extends PropertyDefinerBase {
 </configuration>
 ```
 
+### JavaFX
+
+- 父pom
+
+```xml
+<properties>
+    <!--java8之后用maven.compiler.release标签代替maven.compiler.source标签和maven.compiler.target标签-->
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+    <javafx.applicationName>app</javafx.applicationName>
+    <javafx.version>25.0.3</javafx.version>
+</properties>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<build>
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <!--java8之后用release标签代替source标签和target标签-->
+                    <release>25</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <executions>
+                    <execution>
+                        <!-- Default configuration for running with: mvn clean javafx:run -->
+                        <id>default-cli</id>
+                        <configuration>
+                            <launcher>${javafx.applicationName}</launcher>
+                            <jlinkZipName>${javafx.applicationName}</jlinkZipName>
+                            <jlinkImageName>${javafx.applicationName}</jlinkImageName>
+                            <noManPages>true</noManPages>
+                            <stripDebug>true</stripDebug>
+                            <noHeaderFiles>true</noHeaderFiles>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+</build>
+```
+
+- 子pom
+
+```xml
+<properties>
+    <javafx.applicationName>hellofx</javafx.applicationName>
+</properties>
+
+<dependencies>
+    <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-controls</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-fxml</artifactId>
+    </dependency>
+</dependencies>
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+        </plugin>
+        <plugin>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-maven-plugin</artifactId>
+        </plugin>
+    </plugins>
+</build>
+```
+
 ### GUI
 
 #### JFrame
@@ -3892,7 +3989,7 @@ public class Applistener implements ServletContextListener {
 cd 指定目录
 
 # 3.生成jre
-jlink.exe --module-path jmods --add-modules java.base --output jre
+jlink.exe --module-path jmods --add-modules java.xml --output jre
 ```
 
 #### 普通springboot发布
