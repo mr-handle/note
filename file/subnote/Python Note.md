@@ -193,6 +193,8 @@ outerList[0]
 outerList[0][1]
 ```
 
+## 语法
+
 ### 流程控制
 
 流程控制语句靠相同的代码缩进来区分语句块
@@ -209,6 +211,12 @@ elif inputNumber == 0:
 # else也是可选的
 else:
     print("Postive number")
+
+inputNumber = int(input("请输入一个整数: "))
+if inputNumber not in (-1, 0, 1):
+    print("请输入-1, 0, 1这三个数字中的一个")
+else:
+    print("你输入的数字是: ", inputNumber)
 ```
 
 #### for语句
@@ -253,6 +261,105 @@ while a < 10 :
     # 在赋值前，会按顺序从左到右顺序计算表达式的值
     a, b = b, a + b
 
+```
+
+#### break语法、continue语法和else从句
+
+这种语法在for循环和while循环都支持，下面以for循环为例子
+
+```py
+# break，退出该层循环
+for i in range(5):
+    for j in range(5):
+        if i == j:
+            print(i, "*", j, "=", i * j)
+            break
+
+# continue，退出当次迭代，开始下一次迭代
+for i in range(5):
+    if i % 2 == 0:
+        print(i, " is even number")
+        continue
+    print(i, " is odd number")
+
+
+# else从句：只有在for循环“正常结束”（即没有执行过break）时，就执行else的代码
+for i in range(5):
+    if i % 2 == 0:
+        print(i)
+        break
+else:
+    print("no break occurs")
+```
+
+#### pass语句
+
+pass语句表示一个空操作，它什么都不做
+
+python是强缩进语言，语法上不允许代码块（比如if的后面）是空的，如果还没想好逻辑，可以用pass先占位
+
+```py
+a = 2
+if a > 1:
+    pass
+
+class MyClass:
+    pass
+
+def total(*args):
+    pass
+```
+
+#### match语句
+
+match看起来像Java的switch，实际上更类似于模式匹配
+
+```py
+def weekDictionary(code):
+    match code:
+        case 6:
+            return "Saturday"
+        case 7:
+            return "Sunday"
+        # 也可以用|（表示或）将相同处理逻辑的字面量组合在一起
+        case 1 | 2 | 3 | 4 | 5:
+            return "Weekday"
+        # 变量名_表示匹配任何值
+        case _:
+            return "Unsupported code"
+
+# 此外还有一些其它例子，目前笔者看官方文档还不是很了解，先记下来，回头再消化
+```
+
+### 定义方法
+
+```py
+def functionName(arguments):
+    """function documentation"""
+    # function body
+    # return statement
+
+def greet():
+    print("Hello, World!")
+    # 没有return语句，默认返回None
+
+def power(base, exponent):
+    """幂运算"""
+    return base ** exponent
+
+# 可以给方法定义别名
+alias = power
+
+# 可以用别名调用方法
+print(alias(2, 3))
+
+# 给参数设置默认值，在调用的时候，有默认值的参数可以根据情况传参或者不传参
+def greet(name= "World"):
+    print("Hello ", name)
+
+greet()
+
+# 定义方法官网还有很多其它的特性，可以回头再详细研究
 ```
 
 ### 内置方法
