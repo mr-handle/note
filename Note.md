@@ -14,6 +14,8 @@
 
 - [Kotlin笔记](/file/subnote/Kotlin%20Note.md "点击链接查看Kotlin笔记")
 
+- [Python笔记](/file/subnote/Python%20Note.md "点击链接查看Python笔记")
+
 ## 硬件笔记
 
 - 机械硬盘种类：
