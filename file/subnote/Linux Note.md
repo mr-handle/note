@@ -4013,8 +4013,10 @@ sudo pacman -S vulkan-tools
 
 ```sh
 # rocm-hip-sdk：Develop applications using HIP and libraries for AMD platforms
+# rocm-opencl-sdk还不太懂，先装着
+# 如果使用ollama，需要安装ollama-rocm才能使用GPU加速
 # 像python-pytorch-opt-rocm应该在具体的环境中安装
-sudo pacman -S rocm-hip-sdk
+sudo pacman -S rocm-hip-sdk rocm-opencl-sdk ollama-rocm
 ```
 
 ###### 安装英伟达显卡驱动
