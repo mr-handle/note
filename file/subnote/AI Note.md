@@ -188,9 +188,19 @@ ollama serve
 # 可以在拉取模型的时候指定镜像源
 [OLLAMA_BASE_URL=https://mirrors.tuna.tsinghua.edu.cn/ollama] ollama pull 模型名称:标签
 
-# 拉取模型，可以下这两个玩玩
-ollama pull gemma4:26b-a4b-it-qat
-ollama pull ollama pull qwen3.6:35b-a3b-q4_K_M
+
+# gemma4:e4b-it-qat，使用更少的内存(5G左右)，适合日常问答、处理文档、轻度多模态任务等边缘计算场景
+# gemma4:12b 用了RX9070的9G左右显存，回答比网页版的文心一言稍慢
+# gemma4:12b-it-qat，适合需要复杂推理、代码生成、Agent 工作流以及高质量多模态理解的用户
+# gemma4:26b-a4b-it-qat回答确实快，但是26b已经把RX9070的16G显存用完，只使用交互终端问答没感觉到卡顿，但是切换到别的应用就明显卡顿了
+# 这么算下来的话qwen3.6:35b-a3b-q4_K_M是没办法玩了
+# 可以下这两个玩玩
+ollama pull gemma4:e4b-it-qat
+ollama pull gemma4:12b-it-qat
+
+ollama pull qwen3.5:9b-q4_K_M
+
+ollama pull deepseek-v2:16b-lite-chat-q4_K_M
 
 # 查看已经下载的模型列表
 ollama list
@@ -206,3 +216,70 @@ ollama run  模型名称:标签
 # 即使在终端停止了模型，只要用桌面客户端应用连接了ollama，发送消息就会唤醒或启动模型
 ollama stop 模型名称:标签
 ```
+
+### 修改上下文的词元长度
+
+ollama默认上下文长度是 4096 tokens
+
+- 在启动ollama服务时设置
+
+```sh
+# 通过环境变量设置上下文长度
+OLLAMA_CONTEXT_LENGTH=8192 ollama serve
+```
+
+- 通过/set设置，在会话中直接输入下面的命令
+
+```sh
+/set parameter num_ctx 4096
+```
+
+- api调用时设置
+
+```sh
+curl http://localhost:11434/api/generate -d '{
+    "model": "llama3.2",
+    "prompt": "Why is the sky blue?",
+    "options": {
+        "num_ctx": 4096
+    }
+}'
+```
+
+### 禁用Ollama云服务
+
+- 方法1：通过设置环境变量OLLAMA_NO_CLOUD=1
+
+- 方法2: 创建文件~/.ollama/server.json，输入如下内容
+    - 如果是systemd服务启动的则是/var/lib/ollama/.ollama/server.json，并且还要将文件属主和所属组都设置为ollama
+
+```json
+{
+  "disable_ollama_cloud": true
+}
+```
+
+设置好后重启ollama服务，查看日志会看到：Ollama cloud disabled: true
+
+## AI训练/预测流程
+
+- 模型训练流程
+    - 准备数据集
+    - 构建神经网络
+    - 构建模型（让这个模型应用上一步的神经网络）
+    - 训练配置（如何训练，训练数据集、验证数据集、测试数据集）
+    - 训练模型
+    - 保存模型
+- 模型使用流程
+    - 加载模型（上面保存的模型）
+    - 预测（给模型一个新输入，让其判断）
+
+- 未训练的模型是参数值不确定的公式，训练好的模型是参数值确定的公式
+
+![机器学习算法](/images/机器学习算法.png)
+
+## PyTorch
+
+官网：<https://pytorch.org/>
+
+PyTorch是一个AI框架，主打动态图计算，跟TensorFllow类似，但是后者是静态图计算的

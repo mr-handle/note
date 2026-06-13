@@ -21046,6 +21046,8 @@ firewall-cmd --reload
 
 ![机器学习算法](/images/机器学习算法.png)
 
+目前Deep Java Library没有办法使用amdgpu进行加速，看了底层代码都没有amd显卡的判断逻辑，因此打算直接用python训练玩玩了
+
 ## VirtualBox
 
 ### 网络

@@ -1466,6 +1466,28 @@ systemctl list-unit-files [| grep 服务名关键字]
 systemctl is-enabled 服务名
 ```
 
+#### systemd环境变量
+
+特别提一下，systemd是系统服务，不会读取普通用户的的家目录下的配置文件，如~/.bashrc
+
+因此要么将环境变量设置到系统级配置文件中，要么通过systemd的覆盖机制来配置环境变量
+
+```sh
+# 打开服务编辑器
+sudo systemctl edit 服务名
+
+# 在编辑器里面添加环境变量，然后wq保存退出
+[Service]
+Environment="环境变量名1=值1"
+Environment="环境变量名2=值2"
+
+# 重新加载systemd
+sudo systemctl daemon-reload
+
+# 重启服务
+sudo systemctl restart 服务名
+```
+
 ## ssh
 
 ssh：Secure Shell，是建立在应用层和传输层上的安全协议，由IETF的网络工作小组制定
@@ -1660,7 +1682,15 @@ include /etc/logrotate.d
 # -p err：查看报错日志
 # -o verbose：查看详情
 # _PID=进程id _COMM=sshd：查看包含进程id和sshd的日志，也可以用grep筛选
+# -u 是 --unit 参数的缩写，指定Systemd单元（Unit），Systemd 使用“单元（Unit）”来管理和组织各种服务、挂载点、定时任务等
 journalctl | grep sshd
+
+
+# 标准命令
+journalctl -u 服务名
+
+# 实时追踪日志（推荐用于排查启动问题）
+journalctl -u 服务名 --no-pager --follow --pager-end
 ```
 
 ## vi/vim编辑器
