@@ -173,7 +173,8 @@ Ollama是一个类似docker的用于本地快速部署模型进行推理的工�
 # 如果是and显卡，除了rocm-hip-sdk，还需要安装ollama-rocm才能使用GPU加速
 sudo pacman -S ollama ollama-rocm
 
-# 如果想要修改ollama模型的保存位置，设置环境变量即可
+# 如果想要修改ollama模型的保存位置
+# 如果是通过systemd启动，要通过sudo systemctl edit ollama 设置环境变量
 export OLLAMA_MODELS=/pato/to/model
 
 # 设置镜像源
@@ -198,8 +199,10 @@ ollama serve
 ollama pull gemma4:e4b-it-qat
 ollama pull gemma4:12b-it-qat
 
+# 7G多显存，更推荐玩这个
 ollama pull qwen3.5:9b-q4_K_M
 
+# 12G多显存
 ollama pull deepseek-v2:16b-lite-chat-q4_K_M
 
 # 查看已经下载的模型列表
@@ -283,3 +286,42 @@ curl http://localhost:11434/api/generate -d '{
 官网：<https://pytorch.org/>
 
 PyTorch是一个AI框架，主打动态图计算，跟TensorFllow类似，但是后者是静态图计算的
+
+- 下载：<https://pytorch.org/get-started/locally/>
+    - 选择pytorch版本、系统、包管理器、语言、根据显卡选择计算平台最后得到安装命令
+
+```sh
+# 根据情况将pip3改成pip
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/rocm7.2
+
+# 如果安装了uv，则添加前缀uv
+# 下载太慢了，笔者试了一下用国内镜像源（摇头），最后还是用魔法下载完的
+uv pip install torch torchvision --index-url https://download.pytorch.org/whl/rocm7.2
+```
+
+- 测试
+
+```py
+import torch
+
+# 创建一个5行3列的随机张量
+x = torch.rand(5, 3)
+
+# 用当前可用的GPU加速计算
+if torch.accelerator.is_available():
+    tensor = tensor.to(torch.accelerator.current_accelerator())
+
+print(x)
+```
+
+- GPU加速通用的输出
+
+```py
+# 英伟达和AMD都是用torch.cuda.is_available()这个语句检查检查显卡加速是否可用
+device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+
+print(f"Using {device} device")
+
+if device != "cpu":
+    print("gpu type:", torch.cuda.get_device_name(0))
+```

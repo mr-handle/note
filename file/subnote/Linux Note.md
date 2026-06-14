@@ -5232,8 +5232,9 @@ sudo pacman -S uv
 uv init
 
 # 创建一个环境，比如在项目中删除.venv文件夹后可以执行，这样就重新创建一个环境了
-# --python 3.9：指定python版本
-uv venv [--python 3.9]
+# --python 3.11：指定python版本
+# --system-site-packages：继承系统的包，但是`uv pip list` or `uv pip install`不会将系统的包算在其中，但是笔者试了不知道为什么带不进来
+uv venv [--python 3.11] [--system-site-packages]
 
 # 在新项目中添加依赖
 uv add
