@@ -353,3 +353,88 @@ class NeuralNetwork(nn.Module):
 model = NeuralNetwork().to(device)
 print(model)
 ```
+
+### tensor
+
+```py
+import torch
+
+# 定义一个形状（元组）作为张量的维度
+shape = (2, 3)
+
+# 用随机值填充指定形状，来创建张量
+randTensor = torch.rand(shape)
+
+# 用全1填充指定形状，来创建张量
+onesTensor = torch.ones(shape)
+
+# 用全0填充指定形状，来创建张量
+zerosTensor = torch.zeros(shape)
+
+print(f"随机张量:\n{randTensor}\n")
+print(f"全1张量:\n{onesTensor}\n")
+print(f"全0张量:\n{zerosTensor}\n")
+
+# 张量的属性
+tensor = torch.rand(3, 4)
+
+print(f"Shape of tensor: {tensor.shape}")
+print(f"Data type of tensor: {tensor.dtype}")
+print(f"Device tensor is stored on: {tensor.device}")
+
+# 张量的操作：索引和切片
+tensor = torch.ones(4, 4)
+print(f"First row: {tensor[0]}")
+print(f"First column: {tensor[:, 0]}")
+print(f"Last column: {tensor[..., -1]}")
+# 将第二列的值设置为0
+tensor[:, 1] = 0
+print(tensor)
+
+# 张量的操作：连接
+# 将张量沿着列的维度进行拼接
+t1 = torch.cat([tensor, tensor, tensor], dim=1)
+print(t1)
+
+# 张量的操作：矩阵乘法
+# @ 运算符表示矩阵乘法
+# tensor.T是得到tensor的转置，原来是(m, n)，转置后是(n, m)
+# matmul方法和@的功能一样，都是进行矩阵乘法运算
+# 下面的y1,y2,y3的结果是一样的，都是tensor与tensor转置的矩阵乘积
+y1 = tensor @ tensor.T
+y2 = tensor.matmul(tensor.T)
+
+# 创建一个与y1形状相同的张量y3，并初始化为[0,1)随机值
+y3 = torch.rand_like(y1)
+# 使用torch.matmul进行矩阵乘法运算，并将结果存储在y3中
+torch.matmul(tensor, tensor.T, out=y3)
+print(y1)
+
+# 张量的操作：逐元素乘法
+# 逐元素乘法（Element-wise Multiplication），也常被称为哈达玛积（Hadamard Product）
+# 将两个张量在相同位置上的元素分别相乘，要求参与运算的两个张量形状完全相同
+# 下面的z1,z2和z3的结果都是一样的，都是一个4x4的张量
+z1 = tensor * tensor
+z2 = tensor.mul(tensor)
+z3 = torch.rand_like(tensor)
+torch.mul(tensor, tensor, out=z3)
+print(z1)
+
+# 张量的操作：合计元素值
+# 合计张量所有元素的值到一个单元素张量中
+agg = tensor.sum()
+# 将单元素张量转换为Python数值
+agg_item = agg.item()
+print(agg, type(agg))
+print(agg_item, type(agg_item))
+
+# 张量的操作：就地操作
+# 就地操作的操作结果会覆盖操作数，它们一般有下划线后缀，如x.copy_(y), x.t_(), 将会改变x的值
+# 就地操作能节省内存，但在计算衍生品时，由于历史的直接损失，可能会出现问题。因此，不鼓励使用它们。
+print(f"{tensor} \n")
+# 每个元素值都加5
+tensor.add_(5)
+print(tensor)
+
+# torch的tensor是可以和NumPy互相转换的，官网也提供了一些例子，笔者目前用不到就先不记录笔记了
+```

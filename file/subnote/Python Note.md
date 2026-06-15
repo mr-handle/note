@@ -554,3 +554,42 @@ __all__ = ["mathUtil"]
 # 如果在module/__init__.py中也定义了mathUtil名称（比如同名方法）
 # from module import mathUtil将不会导入mathUtil模块
 ```
+
+### 类
+
+```py
+# 最简单的类定义
+class ClassName:
+    pass
+
+
+# 定义一个家庭类
+class Family:
+    """家庭类"""
+    # 类字段
+    father = "Handle"
+
+    # 无参构造方法
+    # def __init__(self):
+    #     pass
+
+    # 有参构造方法
+    def __init__(self, mother):
+        # 实例字段
+        self.mother = mother
+
+    def work(self):
+        print(f"{self.father} is working")
+        print(f"{self.mother} is cooking")
+
+# 实例化类对象
+family = Family("Anna")
+
+# 调用类属性
+print(f"class description: {family.__doc__}")
+print(f"family's father: {family.father}")
+print(f"family's mother: {family.mother}")
+
+# 等价于Family.work(family) ，但不推荐使用这种方式调用实例方法
+family.work()
+```
