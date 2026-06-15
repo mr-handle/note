@@ -511,3 +511,46 @@ import builtins
 
 dir(builtins) 
 ```
+
+#### 包
+
+包是一种通过使用".模块名称"，来组织模块命名空间的方式
+
+- 比如有目录结构
+    - src
+        - module
+            - __init__.py
+            - mathUtil.py
+        - main.py
+
+- `__init__.py`文件使得python编译器将module目录视为包
+    - 它可以是一个空文件
+    - 它也可以执行初始化代码或者设置__all__变量的值
+
+```py
+# 可以从包中导入指定的模块，如果不写别名需要通过全限定名称调用：module.mathUtil.power(5, 2)
+import module.mathUtil as mathUtil
+
+# 或者这么导入
+from module import mathUtil
+
+print(mathUtil.power(5, 2))
+
+# 或者这么导入
+from module.mathUtil import power
+
+print(power(5, 2))
+
+# 即使用from package import item，这里的item可以是package的子模块（或者子包）
+# 也可以是package里面定义的其它名称，比如方法名，类名或变量名
+# 而使用import item.subitem.subsubitem，除了最后的item，必须是包；最后的item可以是模块名或包名，但不能是前一item定义的类名或方法名或变量名
+
+
+# module/__init__.py文件中可以定义如下变量
+# 以便于当使用from package import * 时，导入该变量指定的模块，但是不建议全部导入这种写法
+# 如果确定没人使用from package import *这个语句进行模块导入，则不用写
+__all__ = ["mathUtil"]
+
+# 如果在module/__init__.py中也定义了mathUtil名称（比如同名方法）
+# from module import mathUtil将不会导入mathUtil模块
+```
