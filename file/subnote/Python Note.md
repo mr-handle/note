@@ -393,3 +393,121 @@ for i in range(len(letters)):
 # 0 + 1 + 2
 result = sum(range(3))
 ```
+
+### 模块
+
+一个包含python定义和语句的文件就是一个模块
+
+模块名就是后缀为`.py`的文件名，可以通过`模块名.__name__`得到模块名称
+
+```py
+# 创建文件mathUtil.py，定义power方法
+def power(base, exponent):
+    """幂运算"""
+    return base ** exponent
+
+# 在另一个文件main.py中导入mathUtil
+import mathUtil
+
+# 调用模块的power方法
+print(mathUtil.power(5, 3))
+
+# 打印模块名称
+print(mathUtil.__name__)
+
+# 可以给模块方法定义本地别名
+power = mathUtil.power
+
+print(power(2, 4))
+
+# 只导入模块的某个方法，多个方法用英文逗号隔开，这种方式mathUtil是未定义的
+from mathUtil import power
+
+print(power(5, 3))
+
+# 导入模块的所有方法，除了以下划线为前缀的，不推荐使用
+from mathUtil import *
+
+# 设置别名
+import mathUtil as alia_math_util 
+from mathUtil import power as alia_power
+
+# 在每个解释器会话期间，每一个模块只会导入一次，如果修改了模块，必须重启解释器会话
+# 或者，如果你只在交互式会话使用一个模块，则可以
+ import importlib; importlib.reload(modulename)
+```
+
+#### 把模块当作脚本执行
+
+```py
+# 在模块文件的末尾加上
+if __name__ == "__main__":
+    import sys
+    print(power(int(sys.argv[1]), int(sys.argv[2])))
+
+# 当执行下面的命令时，模块名称__name__将被设置为 "__main__"
+# 就会执行定义好的代码，这时候这个模块就成了一个脚本
+# 但是如果是import mathUtil，就不会执行这些代码
+python mathUtil.py 参数1，参数2
+
+# 可以定义通用的入口文件和入口方法如下：
+# 定义入口方法
+def main():
+    pass
+
+# 如果这个文件被直接运行，就执行main()方法
+if __name__ == "__main__":
+    main()
+```
+
+#### 模块搜索路径
+
+当一个模块如mathUtil被导入时，python解释器首先查找内置模块有没有跟导入模块同名的，这些模块名被列在sys.builtin_module_names
+
+如果找不到，再查找所有文件（在sys.path包含的路径中查找）有没有文件名是mathUtil.py的
+
+- sys.path从下面的路径中初始化得来
+    - 包含了输入脚本的路径（当没有指定输入脚本文件时，为当前路径）
+    - PYTHONPATH（和shell的环境变量PATH一样）
+    - 安装依赖默认的路径（包括sit模块管理的site-packages路径）
+
+```py
+import sys
+
+print(sys.builtin_module_names)
+print(sys.path)
+
+# 使用标准list操作修改sys.path，如添加一个模块搜索路径
+sys.path.append('/path/to/python/module')
+```
+
+#### “编译”Python文件
+
+为了提升加载模块的速度（不会提升执行速度），python解释器会在__pycache__路径缓存每个模块的编译版本
+
+编译后的模块名称为module.version.pyc，版本一般是python版本
+
+python解释器会检查源文件的修改日期和编译版本，以确认是否需要重新编译
+
+- 有两种情况python解释器不会检查缓存文件
+    - 第一，当模块是从命令行加载时，总是会重新编译模块，但是不会保存到缓存
+    - 第二，当模块源文件不存在时
+
+#### 标准模块
+
+python自带一个标准模块库，如sys
+
+```py
+import sys
+
+# dir方法可以获取一个模块定义的所有名称：变量名、模块名、方法名等
+print(dir(sys))
+
+# 列出当前文件定义的名称
+print(dir())
+
+# dir()不会列出内置方法的方法名和变量名，如果你想要打印它们，可以用标准模块builtins
+import builtins
+
+dir(builtins) 
+```
