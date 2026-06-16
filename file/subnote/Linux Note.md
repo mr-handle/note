@@ -5236,18 +5236,25 @@ uv init
 # --system-site-packages：继承系统的包，但是`uv pip list` or `uv pip install`不会将系统的包算在其中，但是笔者试了不知道为什么带不进来
 uv venv [--python 3.11] [--system-site-packages]
 
+# 更新项目环境
+# 指定国内源
+uv sync --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
+# 安装依赖包
+# 也可以在安装依赖包的时候指定源，--index-url也可以简写为-i
+uv pip install matplotlib --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+# 清空不可访问的缓存（相当于没有项目用到的缓存）
+uv cache prune
+
+# 清空所有缓存（包括项目中会用到的缓存）
+uv cache clean
+
 # 在新项目中添加依赖
 uv add
 
 # 在新项目中删除依赖
 uv remove   
-
-# 更新项目环境
-# 指定国内源
-uv sync --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
-
-# 清空缓存
-uv cache clean
 ```
 
 ### miniforge的使用

@@ -1,5 +1,11 @@
 # AI Note
 
+深度学习是机器学习的一个分支
+
+神经网络的核心是“微积分”（梯度计算）
+
+神经网络训练的本质是反向传播算法，这需要计算损失函数对模型参数的偏导数（即梯度）
+
 Hugging Face：官网<https://huggingface.co/>， 托管了海量的模型、数据集和演示应用，是全球通用的开源 AI 社区，是AI界的“github”
 
 HF-Mirror：官网 <https://hf-mirror.com>，Hugging Face的镜像
@@ -438,3 +444,248 @@ print(tensor)
 
 # torch的tensor是可以和NumPy互相转换的，官网也提供了一些例子，笔者目前用不到就先不记录笔记了
 ```
+
+### 数据集和数据加载器
+
+pytorch提供了两个数据基本组件：`torch.utils.data.DataLoader` 和 `torch.utils.data.Dataset`，允许你使用预加载的数据集和你自己的数据
+
+Dataset保存了样本及对应的标签
+
+DataLoader在数据集周围包装了一个可迭代对象，以方便地访问样本
+
+pytorch域库提供了许多预加载的数据集（如FashionMNIST）
+
+这些数据集是`torch.utils.data.Dataset`的子类，并实现了特定数据的特定函数，它们可用于原型化和基准化模型
+
+顺便一提，MNIST（Modified National Institute of Standards and Technology）是计算机视觉和机器学习领域中最经典、最基础的手写数字图像数据集
+
+它通常被用作入门深度学习、测试新算法或进行基准测试的“Hello World”级数据集
+
+MNIST 是由 Yann LeCun、Corinna Cortes 和 Christopher J.C. Burges 等人在 1998 年发布的。它是基于美国国家标准与技术研究院（NIST）的原始数据集（NIST Special Database 1 和 3）修改而来的，旨在提供一个标准化的、易于处理的基准，以便研究人员能够专注于算法本身，而不是数据预处理
+
+#### FashionMNIST数据集
+
+FashionMNIST数据集包含了1-10种类别的6万训练样本和1万测试样本的28x28大小的灰度图像和对应的标签
+
+- FashionMNIST数据集有以下参数
+    - root， train/test 数据存放的路径
+    - train，指定是训练还是测试数据集
+    - download=True，如果root路径不可用，则从Internet下载数据
+    - transform 和 target_transform，指定特征和标签转换
+
+##### 加载数据集
+
+```py
+import torch
+from torch.utils.data import Dataset
+from torchvision import datasets
+from torchvision.transforms import v2
+
+# 需要先安装依赖包：uv pip install matplotlib
+import matplotlib.pyplot as plt
+
+tranning_data = datasets.FashionMNIST(
+    root = "data",
+    train = True,
+    download= True,
+    # Compose 是一个“组合器”，它的作用是将列表中的多个变换（transforms）打包在一起，并按照列表中的顺序依次执行
+    # 第一步，v2.ToImage()，将输入的图像统一转换为 PyTorch 的 tv_tensors.Image 类型
+    # 第二步，v2.ToDtype(torch.float32, scale=True)，转换图像张量的数据类型
+    # torch.float32，将像素值的数据类型转换为 32位浮点数
+    # scale=True，这是关键参数。当设置为 True 时，它会自动将像素值从整数范围 [0, 255] 线性缩放（归一化）到浮点数范围 [0.0, 1.0]
+    # 也就是说将原始的整数像素值除以255.0
+    transform= v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+)
+
+test_data = datasets.FashionMNIST(
+    root="data",
+    train=False,
+    download=True,
+    transform=v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+)
+```
+
+##### 迭代和可视化数据集
+
+我们可以用training_data[index]，像列表一样手动索引数据集
+
+我们使用matplotlib来可视化训练数据中的一些样本
+
+```py
+label_map = {
+    # T恤
+    0: "T-Shirt",
+    # 裤子
+    1: "Trouser",
+    # 套衫
+    2: "Pullover",
+    # 裙子
+    3: "Dress",
+    # 外套
+    4: "Coat",
+    # 凉鞋
+    5: "Sandal",
+    # 衬衫
+    6: "Shirt",
+    # 运动鞋
+    7: "Sneaker",
+    # 包
+    8: "Bag",
+    # 踝靴：一种只到踝部的靴子，通常用于保护踝关节
+    9: "Ankle Boot",
+}
+
+# 创建一个新的图表窗口（画布），尺寸是(8, 8)，英寸，一边后续在上面画图
+figure = plt.figure(figsize=(8, 8))
+
+cols, rows = 3, 3
+
+for i in range(1, cols * rows + 1):
+    # 从训练数据集中随机抽取一个样本的索引，并将其转换为普通的Python整数
+    # len(tranning_data)，训练集长度
+    # size=(1, ) 表示生成一个只包含 1 个元素的一维张量
+    # .item()，将这个张量转换为普通的Python整数
+    sample_idx = torch.randint(len(tranning_data), size=(1, )).item()
+    # 通过刚刚获取的随机索引，从训练数据集中提取出对应的图像和标签(分类数字，如：0)
+    img, label = tranning_data[sample_idx]
+    # 在画布上划分网格并添加一个子图（Subplot）
+    # rows, cols，指定画布分成几行几列，最终画布被分成rows × cols 的网格
+    # i，指定要在这个网格的第几个位置画图从左上角开始，从左到右、从上到下依次编号，从 1 开始
+    figure.add_subplot(rows, cols, i)
+    # label_map[label]，通过分类数字获取分类字符串
+    plt.title(label_map[label])
+    print(f"label: {label}, label_map[label]: {label_map[label]}")
+    # 关闭坐标轴的所有显示元素
+    plt.axis("off")
+    # imshow只是把图像画好，但不弹窗显示
+    # img.squeeze()，去除所有大小为 1 的维度
+    # tranning_data如果包含64张图像，则为[64, 1, 28, 28]
+    # 那么img就是[1, 28, 28]
+    # 单张灰度图：[1, 28, 28]，单张彩色图：[3, 28, 28]
+    # plt.imshow() 在显示单张图像时，通常只接受 2 维数组 (高, 宽) 
+    # 多出来的维度，将导致imshow报错或异常，使用squeeze后就会被“压缩”成标准的 (28, 28)，从而可以顺利显示
+    # cmap，colormap，色彩映射的缩写，以灰度显示图像
+    plt.imshow(img.squeeze(), cmap="gray")
+
+# 弹窗显示图表
+plt.show()
+```
+
+#### 给你的文件创建自定义数据集
+
+一个自定义Dataset类必须实现三个方法： `__init__`, `__len__`, 和 `__getitem__`
+
+FashionMNIST图像保存在img_dir目录下
+
+标签保存在独立的csv文件annotations_file中，内容类似下面这样
+
+```csv
+tshirt1.jpg, 0
+tshirt2.jpg, 0
+......
+ankleboot999.jpg, 9
+```
+
+```py
+import os
+
+# 需要安装依赖包: uv pip install pandas
+import pandas as pd
+
+from torch.utils.data import Dataset
+from torchvision.io import decode_image
+
+class CustomImageDataset(Dataset):
+    # __init__方法只在实例化Dataset对象时运行一次
+    # 初始化包含图像的目录、csv标签文件和两个转换器
+    def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
+        # 读取csv标签文件内容
+        self.img_labels = pd.read_csv(annotations_file)
+        self.img_dir = img_dir
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __len__(self):
+        """返回数据集的样本数大小"""
+        return len(self.img_labels)
+
+    # 根据所给出的索引参数，从数据集加载并返回一个样本
+    def __getitem__(self, idx):
+        # 拼接指定索引idx所在图像文件的完整路径
+        # self.img_dir，图像所在目录
+        # self.img_labels.iloc[idx, 0]，图像文件名
+        # self.img_labels存的数据类似这样："tshirt1.jpg, 0"
+        # iloc[idx, 0]，idx是"tshirt1.jpg, 0"的索引，0是图像文件名"tshirt1.jpg"的索引，1是标签"0"的索引
+        img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
+
+        # 从指定路径加载图像文件并转换为tensor
+        image = decode_image(img_path)
+
+        # 获取图像文件相应的标签
+        label = self.img_labels.iloc[idx, 1]
+        # 如果定义了转换器就调用它们
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            label = self.target_transform(label)
+        # 返回一个包含张量图像和相应标签的元组
+        return image, label
+```
+
+#### 数据加载器
+
+数据加载器是一个可迭代对象，它用一个简单的API，把复杂的数据集遍历做了抽象
+
+Dataset每次检索数据集中一个样本的特征和标签
+
+真正训练一个模型的时候，通常以小批量的方式来传递样本
+
+重新洗牌（reshuffle）是对整个数据集进行的，而不是对某个小批量里面的数据进行的
+
+在每轮遍历数据集前，都先重新洗牌（reshuffle）整个数据集以减少模型过拟合
+
+并使用Python的多线程来加速数据检索
+
+- 例如训练集有1万样本，训练5轮
+    - 首先
+        - 按这1万样本的原本的顺序，比如说得到一个list1
+        - 然后对list1按顺序分成64个样本一批，逐批送入模型，直到将这1万样本都训练完就是1轮（1个epoch）
+    - 然后
+        - 第二轮，因为shuffle=True，进行重新洗牌，将这1万样本的顺序打乱，得到一个新的列表list2
+        - 然后对list2按顺序分成64个样本一批，逐批送入模型，直到将这1万样本都训练完
+    - 直到训练完5轮
+
+```py
+from torch.utils.data import DataLoader
+
+# batch_size，每次小批量传递64个样本
+# shuffle=True，每一轮都重新洗牌数据集
+train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
+test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
+```
+
+##### 通过数据加载器迭代数据集
+
+上一步我们已经将数据集加载到DataLoader，可以根据需要迭代数据集了
+
+```py
+# 下面的每一次迭代都从数据集返回一批train_features和train_labels（包含batch_size=64个特征和标签）
+# 从数据加载器中提取出第一个批次的数据
+# iter(train_dataloader)：把加载器变成可迭代对象，iter() 是 Python 的内置函数，它的作用是把一个对象转换成“迭代器（Iterator）”
+# next(...)：提取下一个数据块，next() 也是 Python 的内置函数，作用是让迭代器向前走一步，并返回当前这一步的数据
+# train_features：包含64张图片的像素数据，[64, 1, 28, 28]，分别表示64张图像，单通道（灰度图像），图像高度，图像宽度
+# train_labels：包含64张图片对应的标签数据，这里是一个list
+train_features, train_labels = next(iter(train_dataloader))
+print(f"Feature batch shape: {train_features.size()}")
+print(f"Labels batch shape: {train_labels.size()}")
+# train_features[0]得到[1, 28, 28]
+# squeeze()去掉所有大小为1的维度，得到[28, 28]
+img = train_features[0].squeeze()
+label = train_labels[0]
+
+plt.imshow(img, cmap="gray")
+plt.show()
+print(f"Label: {label}")
+```
+
+### 转换器
