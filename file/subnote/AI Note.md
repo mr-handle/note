@@ -689,3 +689,47 @@ print(f"Label: {label}")
 ```
 
 ### 转换器
+
+数据并不总是以训练机器学习算法所需的最终处理形式出现
+
+我们使用转换器对数据进行一些操作，使其适合于训练
+
+- 所有的TorchVision数据集有两个参数，它们接受包含转换逻辑的可调用对象
+    - transform，用来修改特征
+    - target_transform，用来修改标签
+
+`torchvision.transforms`模块提供了几个常用的开箱即用的转换器
+
+FashionMNIST特征是PIL图像格式的，标签是整数的
+
+为了将其用于训练，需要将特征转换为标准化张量，将标签转换为`one-hot`编码张量
+
+为了进行这些转换，我们使用`torchvision.transforms.v2`API以及`torch.nn.functional.one_hot`API
+
+```py
+import torch
+import torch.nn.functional as F
+from torchvision import datasets
+from torchvision.transforms import v2
+
+ds = datasets.FashionMNIST(
+    root="data",
+    train=True,
+    download=True,
+    # v2.ToImage()：将PIL图像或NumPy n维数组转为torchvision.tv_tensors.Image张量
+    # v2.ToDtype：将像素灰度值转为浮点数，scale=True，将像素灰度值转为 [0., 1.]范围的浮点数
+    transform=v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]),
+    
+    target_transform=v2.Lambda(
+        # y代表从数据集里取出的原始标签
+        # F.one_hot：将原本的整型张量转换成one-hot编码的整型张量
+        # torch.tensor(y)：将y转成张量
+        # num_classes=10，指定了张量的长度为 10（0~9 共 10 个类别，对应数据集的标签数），如3转换后为[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+        # float()：F.one_hot默认生成的是整数类型的张量，需要转为浮点数来匹配预期数据类型
+        # 在深度学习计算（如计算交叉熵损失、矩阵乘法）时，通常需要转为浮点数
+        lambda y: F.one_hot(torch.tensor(y), num_classes=10).float()
+    )
+)
+```
+
+### 构建神经网络
