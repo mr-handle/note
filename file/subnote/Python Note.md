@@ -592,4 +592,8 @@ print(f"family's mother: {family.mother}")
 
 # 等价于Family.work(family) ，但不推荐使用这种方式调用实例方法
 family.work()
+
+# 类继承写法
+class SonClassName(FatherClassName):
+    pass
 ```

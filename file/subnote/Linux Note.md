@@ -5244,6 +5244,10 @@ uv sync --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 # 也可以在安装依赖包的时候指定源，--index-url也可以简写为-i
 uv pip install matplotlib --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
+# 激活环境：打开终端，进入项目根目录，执行如下命令
+# 一些ide如vscode在你打开终端的时候会自动执行这个命令
+source .venv/bin/activate
+
 # 清空不可访问的缓存（相当于没有项目用到的缓存）
 uv cache prune
 

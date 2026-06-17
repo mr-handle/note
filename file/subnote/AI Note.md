@@ -733,3 +733,132 @@ ds = datasets.FashionMNIST(
 ```
 
 ### 构建神经网络
+
+神经网络由对数据执行操作的层/模块组成
+
+`torch.nn`命名空间提供了构建你自己的神经网络所需的所有构建块
+
+PyTorch中的每个模块都是`nn.Module`的子类
+
+神经网络本身就是一个由其他层/模块组成的模块
+
+这种嵌套结构允许你轻松地构建和管理复杂的体系结构
+
+```py
+import torch
+from torch import nn
+
+# 如果当前有加速器可用，我们希望用加速器训练我们的模型，否则还是用CPU
+device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+
+print(f"Using {device} device")
+
+# 通过派生nn.Module的子类来定义我们自己的神经网络
+class CustomImageNeuralNetwork(nn.Module):
+    # 在构造方法中初始化神经网络层
+    def __init__(self):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(28*28, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, 10),
+        )
+
+    # 实现forward方法来操作输入数据
+    def forward(self, x):
+        x = self.flatten(x)
+        logits = self.linear_relu_stack(x)
+        return logits
+    
+# 创建神经网络实例，并将移动到指定设备
+model = CustomImageNeuralNetwork().to(device)
+
+# 打印神经网络的结构
+print(model)
+
+
+# 用指定设备创建一个只有1张图像样本的输入张量，作为模型入参
+X = torch.rand(1, 28, 28, device=device)
+
+# 通过传递输入数据来使用这个模型，会自动执行模型的forward方法，以及一些后台操作，千万不要直接调用forward方法！
+# 模型将返回一个2维的张量作为结果（形状是[1,10]），dim=0的值批处理大小，这里是1
+# dim=1的值是每一个分类对应的10个原始预测值，它们有负数，且加起来不等于1
+logits = model(X)
+
+
+# 创建nn.Softmax模块的实例
+# dim=1，在dim=1上进行计算，这里对应就是logits的dim=1维度
+softmax = nn.Softmax(dim=1)
+
+# 通过将输出传递给nn.Softmax模块的实例来获得预测概率
+# 如果在一个对象后面加上()，Python 会自动去寻找并执行这个对象内部的 __call__() 方法
+pred_probab = softmax(logits)
+
+# argmax：argument of the maximum，最大值所在的索引
+# 1表示dim=1
+y_pred = pred_probab.argmax(1)
+rawpv = logits[0, y_pred]
+print(f"logits : {logits}")
+print(f"Predicted class: {y_pred}, raw predicted values: {rawpv}")
+
+# 创建一个只有3张图像样本的输入张量
+input_image = torch.rand(3, 28, 28)
+# [3, 28, 28]
+print(input_image.size())
+
+# nn.Flatten()：扁平化，将2维的28x28图像转为包含784个连续像素值的数组，dim=0维度保持不变
+fltten = nn.Flatten()
+flat_image = fltten(input_image)
+# [3, 784]
+print(flat_image.size())
+
+# 线性层是一个使用其存储的权重和偏置对输入应用线性变换的模块
+# 也就是把输入特征映射到一个新的特征空间中
+# 在训练过程中，模型会通过反向传播不断调整权重和偏置的值，直到找到最优的加工方式
+print(f"Before Linear: {flat_image}\n\n")
+layer1 = nn.Linear(in_features=28*28, out_features=20)
+hidden1 = layer1(flat_image)
+print(hidden1.size())
+
+# nn.ReLU（Rectified Linear Unit，修正线性单元）的核心作用确实就是把输入中小于 0 的数全部变成 0，大于等于 0 的数保持不变
+# 数学公式：f(x)=max(0,x)
+# 在神经网络中，nn.Linear 只是做线性变换（矩阵乘法加偏置），如果一层层只堆叠线性层，无论多少层，最终都等价于一个单层线性模型
+# 加上 nn.ReLU 后，就引入了非线性。这就好比给模型增加了“拐弯”的能力，让它能够去拟合现实世界中复杂的、非线性的规律
+# 非线性激活会在模型的输入和输出之间创建复杂的映射
+# 它们应用于线性变换后引入非线性，帮助神经网络学习各种各样的现象
+print(f"Before ReLU: {hidden1}\n\n")
+hidden1 = nn.ReLU()(hidden1)
+print(f"After ReLU: {hidden1}")
+
+# nn.Sequential是一个有序的模块容器，数据按照定义的顺序在所有模块中传递
+# 您可以使用它来组成一个快速网络，如seq_modules
+seq_modules = nn.Sequential(
+    fltten,
+    layer1,
+    nn.ReLU(),
+    nn.Linear(20, 10)
+)
+
+input_image = torch.rand(3, 28, 28)
+logits = seq_modules(input_image)
+
+# nn.Softmax
+# 神经网络的最后一个线性层返回logits：[-infty， infty]中的原始值
+# 这些值被传递给nn.Softmax模块
+# logits会被缩放到值[0,1]，表示模型对每个分类的预测概率
+# dim参数表示值之和必须为1的维度
+softmax = nn.Softmax(dim=1)
+pred_probab = softmax(logits)
+
+# 模型参数
+# 神经网络中的许多层都是参数化的，例如，在训练过程中与优化相关的权重和偏差
+# nn.Module的子类神经网络自动跟踪模型对象中定义的所有字段
+# 让你可以使用模型的parameters()方法或named_parameters()方法访问所有参数
+print(f"Model structure: {model}\n\n")
+# 遍历每一个参数并打印其大小以及预览其值
+for name, param in model.named_parameters():
+    print(f"Layer: {name} | Size: {param.size()} | Values: {param[:2]}\n")
+```
