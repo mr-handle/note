@@ -16,7 +16,7 @@
 
 - [Python笔记](/file/subnote/Python%20Note.md "点击链接查看Python笔记")
 
-- [AI笔记](/file/subnote/AI%20Note.md "点击链接查看AI笔记")
+- [AI笔记](/file/subnote/aiNote/AI%20Note.md "点击链接查看AI笔记")
 
 ## 硬件笔记
 

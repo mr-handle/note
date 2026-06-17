@@ -862,3 +862,496 @@ print(f"Model structure: {model}\n\n")
 for name, param in model.named_parameters():
     print(f"Layer: {name} | Size: {param.size()} | Values: {param[:2]}\n")
 ```
+
+### 微分
+
+在训练神经网络时，最常用的算法是反向传播
+
+在该算法中，根据损失函数相对于给定参数的梯度来调整模型参数（模型权重）
+
+为了计算这些梯度，PyTorch有一个内置的微分引擎，名为`torch.autograd`，它支持任何计算图的梯度自动计算
+
+考虑最简单的单层神经网络，输入x，参数w和b，以及一些损失函数。它可以在PyTorch中以以下方式定义：
+
+```py
+import torch
+
+# 输入张量
+x = torch.ones(5)
+# 期望输出，比如说数据的真实标签
+y = torch.zeros(3)
+# 生成服从标准正态分布（Standard Normal Distribution，也称高斯分布）的随机浮点数
+# requires_grad=True，追踪该张量的所有计算历史，以便在后续自动计算梯度
+# PyTorch就会在后台偷偷画一张计算图（Computational Graph），记录这个张量参与的所有数学操作
+# 也可以在张量创建后通过"张量变量名称.requires_grad_(True) "来设置
+w = torch.randn(5, 3, requires_grad=True)
+b = torch.randn(3, requires_grad=True)
+# 模型的原始输出，通常是nn.Linear直接输出的结果，取值范围是负无穷到正无穷
+z = torch.matmul(x, w) + b
+# 根据模型的原始输出（z）和期望输出（y）来计算二元交叉熵损失（Binary Cross-Entropy Loss）
+# 在普通的二分类任务中，我们需要先对 z 使用 Sigmoid 函数将其压缩到[0, 1] 之间变成概率，然后再计算交叉熵损失
+# 这个方法非常智能，它把 Sigmoid 激活和计算交叉熵这两步合二为一了
+# 直接把 z 传给它，它会在内部自动完成 Sigmoid 转换，然后计算出预测概率与期望输出 y 之间的差异
+loss = torch.nn.functional.binary_cross_entropy_with_logits(z, y)
+```
+
+上面的代码定义的计算图如下：
+
+![PyTorchComputationalGraph](image/PyTorchComputationalGraph.png)
+
+在这个神经网络中，w和b是需要我们优化的参数
+
+因此，我们需要能够计算损失函数相对于这些参数的梯度
+
+为此，我们将这些张量的梯度属性设置为`requires_grad=True`
+
+我们应用于张量来构造计算图的方法实际上是Function类的对象
+
+该对象知道如何在正向方向上进行计算，以及如何在反向传播步骤中计算其导数
+
+对反向传播方法的引用存储在张量的`grad_fn`属性中
+
+这个计算图叫：directed acyclic graph (DAG，有向无环图)
+
+在DAG中，输入张量是叶子张量，输出张量是根张量
+
+通过从根到叶的跟踪图，您可以使用链式法则自动计算梯度
+
+- 在向前传递中，autograd同时做两件事
+    - 运行请求的操作来计算结果张量
+    - 在DAG中维持操作的梯度函数
+
+- 向后传递开始于DAG的根节点调用`.backward()`,然后autograd做
+    - 从每个`.grad_fn`计算梯度
+    - 在各自张量中的`.grad`属性中进行累加
+    - 用链式法则，一直推广到叶子张量
+
+PyTorch中的DAG是动态的，需要注意的一点是图形是从头开始重新创建的
+
+每个`.backward()`调用之后， autograd开始填充一个新图
+
+这正是允许您在模型中使用控制流语句的原因
+
+如果需要，您可以在每次迭代中更改形状、大小和操作
+
+#### 计算梯度
+
+简单描述一下导数：假设`y=wx+b`，那么导数`y'=w`，即斜率w就是导数
+
+为了优化神经网络中参数的权重，我们需要计算损失函数对参数的导数
+
+即x和y为某些固定值时，`∂loss/∂w` 和`∂loss/∂b`的值，到这里笔者已经懵了
+
+为了计算这两个导数，调用`loss.backward()`，然后获取其值用`w.grad`和`b.grad`
+
+```py
+loss.backward()
+print(w.grad)
+print(b.grad)
+```
+
+我们只能获取计算图“叶子节点”（Leaf Nodes）的梯度（grad），并且这些节点必须开启了梯度追踪（requires_grad=True）
+
+对于计算图中的其他中间节点，PyTorch 默认不会保存它们的梯度
+
+出于性能原因，我们只能在给定的图上使用一次backward
+
+如果我们需要对同一个图进行几次backward调用，我们需要将`retain_graph=True`传递给backward方法
+
+#### 禁用梯度追踪
+
+默认情况下，设置了`requires_grad=True`的所有张量都会追踪他们的计算历史并支持梯度计算
+
+- 然而，也有一些场景我们不需要这样做，例如
+    - 模型已经训练好，我们只是想将输入应用到模型，也就是说我们只想通过神经网络只进行向前计算
+    - 将神经网络中的一些参数标记为冻结参数
+    - 只进行向前计算时，在不跟踪梯度的张量上的计算会更有效率
+
+我们可以通过在计算代码周围加上`torch.no_grad()`块来禁用追踪计算
+
+也可以调用张量的`detach()`方法来实现
+
+```py
+z = torch.matmul(x, w)+b
+print(z.requires_grad)
+
+with torch.no_grad():
+    z = torch.matmul(x, w)+b
+print(z.requires_grad)
+
+z = torch.matmul(x, w)+b
+z_det = z.detach()
+print(z_det.requires_grad)
+```
+
+### 优化模型参数
+
+#### 超参数
+
+超参数是可调节的参数，可以控制模型优化过程
+
+不同的超参数值会影响模型的训练和收敛速度
+
+- 我们为训练模型定义如下超参数
+    - Number of Epochs：训练的轮次（epoch），每一轮都训练完整个数据集
+    - Batch Size：批次，在参数更新之前，通过神经网络传播的数据样本数量
+    - Learning Rate：在每个批次/轮次中需要更新多少模型参数
+        - 较小的值产生较慢的学习速度，而较大的值可能导致训练过程中不可预测的行为
+
+```py
+# e表示10的幂，1e-3就是1乘以10的-3次方，即0.001
+learning_rate = 1e-3
+batch_size = 64
+epochs = 5
+```
+
+#### 优化循环
+
+一旦设置超参数，就可以通过优化循环来训练和优化模型了
+
+优化循环的每一次迭代称为一个epoch
+
+- 每个epoch有两个主要部分组成
+    - The Train Loop：训练循环，迭代整个训练数据集并尝试收敛到最优参数
+    - The Validation/Test Loop：验证/测试循环，迭代整个测试数据集以检查模型性能是否有所改善
+
+#### 损失函数
+
+当提供一些训练数据时，我们的未经训练的神经网络很可能不会给出正确的答案
+
+损失函数衡量的是得到的结果与目标值的不相似程度，这是我们在训练中要最小化的损失函数
+
+为了计算损失，我们使用给定数据样本的输入进行预测，并将其与真实的数据标签值进行比较
+
+- 常见的损失函数包括
+    - `nn.MSELoss`：Mean Square Error，均方误差，用于回归任务
+    - `nn.NLLLoss`：Negative Log Likelihood，负对数似然，用于分类任务
+    - `nn.CrossEntropyLoss`：Cross Entropy，交叉熵， 整合了nn.LogSoftmax和nn.NLLLoss，
+
+```py
+# 初始化损失函数，使logits归一化并计算预测误差
+loss_fn = nn.CrossEntropyLoss()
+```
+
+#### 优化器
+
+优化是在每个训练步骤中调整模型参数以减少模型误差的过程
+
+优化算法定义如何执行此过程，所有优化逻辑都封装在optimizer对象中
+
+```py
+# Stochastic Gradient Descent，随机梯度下降算法
+# 此外还有ADAM、RMSProp，应该根据模型和数据分情况使用
+# model.parameters()：需要训练的模型参数
+# lr：超参数Learning Rate
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+```
+
+- 在训练循环中，优化分三步进行
+    - 调用`optimizer.zero_grad()`来重置模型参数的梯度，梯度默认是加起来的；为了防止重复计算，我们在每次迭代时显式地将它们归零
+    - 调用`loss.backward()`反向传播预测损失，PyTorch 会计算并存储损失函数相对于每个参数的梯度
+    - 一旦我们得到了梯度，就可以调用 optimizer.step() 方法，利用反向传播过程中收集到的梯度来调整参数
+
+我们定义了 train_loop 来循环执行优化代码，并定义了 test_loop 来评估模型在测试集上的表现
+
+```py
+def train_loop(dataloader, model, loss_fn, optimizer):
+    size = len(dataloader.dataset)
+    # Set the model to training mode - important for batch normalization and dropout layers
+    # Unnecessary in this situation but added for best practices
+    model.train()
+    # batch：当前批次的索引
+    # X：特征
+    # y：标签
+    for batch, (X, y) in enumerate(dataloader):
+        # Compute prediction and loss
+        pred = model(X)
+        loss = loss_fn(pred, y)
+
+        # Backpropagation
+        loss.backward()
+        # 执行模型参数的更新
+        optimizer.step()
+        # 清空梯度
+        optimizer.zero_grad()
+
+        if batch % 100 == 0:
+            loss, current = loss.item(), batch * batch_size + len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+
+def test_loop(dataloader, model, loss_fn):
+    # Set the model to evaluation mode - important for batch normalization and dropout layers
+    # Unnecessary in this situation but added for best practices
+    model.eval()
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    test_loss, correct = 0, 0
+
+    # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
+    # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
+    with torch.no_grad():
+        for X, y in dataloader:
+            pred = model(X)
+            test_loss += loss_fn(pred, y).item()
+            # argmax， 1表示维度，从模型的预测结果中，找出概率最高的那个类别的索引
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+
+    test_loss /= num_batches
+    correct /= size
+    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+```
+
+### 保存和加载模型
+
+PyTorch 模型会将学习到的参数（即权重和偏置）保存在一个内部的状态字典（state_dict）中
+
+这些（参数）可以通过 `torch.save` 方法进行持久化保存
+
+```py
+import torch
+import torchvision.models as models
+
+# 从 PyTorch 的模型库中调用 VGG16 神经网络
+# 并自动下载、加载官方在 ImageNet 数据集上预先训练好的权重（V1版本）
+model = models.vgg16(weights='IMAGENET1K_V1')
+# 保存模型
+# model_weights.pth：文件名，也可以是.pt后缀，这样一看就知道是pytorch的模型权重文件
+torch.save(model.state_dict(), 'model_weights.pth')
+
+
+# 先创建一个相同模型的实例来加载模型权重，然后用load_state_dict()加载模型参数
+# weights_only=True，目的是在反序列化（unpickling）过程中，限制只执行加载权重所必需的函数
+# 在 Python 中，pickle 是一种用来保存和读取数据的机制
+# 但它有一个安全隐患：在读取文件时，它可能会执行文件中潜藏的恶意代码
+# 加上 weights_only=True 这个参数，就相当于给 PyTorch 加了一道“安全锁”
+# 告诉它：“我只需要提取模型参数，千万别执行其他任何多余的代码”，从而有效防止恶意攻击
+# 在加载模型权重时，使用 weights_only=True 被认为是一种最佳实践
+
+# 不用指定权重参数，这里只需创建一个未经训练的模型
+model = models.vgg16()
+# 加载模型参数
+model.load_state_dict(torch.load('model_weights.pth', weights_only=True))
+
+# 设置模型的模式为评估模式
+model.eval()
+```
+
+#### 保存和加载包含Shapes的模型
+
+这是torch.save遗留用法，了解即可
+
+```py
+# 当加载模型权重时，我们需要首先实例化模型类，因为模型类定义了神经网络的结构
+# zhe s望将该类的结构与模型一起保存，在这种情况下，可以传model参数，而不是model.state_dict()
+torch.save(model, 'model.pth')
+
+# 加载的时候，设置weights_only=False，因为涉及到加载模型
+# 这种方法在序列化模型时使用了 Python 的 pickle 模块
+# 因此在加载模型时，必须确保原始的类定义仍然可用
+model = torch.load('model.pth', weights_only=False)
+```
+
+### 完整的训练和预测代码
+
+```py
+import torch
+from torch import nn
+from torch.utils.data import DataLoader
+# PyTorch提供了各种领域的库，如TorchText, TorchVision, TorchAudio, 都包含了数据集，这里使用TorchVision数据集
+from torchvision import datasets
+from torchvision.transforms import v2
+import random
+
+# 加载训练数据集
+tranning_data = datasets.FashionMNIST(
+    root = "data",
+    train = True,
+    download= True,
+    # Compose 是一个“组合器”，它的作用是将列表中的多个变换（transforms）打包在一起，并按照列表中的顺序依次执行
+    # 第一步，v2.ToImage()，将输入的图像统一转换为 PyTorch 的 tv_tensors.Image 类型
+    # 第二步，v2.ToDtype(torch.float32, scale=True)，转换图像张量的数据类型
+    # torch.float32，将像素值的数据类型转换为 32位浮点数
+    # scale=True，这是关键参数。当设置为 True 时，它会自动将像素值从整数范围 [0, 255] 线性缩放（归一化）到浮点数范围 [0.0, 1.0]
+    # 也就是说将原始的整数像素值除以255.0
+    transform= v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+)
+
+# 加载测试数据集
+test_data = datasets.FashionMNIST(
+    root="data",
+    train=False,
+    download=True,
+    transform=v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32, scale=True)])
+)
+
+# e表示10的幂，1e-3就是1乘以10的-3次方，即0.001
+learning_rate = 1e-3
+batch_size = 64
+epochs = 5
+
+# Dataset每次检索数据集中一个样本的特征和标签
+# 训练一个模型的时候，我们通常希望以小批量的方式来传递样本
+# 在每次遍历完整数据集（一个epoch）时，重新排序（reshuffle）数据以减少模型过拟合
+# 并使用Python的多处理来加速数据检索
+train_dataloader = DataLoader(tranning_data, batch_size=batch_size, shuffle=True)
+test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+
+# 如果当前有加速器可用，我们希望用加速器训练我们的模型，否则还是用CPU
+device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+
+print(f"Using {device} device")
+
+# X是图像张量
+# y是图像对应的label
+for X, y in test_dataloader:
+    X, y = X.to(device), y.to(device)
+    print(f"Shape of X [Number/Batch Size, Channels, Height, Width]: {X.shape}")
+    print(f"Shape of y: {y.shape} {y.dtype}")
+    break
+
+# 通过派生nn.Module的子类来定义我们自己的神经网络
+class NeuralNetwork(nn.Module):
+    # 在构造方法中初始化神经网络层
+    def __init__(self):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(28*28, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            # 最后一层的输出大小设置为分类的大小，这里是10
+            nn.Linear(512, 10)
+        )
+
+    # 实现forward方法来操作输入数据
+    def forward(self, x):
+        x = self.flatten(x)
+        logits = self.linear_relu_stack(x)
+        return logits
+
+
+# 创建神经网络实例，并将移动到指定设备
+model = NeuralNetwork().to(device)
+
+# 初始化损失函数，使logits归一化并计算预测误差
+loss_fn = nn.CrossEntropyLoss()
+
+# Stochastic Gradient Descent，随机梯度下降算法
+# 此外还有ADAM、RMSProp，应该根据模型和数据分情况使用
+# model.parameters()：需要训练的模型参数
+# lr：超参数Learning Rate
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+# 在单个训练循环中，模型对训练数据集进行预测（批量提供给它）
+# 并反向传播预测误差以调整模型的参数
+def train_loop(dataloader, model, loss_fn, optimizer):
+    size = len(dataloader.dataset)
+    # 设置模型的模式为训练模式，这对批归一化（Batch Normalization）和 Dropout 层非常重要
+    # 在当前情况下其实并非必需，但加上这是为了遵循最佳实践
+    model.train()
+    # batch：当前批次的索引
+    # X：特征
+    # y：标签
+    for batch, (X, y) in enumerate(dataloader):
+        X, y = X.to(device), y.to(device)
+        # 计算预测值和损失
+        pred = model(X)
+        loss = loss_fn(pred, y)
+
+        # 反向传播
+        loss.backward()
+        # 执行模型参数的更新
+        optimizer.step()
+        # 清空梯度
+        optimizer.zero_grad()
+
+        if batch % 100 == 0:
+            loss, current = loss.item(), batch * batch_size + len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+
+# 根据测试数据集检查模型的性能，以确保它正在学习
+def test_loop(dataloader, model, loss_fn):
+    # 设置模型的模式为评估模式，这对批归一化（Batch Normalization）和 Dropout 层非常重要
+    # 在当前情况下其实并非必需，但加上这是为了遵循最佳实践
+    model.eval()
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    test_loss, correct = 0, 0
+
+    # 使用 torch.no_grad() 来评估模型，可以确保在测试模式下不计算梯度
+    # 还能有效减少不必要的梯度计算，并降低 requires_grad=True 的张量所带来的内存占用
+    with torch.no_grad():
+        # X：特征
+        # y：标签        
+        for X, y in dataloader:
+            X, y = X.to(device), y.to(device)
+            pred = model(X)
+            test_loss += loss_fn(pred, y).item()
+            # argmax， 1表示维度，从模型的预测结果中，找出概率最高的那个类别的索引
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+
+    test_loss /= num_batches
+    correct /= size
+    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+# 训练过程在几个迭代（epoch）中进行，这里设置为5轮
+# 在每一轮中，模型学习参数以做出更好的预测
+# 我们打印出模型在每轮的精度和损失
+# 我们希望看到精度随着时间的推移而提高，损失随着时间的推移而减少
+for t in range(epochs):
+    print(f"Epoch {t+1}\n-------------------------------")
+    train_loop(train_dataloader, model, loss_fn, optimizer)
+    test_loop(test_dataloader, model, loss_fn)
+print("Done!")
+
+# 保存模型
+# model_weights.pth：文件名，也可以是.pt后缀，这样一看就知道是pytorch的模型权重文件
+torch.save(model.state_dict(), 'model_weights.pth')
+print("Saved PyTorch Model State to model_weights.pth")
+
+# 加载模型
+model = NeuralNetwork().to(device)
+model.load_state_dict(torch.load("model_weights.pth", weights_only=True))
+
+# 预测
+classes = [
+    # T恤
+    "T-Shirt/top",
+    # 裤子
+    "Trouser",
+    # 套衫
+    "Pullover",
+    # 裙子
+    "Dress",
+    # 外套
+    "Coat",
+    # 凉鞋
+    "Sandal",
+    # 衬衫
+    "Shirt",
+    # 运动鞋
+    "Sneaker",
+    # 包
+    "Bag",
+    # 踝靴：一种只到踝部的靴子，通常用于保护踝关节
+    "Ankle Boot",
+]
+
+# 设置模型的模式为评估模式
+model.eval()
+
+# 随机取出测试数据集中的一个特征和标签
+datasetIndex = random.randint(0, 9999)
+x, y = test_data[datasetIndex][0], test_data[datasetIndex][1]
+
+# 禁用梯度追踪
+with torch.no_grad():
+    x = x.to(device)
+    pred = model(x)
+    predicted, actual = classes[pred[0].argmax(0)], classes[y]
+    result = predicted==actual
+    print(f'datasetIndex: {datasetIndex}, Predicted: "{predicted}", Actual: "{actual}", Predicted Result: {result}')
+```
