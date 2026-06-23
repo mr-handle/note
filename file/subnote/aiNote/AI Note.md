@@ -61,8 +61,8 @@ url = "https://download.pytorch.org/whl/cpu"
 # --extra deepspeed：安装DeepSpeed加速。
 uv sync --all-extras --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
 
-# 先设置镜像源，以防HuggingFace下载很慢
-export HF_ENDPOINT="https://hf-mirror.com"
+# 先设置镜像源，以防HuggingFace下载很慢export HF_ENDPOINT="https://hf-mirror.com"
+
 
 # 通过uv安装 HuggingFace CLI
 # uv tool install "huggingface-hub[cli,hf_xet]"
@@ -109,13 +109,13 @@ uv pip install -e .[all] --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/w
 # 或者根据报错信息：TTS/utils/io.py", line 54, in load_fsspec return torch.load(f, map_location=map_location, **kwargs)
 # 直接改这一行为return torch.load(f, map_location=map_location, weights_only=False, **kwargs)
 # 推荐后面这一种写法，目前只有这个模型是可商用的中文模型
-uv run tts --text "你好，世界！我是爱坤，喂我花生！" --model_name "tts_models/zh-CN/baker/tacotron2-DDC-GST" --out_path ~/Downloads/output.wav
+uv run tts --text "你好，我是爱坤,人称鸡哥，喂我花生！" --model_name "tts_models/zh-CN/baker/tacotron2-DDC-GST" --out_path ~/Downloads/output.wav
 
 # tts_models/en/multi-dataset/tortoise-v2：这个模型很大并且生成语音文件要好久，不推荐使用
 # tts_models/en/ljspeech/glow-tts：生成速度块并且不会漏字，推荐
 uv run tts --text "hello,world! I'm kunJack!" --model_name "tts_models/en/ljspeech/glow-tts" --out_path ~/Downloads/output.wav
 
-# tts_models/multilingual/multi-dataset/your_tts可以将自己的声音作为输入，例子暂时不列出来，目前没有那个需求
+# tts_models/multilingual/multi-dataset/your_tts可以将自己的声音作为输入，例子暂时不列出来，目前没有那个需求，不支持中文转语音
 uv run tts --text "hello,world! I'm aikun!" --model_name "tts_models/multilingual/multi-dataset/your_tts" --out_path ~/Downloads/output.wav --speaker_idx "female-en-5" --language_idx "en" 
 
 # 列出多人语音模型的可选语音列表

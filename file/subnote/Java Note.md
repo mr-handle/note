@@ -3691,7 +3691,7 @@ public class LogHomeConfiguration extends PropertyDefinerBase {
 
 ```xml
 <properties>
-    <javafx.applicationName>hellofx</javafx.applicationName>
+    <javafx.applicationName>应用名称</javafx.applicationName>
 </properties>
 
 <dependencies>
@@ -3714,6 +3714,9 @@ public class LogHomeConfiguration extends PropertyDefinerBase {
         <plugin>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-maven-plugin</artifactId>
+            <configuration>
+                <mainClass>主类全限定类名</mainClass>
+            </configuration>
         </plugin>
     </plugins>
 </build>
@@ -3809,6 +3812,18 @@ contentPane.add(component);
 ```
 
 ### 序列化/反序列化
+
+Jackson 是基于 JSON 文本序列化（反射解析字段 + 文本转换）的独立框架
+
+它不依赖 JDK 原生的序列化机制，只关心对象的结构（无参构造、Getter/Setter），无论类是否实现了 Serializable 接口，Jackson 都能正常工作
+
+但在实际的企业级开发中，很多开发者依然会选择让实体类（如VO）实现 Serializable
+
+这主要是出于通用性和规范性的考虑
+
+如果该对象未来需要用于微服务间的 RPC 调用（如 Dubbo）、消息队列传输（如 RabbitMQ/Kafka）或分布式缓存（如 Redis/Ehcache）
+
+这些底层框架依赖的是 Java 原生的序列化机制，此时就必须实现 Serializable 接口
 
 - JSON和XML这种属于文本类序列化方式（比如后端返回前端的json），这样的实体类可以不实现可序列化接口
 - 如果实体对象需要转为字节（通常是二进制字节流）的形式传输（数据存储/网络传输），就必须实现可序列化接口
