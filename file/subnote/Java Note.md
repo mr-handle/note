@@ -116,6 +116,8 @@ class B {}
         - b）按照在类声明中出现的顺序，执行字段初始化和初始化块
     - 3.执行构造方法主体代码
 
+- java25开始，构造方法中，super(...) 或 this(...) 调用不是必须作为第一条语句出现了，可以在此之前做一些字段校验、初始化了
+
 ```java
 public class Employee {
     // 1. 执行字段声明的初始化
@@ -495,7 +497,9 @@ Assertions.assertTrue("handle" instanceof Object);
 Assertions.assertTrue(Object.class.isAssignableFrom(Integer.class));
 ```
 
-- 从Java 14开始，判断instanceof后，可以直接转型为指定变量，避免再次强制转型。
+##### instanceof模式匹配
+
+- 从Java16开始，判断instanceof后，可以直接转型为指定变量，避免再次强制转型。
 
 ```java
  Object object = "hello";
@@ -1446,6 +1450,96 @@ public final class DateTimeUtil {
         return instant.atZone(calendar.getTimeZone().toZoneId());
     }
 }
+```
+
+### try-with-resource的新写法
+
+java9开始，在 try-with-resources 语句中可以使用 effectively-final 变量（在初始化后从未更改的变量）
+
+但是像下面的例子，传统的写法更合适，因为FileInputStream和FileOutputStream的受检异常FileNotFoundException反而要另外处理了
+
+```java
+@Test
+public void test() throws FileNotFoundException {
+    BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream("demo.txt"));
+    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream("demo.txt"));
+    try (bufferedInputStream; bufferedOutputStream) {
+
+    } catch (IOException exception) {
+        throw new RuntimeException(exception.getLocalizedMessage());
+    }
+}
+```
+
+### var关键字
+
+java10开始，定义局部变量时可以用var关键字
+
+```java
+var string = "hello world";
+var list = Stream.iterate(0, n -> n + 1).limit(3).collect(Collectors.toList());
+```
+
+### switch语句
+
+java14开始，switch的新写法
+
+switch 表达式中就多了一个关键字`yield`，用于跳出 switch 块，主要用于返回一个值
+
+在使用 yield 时，需要有 default 条件
+
+```java
+String weather = "sunny";
+switch (weather) {
+    case "sunny" -> System.out.println("晴天");
+    case "raining" -> System.out.println("雨天");
+}
+```
+
+#### switch模式匹配
+
+java21开始，switch-case可以使用模式匹配
+
+```java
+static String patternMatchingWithSwitch(Object object) {
+    // switch-case 使用类型模式来进行匹配
+    return switch (object) {
+        case Long number    -> "Long Object of " + number;
+        case String string  -> "String Object of " + string;
+        default             -> "Unknown Object of " + object;
+    };
+}
+```
+
+### 文本块
+
+java15开始，可以使用String的文本块写法
+
+```java
+// \ : 表示行尾不引入换行符
+// \s：表示单个空格
+
+// 输出：
+// line 1: hello world
+// line 2
+String string = """
+            line 1: he\
+            llo\sworld
+            line 2
+            """;
+```
+
+### 进程API
+
+java9开始，可以使用ProcessHandle进程API获取进程信息
+
+```java
+// 获取当前正在运行的 JVM 的进程
+ProcessHandle currentProcess = ProcessHandle.current();
+// 输出进程的 id
+System.out.println(currentProcess.pid());
+// 输出进程的信息
+System.out.println(currentProcess.info());
 ```
 
 ### 多线程
@@ -2969,6 +3063,88 @@ Map<Boolean, Dish> mostCaloricPartitionedByVegetarian = menu.stream().collect(
         maxBy(comparingInt(Dish::getCalories)),Optional::get))); 
 ```
 
+### 作用域值（ScopedValue）
+
+Java25开始，可以使用作用域值
+
+作用域值适用于不可变的值上下文共享（如用户 ID、链路追踪 ID），取代ThreadLocal，彻底杜绝内存泄漏问题
+
+如果业务需要可变状态共享（如事务状态、临时计算结果），仍需使用传统的 ThreadLocal
+
+```java
+public class ScopedValueDemo {
+    // 定义作用域值常量
+    private static final ScopedValue<String> CONTEXT_SCOPED_VALUE = ScopedValue.newInstance();
+
+    public void process(String userId) {
+        // 使用where绑定值到作用域值常量，绑定后的值为只读
+        // 使用run（无返回值）/call（有返回值）定义处理逻辑，可通过作用域值常量的get方法获取绑定的值
+        // 绑定的值出作用域（run/call结束)后自动清理
+        ScopedValue.where(CONTEXT_SCOPED_VALUE, userId)
+                .run(() -> {
+                    String value = CONTEXT_SCOPED_VALUE.get();
+                    // 虚拟线程会自动继承父线程的作用域值
+                    Thread.startVirtualThread(() -> {
+                        System.out.println("The userId getted from SCOPED_VALUE is:" + value);
+                    });
+                });
+    }
+}
+```
+
+### 紧凑源文件和实例main方法
+
+Java25开始，紧凑源文件和实例main方法转正
+
+```java
+// 创建一个类文件，然后直接这么写
+public class NewMainThreadDemo {
+    void main() {
+        // todo
+    }
+}
+
+// 或者这么写，这种写法开头不能有包声明
+void main() {
+    // todo
+}
+```
+
+### 模块
+
+在项目中创建一个模块描述文件（module-info.java），就可以将项目声明为一个模块
+
+```java
+// 声明一个模块
+module com.handle.hellofx {
+    // requires声明依赖的模块
+    requires javafx.controls;
+    requires javafx.fxml;
+
+    // opens 包 to 模块，允许模块访问包的特定成员
+    opens com.handle.hellofx to javafx.fxml;
+
+    // 将包公开，允许其他模块在编译和运行时访问该包里的public类和接口
+    exports com.handle.hellofx;
+}
+```
+
+### 导入模块声明
+
+java25开始，无论是否模块化，都可以简洁地导入整个模块的所有导出包，而无需逐个声明包的导入
+
+```java
+// 可以直接使用Stream了，而无需导入Stream包
+import module java.base;
+
+public class ImportModuleDemo {
+    void main() {
+        List<Integer> list = Stream.iterate(0, n -> n + 1).limit(3).collect(Collectors.toList());
+        System.out.println(list);
+    }
+}
+```
+
 ### 正则表达式
 
 - 字符串精确匹配实际上用处不大，用`String.equals()`就可以做到。大多数情况下，我们想要的匹配规则是模糊匹配
@@ -3994,9 +4170,24 @@ public class Applistener implements ServletContextListener {
     必要时将localhost:8080替换成服务器的ip地址
 - 7 关闭Tomcat：找到并运行tomcat根目录/bin/shutdown.bat
 
-### 部署
+### 打包部署
 
-#### 手动生成jre
+#### jlink
+
+#### 生成包含指定模块的jre
+
+- linux系统
+
+```sh
+# 1.打开终端
+# 2.进入某个目录，生成的jre会在这个目录下
+cd 指定目录
+
+# 3.生成jre
+jlink --module-path jmods --add-modules java.xml --output jre
+```
+
+- windows系统
 
 ```sh
 # 1.打开cmd（权限不够时用管理员身份打开cmd）
@@ -4007,10 +4198,7 @@ cd 指定目录
 jlink.exe --module-path jmods --add-modules java.xml --output jre
 ```
 
-#### 普通springboot发布
-
-- 1.复制jre、可执行jar文档、run.bat（springboot项目看需求创建config文档夹，里面放application.properties配置文档），到同一目录下即可
-- 2.运行run.bat快速启动可执行jar文档
+#### jpackage
 
 #### 生成可执行文件graalvm
 
@@ -5765,6 +5953,10 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 
 # 采用解释器+即时编译器的混合模式执行程序
 -Xmixed
+
+# java14开始，启用可以在空指针异常时获取详细的调用信息
+# 更往后的版本这个选项是默认开启了的
+-XX:+ShowCodeDetailsInExceptionMessages
 ```
 
 ##### 建议的jvm选项参数整合
@@ -5790,6 +5982,9 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 
 # 禁止代码中显式调用 System.gc()，避免人为触发不必要的 Full GC，默认
 -XX:+DisableExplicitGC
+
+# java25开始，可以启用紧凑对象头，减少堆内存占用
+-XX:+UseCompactObjectHeaders
 ```
 
 #### 垃圾收集
@@ -6166,6 +6361,14 @@ System.out.println(phantomReference.get());
 ```sh
 # 使用ZGC垃圾收集器，并启用分代ZGC功能
 -XX:+UseZGC -XX:+ZGenerational
+```
+
+###### Shenandoah GC
+
+```sh
+# java15开始，可以使用Shenandoah GC
+# java25开始，可以使用分代 Shenandoah GC
+-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational
 ```
 
 ###### 查看默认的垃圾收集器
@@ -11653,6 +11856,11 @@ mybatis.configuration.log-impl=org.apache.ibatis.logging.slf4j.Slf4jImpl
 </build>
 ```
 
+#### 发布
+
+- 1.复制jre、可执行jar文档、run.bat（springboot项目看需求创建config文档夹，里面放application.properties配置文档），到同一目录下即可
+- 2.运行run.bat快速启动可执行jar文档
+
 ### 命令启动
 
 ```sh
@@ -11664,8 +11872,8 @@ java -jar [选项] [参数] <jar文件名>
     - 指定要激活的配置文件：`-Dspring.profiles.active=<dev/test/prod>`
 
 - 指定JVM参数`-X`
+    - 设置最小堆内存：`-Xms1024m`
     - 设置最大堆内存：`-Xmx1024m`
-    - 设置最小堆内存：`-Xms512m`
 
 ### Spring Boot项目安装ssl证书，用https访问
 
