@@ -21,4 +21,7 @@ gcc source.c -o source
 
 # 编译C++源文件，生成可执行文件（可以不指定文件扩展名），如果不指定-o，则生成的是a.out
 g++ source.cpp -o source
+
+# 编译为动态链接库（so文件）
+gcc -shared -o source.so source.c
 ```

@@ -3145,6 +3145,57 @@ public class ImportModuleDemo {
 }
 ```
 
+### 外部函数和内存API
+
+java22开始，可以使用如下方式调用C方法
+
+- 创建文件math.c
+
+```c
+int max(int x, int y)
+{
+    return (x > y) ? x : y;
+}
+```
+
+- 编译为动态链接库（so文件）
+
+```sh
+gcc -shared -o math.so math.c
+```
+
+- 在java中调用math的max方法
+
+```java
+// 1. 获取原生链接器
+Linker linker = Linker.nativeLinker();
+
+// Arena.ofConfined()，仅限创建它的线程访问，不可跨线程
+try (Arena arena = Arena.ofConfined()) {
+    String libPath = "/path/to/math.so";
+    String methodName = "max";
+    // 2. 查找并加载本地库中的 "max" 函数符号
+    // 如果使用linker.defaultLookup()，将查找操作系统原生提供的标准库，资源将会伴随整个JVM生命周期
+    SymbolLookup thirdPartyLookup = SymbolLookup.libraryLookup(libPath, arena);
+    MemorySegment methodAddress =
+            thirdPartyLookup.find(methodName).orElseThrow(() -> new NoSuchElementException("find method exception: " + methodName));
+
+    // 3. 定义C方法的签名：int max(int x, int y)
+    FunctionDescriptor functionDescriptor = FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT);
+
+    // 4. 创建方法句柄 (MethodHandle)
+    MethodHandle methodHandle = linker.downcallHandle(methodAddress, functionDescriptor);
+
+    try {
+        // 5. 调用C方法
+        int result = (int) methodHandle.invoke(40, 30);
+        System.out.println("Max value: " + result);
+    } catch (Throwable throwable) {
+        throw new RuntimeException("invoke method " + methodName + " exception", throwable);
+    }
+}
+```
+
 ### 正则表达式
 
 - 字符串精确匹配实际上用处不大，用`String.equals()`就可以做到。大多数情况下，我们想要的匹配规则是模糊匹配
@@ -4174,6 +4225,10 @@ public class Applistener implements ServletContextListener {
 
 #### jlink
 
+java9开始，可以使用jlink打包项目，甚至可以生成最小自包含jre的项目包
+
+java9开始，jdk默认不包含jre了，可以使用jlink生成包含指定模块的jre
+
 #### 生成包含指定模块的jre
 
 - linux系统
@@ -4199,6 +4254,8 @@ jlink.exe --module-path jmods --add-modules java.xml --output jre
 ```
 
 #### jpackage
+
+java16开始，可以使用jpackage将项目打包成Linux的deb和rpm，windows的exe，以及macOS的pkg和dmg
 
 #### 生成可执行文件graalvm
 
