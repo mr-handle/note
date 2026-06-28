@@ -1452,6 +1452,49 @@ public final class DateTimeUtil {
 }
 ```
 
+#### Record类型
+
+java16开始，可以使用Record类型
+
+- record 声明的类
+    - 是一个final类，不能继承其它类，但是可以实现一个或多个接口
+    - 所有字段是`private final`的
+    - 自带：包含所有字段的构造器、各个字段的访问器（`实例.字段名()`）、equals()，hashCode() 方法以及 toString() 方法
+
+```java
+public record Pet(
+        // 在此声明字段
+        String name,
+        int age
+) {
+    // 可选的静态字段
+    public static final Pet DEFAULT_PET = new Pet("dog", 1);
+
+    // 可选的紧凑构造器 (Compact Constructor)，无需写参数列表和赋值语句（编译器会自动处理）
+    // 可以写一些参数校验逻辑
+    public Pet {
+        if (Objects.isNull(name) || name.isBlank()) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        } else {
+            name = name.trim();
+        }
+        if (age < 0 || age > 50) {
+            throw new IllegalArgumentException("Age cannot be negative or greater than 50");
+        }
+    }
+
+    // 可选的实例方法
+    public boolean isAdultPet() {
+        return age > 1;
+    }
+
+    // 可选的静态方法
+    public static Pet getDefaultPet() {
+        return DEFAULT_PET;
+    }
+}
+```
+
 ### try-with-resource的新写法
 
 java9开始，在 try-with-resources 语句中可以使用 effectively-final 变量（在初始化后从未更改的变量）
@@ -11946,6 +11989,115 @@ server:
         # keystore文件只包含一个证书的时候可以不用写别名
         key-alias: yourKeystoreAlias
 ```
+
+## Spring AI
+
+Spring AI的版本选择也是要考虑跟Spring Boot版本兼容的
+
+- bom
+
+```xml
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-bom</artifactId>
+    <version>${spring.ai.bom.version}</version>
+    <type>pom</type>
+    <scope>import</scope>
+</dependency>
+```
+
+### 以Ollama为例使用Spring AI
+
+- 依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-ollama</artifactId>
+</dependency>
+```
+
+- 配置
+
+```properties
+# 强制服务器端用UTF-8编码处理对话
+# 只对请求生效，对响应不生效的
+server.servlet.encoding.enabled=true
+server.servlet.encoding.force=true
+server.servlet.encoding.charset=UTF-8
+
+# ollama的本地服务器地址
+spring.ai.ollama.base-url=http://localhost:11434
+# 使用的模型名称，ollma list命令列出的模型名称复制过来就行了
+spring.ai.ollama.chat.model=gemma4:e4b-it-qat
+```
+
+- 控制器，使用ChatClient
+
+```java
+@RestController
+class MyController {
+
+    private final ChatClient chatClient;
+
+    //  Spring AI自动装配了一个ChatClient.Builder
+    public MyController(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
+    }
+
+    @GetMapping("/ai")
+    String generation(String userInput) {
+        return this.chatClient.prompt()
+            .user(userInput)
+            // 发送一个请求到AI模型
+            .call()
+            // 将AI模型的响应以String返回
+            .content();
+    }
+}
+```
+
+- 控制器，使用ChatModel
+
+```java
+@RestController
+public class ApplicationController {
+    @Autowired
+    private OllamaChatModel chatModel;
+
+    @GetMapping("/ai/generate")
+    public Map<String, String> generate(@RequestParam(value = "message", defaultValue = "讲个笑话给我听") String message) {
+        return Map.of("generation", this.chatModel.call(message));
+    }
+
+    //  produces = "text/html;charset=utf-8"将返回的数据用utf-8编码
+    @GetMapping(value = "/ai/generateStream", produces = "text/html;charset=utf-8")
+    public Flux<String> generateStream(@RequestParam(value = "message", defaultValue = "讲个笑话给我听") String message) {
+        return chatModel.stream(message);
+        // 下面这种写法是等价的
+        // Prompt prompt = new Prompt(new UserMessage(message));
+        // return chatModel.stream(prompt).map(response -> response.getResult().getOutput().getText());
+    }
+}
+```
+
+### ChatModel 和 ChatClient
+
+ChatModel 和 ChatClient 是两个核心的抽象，它们分别代表了底层交互接口和高级应用封装
+
+简单来说，ChatModel 是直接与底层大语言模型（LLM）通信的基础设施
+
+而 ChatClient 则是基于 ChatModel 构建的高级 API，旨在简化复杂 AI 应用的开发
+
+- ChatModel（底层对话模型）：
+    - 它是直接与具体大语言模型交互的底层接口，提供基础的 call() 和 stream() 方法
+    - 工作原理是接收 Prompt 作为输入，发送给后端大模型，并接收 ChatResponse 作为输出
+    - 适合简单的模型交互场景或需要精细控制底层参数的模型实验
+
+- ChatClient（高级聊天客户端）：
+    - 它是基于 ChatModel 构建的高级封装，提供了流畅的链式 API（Fluent API）
+    - 类似于应用程序开发中的“服务层”，它将与 LLM 及其他组件（如提示词模板、聊天记忆、RAG 组件等）交互的复杂性隐藏在背后，开发者可以快速组装一整套 AI 交互流程
+    - 适合快速构建标准化的复杂 AI 服务和业务接口
 
 ## Spring Security
 
