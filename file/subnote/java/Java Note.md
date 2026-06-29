@@ -141,6 +141,21 @@ public void test5() {
 }
 ```
 
+### 修饰符的顺序
+
+- 根据《Java 语言规范》的推荐，修饰符应当按照以下标准顺序进行排列：
+    - Annotations
+    - 访问权限修饰符：public / protected / private
+    - abstract
+    - static
+    - final
+    - transient
+    - volatile
+    - synchronized
+    - native
+    - default
+    - strictfp
+
 ### 类路径
 
 - 类路径就是JVM在运行时用来查找类文件(.class)和资源文件（*.properties、*.xml等）的一组目录或jar文件列表
@@ -2345,194 +2360,6 @@ CLH 锁 对自旋锁进行了改进，是基于单链表的自旋锁。
 
     - 由 单向队列 优化为 双向队列
         - 在 CLH 变体队列中，会对等待的线程进行阻塞操作，当队列前边的线程释放锁之后，需要对后边的线程进行唤醒，因此增加了 next 指针，成为了双向队列
-
-### 代理模式
-
-#### 静态代理
-
-静态代理在编译时就将接口、实现类、代理类这些都变成了一个个实际的 class 文件
-
-静态代理对目标对象的每个方法的增强都要手动完成
-    - 非常不灵活：比如接口一旦新增加方法，目标对象和代理对象都要进行修改
-    - 且麻烦：需要对每个目标类都单独写一个代理类
-
-- 1.定义一个接口及其实现类
-
-```java
-public interface UserService {
-    void save(String name);
-}
-
-public class UserServiceImpl implements UserService {
-    @Override
-    public void save(String name) {
-        System.out.println("save user: " + name);
-    }
-}
-```
-
-- 2.创建代理类并同样实现该接口
-
-```java
-public class UserServiceProxy implements UserService {
-    private final UserService userService;
-
-    public UserServiceProxy(UserService userService) {
-        this.userService = userService;
-    }
-
-    @Override
-    public void save(String name) {
-        // 调用方法前添加自己的操作
-        System.out.println("before method " + "save");
-        // 调用被代理对象的方法
-        userService.save(name);
-        // 调用方法后添加自己的操作
-        System.out.println("after method " + "save");
-    }
-}
-```
-
-- 3.使用代理对象调用方法
-
-```java
-UserService userService = new UserServiceImpl();
-UserServiceProxy proxy = new UserServiceProxy(userService);
-proxy.save("handle");
-```
-
-#### 动态代理
-
-从JVM角度来说，动态代理是在运行时动态生成类字节码，并加载到JVM中。
-
-##### JDK原生动态代理
-
-缺点：只能代理实现了接口的类
-
-核心：InvocationHandler接口和Proxy类
-
-- 1.定义一个接口及其实现类
-
-```java
-public interface UserService {
-    void save(String name);
-}
-
-public class UserServiceImpl implements UserService {
-    @Override
-    public void save(String name) {
-        System.out.println("save user: " + name);
-    }
-}
-```
-
-- 2.实现InvocationHandler接口并重写invoke方法，在invoke方法中我们会调用被代理对象的方法并自定义一些处理逻辑；
-
-```java
-public class UserInvocationHandler implements InvocationHandler {
-    // 被代理对象
-    private final Object target;
-
-    public UserInvocationHandler(Object target) {
-        this.target = target;
-    }
-
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // 调用方法前添加自己的操作
-        System.out.println("before method " + method.getName());
-        // 调用被代理对象的方法
-        Object result = method.invoke(target, args);
-        // 调用方法后添加自己的操作
-        System.out.println("after method " + method.getName());
-        return result;
-    }
-}
-```
-
-- 3.通过`Proxy.newProxyInstance(ClassLoader loader,Class<?>[] interfaces,InvocationHandler h)`方法创建代理对象
-
-```java
-// 被代理对象
-UserService userService = new UserServiceImpl();
-// 代理对象
-UserService proxyInstance = (UserService) Proxy.newProxyInstance(
-    userService.getClass().getClassLoader(),
-    userService.getClass().getInterfaces(), 
-    new UserInvocationHandler(userService)
-);
-// 代理对象调用方法
-proxyInstance.save("Tom");
-```
-
-##### CGLIB动态代理
-
-Maven依赖
-
-```xml
-<dependency>
-    <groupId>cglib</groupId>
-    <artifactId>cglib</artifactId>
-    <version>${cglib.version}</version>
-</dependency>
-```
-
-CGLIB是一个基于ASM的字节码生成库，它允许我们在运行时对字节码进行修改和动态生成
-
-缺点：CGLIB通过继承方式实现代理，因此不能代理终结类和终结方法
-
-核心：MethodInterceptor接口和Enhancer类
-
-- 1.定义一个类
-
-```java
-public class UserServiceImpl {
-    public void save(String name) {
-        System.out.println("save user: " + name);
-    }
-}
-```
-
-- 2.实现MethodInterceptor接口并重写intercept方法，intercept用于增强被代理类的方法
-
-```java
-public class UserMethodInterceptor implements MethodInterceptor {
-    @Override
-    public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
-        // 调用方法前添加自己的操作
-        System.out.println("before method " + method.getName());
-        // 调用被代理对象的方法
-        Object result = proxy.invokeSuper(obj, args);
-        // 调用方法后添加自己的操作
-        System.out.println("after method " + method.getName());
-        return result;
-    }
-}
-```
-
-- 3.通过Enhancer类的create()创建代理类
-
-```java
-// 创建被代理对象
-UserServiceImpl userService = new UserServiceImpl();
-  
-Enhancer enhancer = new Enhancer();
-enhancer.setClassLoader(userService.getClass().getClassLoader());
-enhancer.setSuperclass(userService.getClass());
-enhancer.setCallback(new UserMethodInterceptor());
-// 创建代理对象
-UserServiceImpl proxyInstance = (UserServiceImpl) enhancer.create();
-
-// 代理对象调用方法
-proxyInstance.save("Tom");
-```
-
-- 4.Java 17及以上版本，运行需要添加如下jvm参数
-
-```jvm
---add-opens java.base/java.lang=ALL-UNNAMED
---add-opens java.base/sun.net.util=ALL-UNNAMED
-```
 
 ### jdbc
 
@@ -7108,6 +6935,351 @@ volatile 关键字能保证数据的可见性，但不能保证数据的原子�
 但从 Java 程序的视角来看，对象创建才刚开始，<init> 方法还没有执行，所有的字段都还为零。
 
 所以一般来说，执行 new 指令之后会接着执行 <init> 方法，把对象按照程序员的意愿进行初始化，这样一个真正可用的对象才算完全产生出来。
+
+### 设计模式
+
+#### 单例模式
+
+单例模式有很多中写法，一般静态内部类写法和饿汉式写法就能应付绝大多数情况了
+
+- 懒汉式写法（线程不安全）
+
+```java
+public class Singleton {
+    private static Singleton instance;
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        if (Objects.isNull(instance)) {
+            instance = new Singleton();
+        }
+        return instance;
+    }
+}
+```
+
+- 懒汉式写法（线程安全），也叫双重校验锁写法
+
+```java
+public class Singleton {
+    private static volatile Singleton instance;
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        if (Objects.isNull(instance)) {
+            synchronized (Singleton.class) {
+                if (Objects.isNull(instance)) {
+                    instance = new Singleton();
+                }
+            }
+        }
+        return instance;
+    }
+}
+```
+
+- 懒汉式写法（线程安全），也叫静态内部类写法
+    - 类的加载遵循“按需加载”的原则
+    - 仅仅加载外部类，或者调用外部类的其他方法，都不会触发静态内部类的加载
+    - 对于静态内部类，JVM 只有在主动使用它时才会去加载它
+
+```java
+public class Singleton {
+    private Singleton() {}
+
+    private static class SingletonHolder {
+        private static final Singleton INSTANCE = new Singleton();
+    }
+
+    public static Singleton getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+}
+```
+
+- 饿汉式写法（线程安全）
+    - JVM 保证类加载的线程安全：在 JVM 中，类的加载、链接和初始化过程本身就是线程安全的
+    - 当多个线程同时首次访问 Singleton.getInstance() 时，JVM 会保证 Singleton 类只被加载和初始化一次
+
+```java
+public class Singleton {
+    private static final Singleton INSTANCE = new Singleton();
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        return INSTANCE;
+    }
+}
+```
+
+- 枚举写法，不但线程安全还能防⽌反序列化重新创建新的对象
+
+```java
+public enum Singleton {
+    INSTANCE;
+    // 根据需要定义其它方法
+}
+```
+
+#### 迭代器模式
+
+迭代器（Iterator）模式，提供⼀种⽅法访问⼀个容器（container）对象中各
+个元素，⽽⼜不需暴露该对象的内部细节
+
+以ArrayList为例，其继承信息如下图
+
+![Iterator](image/Iterator.png)
+
+- ArrayList定义了一个内部类Itr，并实现了Iterator接口的方法
+
+- ArrayList实现了Iterable接口的iterator()方法，该方法返回一个Itr对象，从而通过Itr对象遍历元素
+
+#### 代理模式
+
+##### 静态代理
+
+静态代理在编译时就将接口、实现类、代理类这些都变成了一个个实际的 class 文件
+
+静态代理对目标对象的每个方法的增强都要手动完成
+    - 非常不灵活：比如接口一旦新增加方法，目标对象和代理对象都要进行修改
+    - 且麻烦：需要对每个目标类都单独写一个代理类
+
+- 1.定义一个接口及其实现类
+
+```java
+public interface UserService {
+    void save(String name);
+}
+
+public class UserServiceImpl implements UserService {
+    @Override
+    public void save(String name) {
+        System.out.println("save user: " + name);
+    }
+}
+```
+
+- 2.创建代理类并同样实现该接口
+
+```java
+public class UserServiceProxy implements UserService {
+    private final UserService userService;
+
+    public UserServiceProxy(UserService userService) {
+        this.userService = userService;
+    }
+
+    @Override
+    public void save(String name) {
+        // 调用方法前添加自己的操作
+        System.out.println("before method " + "save");
+        // 调用被代理对象的方法
+        userService.save(name);
+        // 调用方法后添加自己的操作
+        System.out.println("after method " + "save");
+    }
+}
+```
+
+- 3.使用代理对象调用方法
+
+```java
+UserService userService = new UserServiceImpl();
+UserServiceProxy proxy = new UserServiceProxy(userService);
+proxy.save("handle");
+```
+
+##### 动态代理
+
+从JVM角度来说，动态代理是在运行时动态生成类字节码，并加载到JVM中。
+
+###### JDK原生动态代理
+
+缺点：只能代理实现了接口的类
+
+核心：InvocationHandler接口和Proxy类
+
+- 1.定义一个接口及其实现类
+
+```java
+public interface UserService {
+    void save(String name);
+}
+
+public class UserServiceImpl implements UserService {
+    @Override
+    public void save(String name) {
+        System.out.println("save user: " + name);
+    }
+}
+```
+
+- 2.实现InvocationHandler接口并重写invoke方法，在invoke方法中我们会调用被代理对象的方法并自定义一些处理逻辑；
+
+```java
+public class UserInvocationHandler implements InvocationHandler {
+    // 被代理对象
+    private final Object target;
+
+    public UserInvocationHandler(Object target) {
+        this.target = target;
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        // 调用方法前添加自己的操作
+        System.out.println("before method " + method.getName());
+        // 调用被代理对象的方法
+        Object result = method.invoke(target, args);
+        // 调用方法后添加自己的操作
+        System.out.println("after method " + method.getName());
+        return result;
+    }
+}
+```
+
+- 3.通过`Proxy.newProxyInstance(ClassLoader loader,Class<?>[] interfaces,InvocationHandler h)`方法创建代理对象
+
+```java
+// 被代理对象
+UserService userService = new UserServiceImpl();
+// 代理对象
+UserService proxyInstance = (UserService) Proxy.newProxyInstance(
+    userService.getClass().getClassLoader(),
+    userService.getClass().getInterfaces(), 
+    new UserInvocationHandler(userService)
+);
+// 代理对象调用方法
+proxyInstance.save("Tom");
+```
+
+###### CGLIB动态代理
+
+Maven依赖
+
+```xml
+<dependency>
+    <groupId>cglib</groupId>
+    <artifactId>cglib</artifactId>
+    <version>${cglib.version}</version>
+</dependency>
+```
+
+CGLIB是一个基于ASM的字节码生成库，它允许我们在运行时对字节码进行修改和动态生成
+
+缺点：CGLIB通过继承方式实现代理，因此不能代理终结类和终结方法
+
+核心：MethodInterceptor接口和Enhancer类
+
+- 1.定义一个类
+
+```java
+public class UserServiceImpl {
+    public void save(String name) {
+        System.out.println("save user: " + name);
+    }
+}
+```
+
+- 2.实现MethodInterceptor接口并重写intercept方法，intercept用于增强被代理类的方法
+
+```java
+public class UserMethodInterceptor implements MethodInterceptor {
+    @Override
+    public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+        // 调用方法前添加自己的操作
+        System.out.println("before method " + method.getName());
+        // 调用被代理对象的方法
+        Object result = proxy.invokeSuper(obj, args);
+        // 调用方法后添加自己的操作
+        System.out.println("after method " + method.getName());
+        return result;
+    }
+}
+```
+
+- 3.通过Enhancer类的create()创建代理类
+
+```java
+// 创建被代理对象
+UserServiceImpl userService = new UserServiceImpl();
+  
+Enhancer enhancer = new Enhancer();
+enhancer.setClassLoader(userService.getClass().getClassLoader());
+enhancer.setSuperclass(userService.getClass());
+enhancer.setCallback(new UserMethodInterceptor());
+// 创建代理对象
+UserServiceImpl proxyInstance = (UserServiceImpl) enhancer.create();
+
+// 代理对象调用方法
+proxyInstance.save("Tom");
+```
+
+- 4.Java 17及以上版本，运行需要添加如下jvm参数
+
+```jvm
+--add-opens java.base/java.lang=ALL-UNNAMED
+--add-opens java.base/sun.net.util=ALL-UNNAMED
+```
+
+#### 观察者模式
+
+- 对象间⼀对多的依赖关系
+    - 一：被观察者，subject
+    - 多：观察者，observer
+- 所有观察者实现相同的接口，因此都有一个同名方法，该方法用来更新观察者的状态（通知）
+- 被观察者内部保存观察者对象
+- 当被观察者的状态发⽣改变时，遍历内部保存的观察者对象，执行同名方法（观察者得到通知并被⾃动更新）
+
+```java
+// 观察者接口
+public interface Observer {
+    void update();
+}
+
+// A观察者
+public class AObserverImpl implements Observer {
+    @Override
+    public void update() {
+        System.out.println("A观察者被通知更新");
+    }
+}
+
+// B观察者
+public class BObserverImpl implements Observer {
+    @Override
+    public void update() {
+        System.out.println("B观察者被通知更新");
+    }
+}
+
+// 被观察者
+public class Subject {
+    private List<Observer> observers = new ArrayList<>();
+
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+    public void advise() {
+        for (Observer item : observers) {
+            item.update();
+        }
+    }
+}
+
+// 测试
+public void test() {
+    AObserverImpl aObserver = new AObserverImpl();
+    BObserverImpl bObserver = new BObserverImpl();
+    Subject subject = new Subject();
+    subject.addObserver(aObserver);
+    subject.addObserver(bObserver);
+    subject.advise();
+}
+```
 
 ## 项目管理工具
 

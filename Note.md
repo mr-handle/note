@@ -2,7 +2,7 @@
 
 ## 目录
 
-- [后端笔记](/file/subnote/Java%20Note.md "点击链接查看后端笔记")
+- [Java笔记](/file/subnote/java/Java%20Note.md "点击链接查看Java笔记")
 
 - [前端笔记](/file/subnote/Front%20End%20Note.md "点击链接查看前端笔记")
 
@@ -16,7 +16,9 @@
 
 - [Python笔记](/file/subnote/Python%20Note.md "点击链接查看Python笔记")
 
-- [AI笔记](/file/subnote/aiNote/AI%20Note.md "点击链接查看AI笔记")
+- [AI笔记](/file/subnote/ai/AI%20Note.md "点击链接查看AI笔记")
+
+- [C/C++笔记](/file/subnote/cPlusPlus/C%20Plus%20Plus%20Note.md "点击链接查看C/C++笔记")
 
 ## 硬件笔记
 
