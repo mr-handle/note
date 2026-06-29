@@ -7281,6 +7281,68 @@ public void test() {
 }
 ```
 
+#### 装饰器模式
+
+装饰器模式（Decorator Pattern）的核心思想是：在不修改原有类代码的情况下，动态地给一个对象添加一些额外的职责。它比生成子类更为灵活
+
+当一个类的功能需要频繁变动，或者需要以各种方式组合功能时，装饰器模式就该上场了
+
+```java
+// 基类
+public class Food {
+    private String foodName;
+
+    public Food() {
+
+    }
+    public Food(String foodName) {
+        this.foodName = foodName;
+    }
+
+    public String make() {
+        return foodName;
+    }
+}
+
+// 装饰器1
+public class Bread extends Food{
+    private Food basicFood;
+
+    public Bread(Food basicFood) {
+        this.basicFood = basicFood;
+    }
+
+    @Override
+    public String make() {
+        return basicFood.make() + "+面包";
+    }
+}
+
+// 装饰器2
+public class Vegetable extends Food{
+    private Food basicFood;
+
+    public Vegetable(Food basicFood) {
+        this.basicFood = basicFood;
+    }
+
+    @Override
+    public String make() {
+        return basicFood.make() + "+蔬菜";
+    }
+}
+
+public void test() {
+    Food food = new Bread(new Vegetable(new Food("炸鸡")));
+    // 先调用最外层Bread的make方法：return basicFood.make() + "+面包"
+    // Bread的basicFood这里是Vegetable，调用Vegetable的make方法：basicFood.make() + "+蔬菜"
+    // Vegetable的basicFood这里是Food，调用Food的make方法：返回foodName，即"炸鸡"
+    // 然后返回炸鸡+蔬菜
+    // 最后返回炸鸡+蔬菜+面包
+    System.out.println(food.make());
+}
+```
+
 ## 项目管理工具
 
 ### Maven
