@@ -7378,7 +7378,7 @@ public void test() {
     <!-- 2.设置下载jar包的镜像地址 -->
     <mirror>
         <id>alimaven</id>
-        <mirrorOf>central</mirrorOf>
+        <mirrorOf>*</mirrorOf>
         <name>aliyun maven</name>
         <url>https://maven.aliyun.com/repository/public</url>
     </mirror>
@@ -21893,10 +21893,11 @@ DNS1=114.114.114.114
 - 打开`Window->Preferences`
     - General
         - `Startup and Shutdown` -> `Plug-ins activated on startup`里面的选项都取消勾选
+        - `Apperance` -> `Colors and Fonts`
+            - `Basic` -> `Text Font`，点击`Edit`进行代码编辑区的字体和字号设置
+            - `View and Editor Folders` -> `Tree and Table font for views` -> 点击`Edit`进行侧边栏的字体和字号设置
 
 ##### 通用设置
-
-- 设置字体和字号，General->Apperance->Colors and Fonts->Basic->Text Font，点击`Edit`进行设置
 
 - 设置自动保存，General->Content Types->Text，在`Default encoding` 输入`UTF-8`，然后点击`Update`
 
@@ -21937,6 +21938,7 @@ DNS1=114.114.114.114
 ##### XML配置
 
 - 设置缩进，XML->XML Files->Editor，选择`Indent using spaces`，`Indentation size`设置为4
+    - 如果是Eclipse IDE for Java Developers版本，需要下载插件`Eclipse XML Editors and Tools`
 
 - 设置xml文件头部约束资源下载，XML(Wild Web Developer)，勾选`Download external resources like referenced DTD,XSD`
 
