@@ -3819,6 +3819,21 @@ public class LogHomeConfiguration extends PropertyDefinerBase {
 </build>
 ```
 
+#### 运行程序
+
+虽然`mvn javafx:run`可以直接运行程序了，但是无法进行调试，还是要通过添加VM选项参数指定javafx库位置来启动程序
+
+```sh
+# 用 idea 原生 Application 启动，这样才能进行调试
+# 要先下载并解压好javafx-sdk
+# 在idea编辑运行设置，添加VM选项
+--module-path "/path/to/javafx-sdk/lib" --add-modules javafx.controls,javafx.fxml
+
+# 下面的VM选项有问题
+# java.lang.module.FindException: Module javafx.fxml not found，先用上面的方法吧
+--module-path "/home/handle/Applications/repository/maven/org/openjfx/javafx-controls/25.0.3;/home/handle/Applications/repository/maven/org/openjfx/javafx-fxml/25.0.3" --add-modules javafx.controls,javafx.fxml
+```
+
 ### GUI
 
 #### JFrame
@@ -7365,7 +7380,19 @@ public void test() {
         <id>alimaven</id>
         <mirrorOf>central</mirrorOf>
         <name>aliyun maven</name>
-        <url>http://maven.aliyun.com/nexus/content/repositories/central</url>
+        <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+    <mirror>
+      <id>maven-default-http-blocker</id>
+      <!-- 匹配所有外部的、且使用 HTTP 协议的仓库 -->
+      <mirrorOf>external:http:*</mirrorOf>
+      <name>Pseudo repository to mirror external repositories initially using HTTP.</name>
+      <!-- http://0.0.0.0/ 在这里没有任何实际的网络请求意义，它只是一个占位符 -->
+      <!-- 在 Maven 的 <mirror> 配置中，<url> 是一个必填标签。如果不填，Maven 在解析 XML 配置文件时就会报错。-->
+      <!-- 但是，这个特定的拦截器配置（maven-default-http-blocker）根本不需要去下载任何东西，它的唯一目的就是拦截。 -->
+      <url>http://0.0.0.0/</url>
+      <!-- 表示对于匹配到的仓库，Maven 会直接阻断请求，不会去下载依赖 -->
+      <blocked>true</blocked>
     </mirror>
 </mirrors>  
   
@@ -7860,6 +7887,15 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
 - 路径最近原则（直接声明使用）
 - 手动排除依赖
 
+### maven 选项参数
+
+```sh
+# -T，指定线程数，有两种写法
+# 第一种写法，指定一个整数，即线程数，如：4
+# 第二种写法，指定一个N（可以是整数或浮点数），然后加后缀C，表示线程数=N * CPU核心数，如：2C/2.5C
+mvn -T 1C [其它选项参数]
+```
+
 #### maven 常见问题及解决方案
 
 ##### 1. maven 控制台日志乱码
@@ -7886,6 +7922,16 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
 
 - 4.修改`MVND_HOME\conf\mvnd.properties` 配置文件，设置maven的settings.xml文件位置为`MVND_HOME\mvn\conf\settings.xml`
 
+```sh
+# 相当于maven的-T，如果不指定，默认为系统的CPU线程数-1
+# 个人觉得，在开发的时候至少预留三个线程比较好，一个给系统，一个给ide，一个给正在启动的java程序
+# 改完后，启动java程序就会生效，如打印：Using the SmartBuilder implementation with a thread count of 3
+mvnd.threads = 0.6C
+
+# 指定maven的settings.xml文件位置
+maven.settings=/path/to/settings.xml
+```
+
 - 5.修改`MVND_HOME\mvn\conf\settings.xml` 配置文件
 
 - 6.测试`mvnd -v`
@@ -7898,7 +7944,16 @@ mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -Dgroup
     - 勾上`Use a Terminal to run goals, with a custom mvn command`
     - 并指定命令为`mvnd`，然后关闭再打开Idea，如果不行就直接指定命令的全路径为`MVND_HOME\bin\mvnd.cmd`
 
-- 使用：右键项目名->Run Maven选择对应指令执行即可
+- 使用：右键->Run Maven选择对应指令执行即可
+
+#### mvnd常用命令
+
+```sh
+# 停止mvnd daemon线程
+mvnd --stop
+
+mvnd --status
+```
 
 ### Gradle
 
@@ -21835,7 +21890,9 @@ DNS1=114.114.114.114
 
 #### 基本设置
 
-打开`Window->Preferences`
+- 打开`Window->Preferences`
+    - General
+        - `Startup and Shutdown` -> `Plug-ins activated on startup`里面的选项都取消勾选
 
 ##### 通用设置
 
@@ -21865,9 +21922,9 @@ DNS1=114.114.114.114
 
 - 自定义模板，Java->Editor->Templates
     - `.sout` 自动补全
-![](images/code-template1.png)
+![](image/code-template1.png)
     - `fori` 自动补全
-![](images/code-template2.png)
+![](image/code-template2.png)
 
 - 设置JRE，Java->Installed JREs，点`Add`添加自己的Java版本
 

@@ -4264,6 +4264,17 @@ sudo pacman -S steam
 steam
 ```
 
+- 为了避免重复安装wine，建议直接使用steam的Proton - Experimental作为本地的wine，在.bashrc添加如下内容即可
+
+- steam的Proton - Experimental除了没有自带winecfg工具，其它方面和独立安装的wine是一样的
+
+- 但是有些应用独立安装的wine可以运行，Proton - Experimental反而运行不了，这种情况下还是有必要独立安装wine的
+
+```sh
+export WINE_PATH="/path/to/SteamLibrary/steamapps/common/Proton - Experimental/files/bin"
+export PATH=$PATH:${WINE_PATH}
+```
+
 #### 安装wine
 
 - 1.安装
