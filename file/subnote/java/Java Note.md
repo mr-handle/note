@@ -21896,15 +21896,21 @@ DNS1=114.114.114.114
         - `Apperance` -> `Colors and Fonts`
             - `Basic` -> `Text Font`，点击`Edit`进行代码编辑区的字体和字号设置
             - `View and Editor Folders` -> `Tree and Table font for views` -> 点击`Edit`进行侧边栏的字体和字号设置
+            - 至于标题栏、菜单栏和工具栏的字体和字号是继承操作系统的字体和字号的，可以通过后者进行设置
+        - `Content Types`
+            - Text，在`Default encoding` 输入`UTF-8`，然后点击`Update`
+                - `Java Properties File`，在`Default encoding` 输入`UTF-8`，然后点击`Update`
+                - `Spring Properties File`，在`Default encoding` 输入`UTF-8`，然后点击`Update`
+        - Editors
+            - Autosave，勾选`Enable autosave for editors with unsaved changes`
+            - `File Associations`,点击`pom.xml`，然后点击`XML Editor`,然后点击`default`，然后应用，这一项设置保留，后面有必要再设置
+            - Text Editors
+                - 勾上`Insert spaces for tabs`，设置Tab键插入空格
+                - 勾上`Show line numbers`，显示行号
+        - Keys
+            - 搜索`Toggle Comment`，将`TM4E Language`那行的快捷键改成`Ctrl+/`，这样就可以在pom.xml里面使用该快捷键了
 
 ##### 通用设置
-
-- 设置自动保存，General->Content Types->Text，在`Default encoding` 输入`UTF-8`，然后点击`Update`
-
-- 设置properties文件编码，General->Editors->Autosave
-- General->Editors->Text Editors
-    - 设置Tab键插入空格，勾上`Insert spaces for tabs`
-    - 显示行号，勾上`Show line numbers`
 
 - 自动刷新文件夹改动，General->Workspace,勾上`Refresh using native hooks or polling`
     - 设置源文件编码，`Text file encoding`设置为UTF-8
