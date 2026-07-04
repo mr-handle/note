@@ -141,6 +141,171 @@ public void test5() {
 }
 ```
 
+### 静态工厂方法（static factory method）
+
+对于类而言，为了让客户端获取它自身的一个实例，最传统的方法就是提供一个公有的构造方法
+
+此外，还可以提供一个公有的静态工厂方法，它只是一个返回类的实例的静态方法
+
+注意，静态工厂方法并不直接对应于设计模式（Design Pattern）中的工厂方法
+
+例如：
+
+```java
+public static Boolean valueOf(boolean b) {
+    return (b ? TRUE : FALSE);
+}
+```
+
+- 相比于构造方法
+    - 静态工厂方法顾名思义
+    - 不必在每次调用它们的时候都创建一个新对象
+    - 可以返回原返回类型的任何子类型的对象
+    - 所返回的对象的类可以随着每次调用而发生变化，这取决于静态工厂方法的参数值
+    - 方法返回的对象所属的类，在编写包含该静态工厂方法的类时可以不存在，例如JDBC API
+    - 缺点：类如果只有静态工厂方法，而不含公有的或者受保护的构造方法，就不能被子类化
+
+- 一些常见的静态工厂方法的名称
+    - from，类型转换方法，它只有单个参数，返回该类型的一个相对应的实例
+    - of，聚合方法，带有多个参数，返回该类型的一个实例，把它们合并起来
+    - valueOf，比 from 和 of 更烦琐的一种替代方法
+    - instance或getInstance，返回的实例是通过方法的参数（如果有）来描述的，但是不能说与参数具有同样的值
+    - create或newInstance，像instance或getInstance，但能够确保每次调用都返回一个新的实例
+    - getType，Type表示静态工厂方法所返回的对象类型，像getInstance一样，但是在静态工厂方法处于不同的类中的时候使用
+    - newType，Type表示静态工厂方法所返回的对象类型，像newInstance一样，但是在静态工厂方法处于不同的类中的时候使用
+    - type，getType 和 newType的简版，如：`Collections.list(...)`
+
+### 构建器（Builder）
+
+构造方法和静态工厂方法有个共同的局限性：它们都不能很好地扩展到大量的可选参数
+
+- 这种场景，虽然可以用重叠构造器（telescoping constructor）
+    - 第一个构造方法只有必要的参数
+    - 第二个构造方法有一个可选参数
+    - 第三个构造方法有两个可选参数
+    - 依此类推，最后一个构造方法包含所有可选的参数
+
+```java
+public class Pet {
+    // 必要字段
+    private final String name;
+
+    // 可选字段
+    private final Integer age;
+    private final BigDecimal weight;
+
+    private Pet(String name) {
+        this(name, 1);
+    }
+
+    private Pet(String name, Integer age) {
+        this(name, age, new BigDecimal("1.0"));
+    }
+    private Pet(String name, Integer age, BigDecimal weight) {
+        this.name = name;
+        this.age = age;
+        this.weight = weight;
+    }
+}
+```
+
+重叠构造器可行，但是当有许多参数的时候，代码会很难编写，并且仍然较难以阅读
+
+一长串类型相同的参数可能还会导致一些微妙的错误，如不小心颠倒了参数顺序
+
+- 为此，还有第二种代替办法，即JavaBeans模式
+    - 先调用一个无参构造器来创建对象
+    - 然后再调用 setter方法来设置每个必要的参数，以及每个相关的可选参数
+
+```java
+@Setter
+public class Pet {
+    // 必要字段
+    private String name;
+
+    // 可选字段
+    private Integer age;
+    private BigDecimal weight;
+}
+```
+
+- Java Beans模式不足之处
+    - 在构造过程中Java Bean可能处于不一致的状态，使用处于不一致状态的对象导致的问题，调试定位十分困难
+    - 使得把类做成不可变的可能性不复存在，需要付出额外的努力来确保它的线程安全
+
+综上，有了第三种替代方法，它既能保证像重叠构造器模式那样的安全性，也能保证像JavaBeans模式那么好的可读性
+
+- 那就是使用构建器，它是构建器设计模式的一种形式
+    - 定义
+        - 首先，创建一个静态内部类Builder，Builder的字段跟外部类一致
+        - 然后，根据外部类的必要字段定义Builder的构造方法
+        - 然后，根据外部类的可选字段定义字段设置方法
+        - 然后，定义一个build方法，通关外部类的私有构造方法，创建外部类的实例并返回
+        - 最后，在外部类定义一个私有构造方法，参数是Builder实例，根据Builder实例的字段初始化所有外部类的同名字段
+    - 使用
+        - 先使用必要参数创建一个Builder实例
+        - 再使用Builder实例，调用字段设置方法，设置可选参数
+        - 最后调用build方法生成外部类的实例（通常是不可变的实例）
+
+```java
+public class Pet {
+    // 必要字段
+    private final String name;
+
+    // 可选字段
+    private final Integer age;
+    private final BigDecimal weight;
+
+    public static class Builder {
+        // 必要字段
+        private final String name;
+
+        // 可选字段
+        private Integer age;
+        private BigDecimal weight;
+
+        // Builder构造方法，初始化必要字段
+        public Builder(String name) {
+            this.name = name;
+        }
+
+        // 可选字段通过设值方法设置，返回builder本身
+        // 这样可以把调用链接起来，得到一个流式API
+        public Builder age(Integer age) {
+            this.age = age;
+            return this;
+        }
+
+        public Builder weight(BigDecimal weight) {
+            this.weight = weight;
+            return this;
+        }
+
+        // 内部类Builder的build方法创建一个外部类实例并返回
+        public Pet build() {
+            return new Pet(this);
+        }
+    }
+
+    // 外部类的私有构造方法，传一个Builder实例作为参数
+    private Pet(Builder builder) {
+        this.name = builder.name;
+        this.age = builder.age;
+        this.weight = builder.weight;
+    }
+}
+
+// 使用
+Pet pet = new Pet.Builder("dog")
+                 .age(1)
+                 .weight(new BigDecimal("15.2"))
+                 .build();
+```
+
+构建器也适用于类层次结构，抽象类有抽象类的构建器，具体类有具体类的构建器
+
+总之类的构造方法和静态工厂方法中具有多个参数，设计这种类时，构建器就是一种不错的选择，特别是当大多数参数都是可选或者类型相同的时候
+
 ### 修饰符的顺序
 
 - 根据《Java 语言规范》的推荐，修饰符应当按照以下标准顺序进行排列：
@@ -2984,6 +3149,8 @@ void main() {
 
 在项目中创建一个模块描述文件（module-info.java），就可以将项目声明为一个模块
 
+- 在maven项目中，`module-info.java`要放在`src/main/java`目录下
+
 ```java
 // 声明一个模块
 module com.handle.hellofx {
@@ -3832,6 +3999,50 @@ public class LogHomeConfiguration extends PropertyDefinerBase {
 # 下面的VM选项有问题
 # java.lang.module.FindException: Module javafx.fxml not found，先用上面的方法吧
 --module-path "/home/handle/Applications/repository/maven/org/openjfx/javafx-controls/25.0.3;/home/handle/Applications/repository/maven/org/openjfx/javafx-fxml/25.0.3" --add-modules javafx.controls,javafx.fxml
+```
+
+但是感觉这样做添加的javafx的maven依赖又多此一举了，如果使用模块的话就不用添加上面的VM选项了
+
+但是使用模块的话，mybatis的mapper识别不了，目前还没解决，又是一个坑
+
+最推荐最省事的是用自带javafx的jdk啊！
+
+#### JavaFX的Scene Graph
+
+笔记的内容来自：<https://fxdocs.github.io/docs/html5/>
+
+![JavaFxSceneGraph](image/JavaFxSceneGraph.png)
+
+- JavaFX的结构是一个树形结构
+    - 顶层Stage，代表本地操作系统的窗体
+    - Scene是JavaFX scene graph的一个容器，每个Stage在某个时间只能有一个关联的Scene
+    - 所有JavaFX scene graph的元素代表了Node对象，有3种类型的Node：root, branch and leaf
+        - root是唯一没有父node并且直接放置到scene中的node
+        - branch有子node，leaf没有子node
+        - 除了root，其它node只能有一个父node
+        - 一个附属当前可见scene的活动的node，只能被JavaFX应用线程修改
+
+- 下面是一个 "Hello World" scene graph的示例图
+
+![JavaFxHelloWorldSceneGraph](image/JavaFxHelloWorldSceneGraph.png)
+
+- 对应的代码实现如下
+
+```java
+public class HelloWorld extends Application {
+    @Override
+    public void start(Stage stage) throws Exception {
+        Text leaf = new Text("hello world");
+        StackPane root = new StackPane(leaf);
+        Scene scene = new Scene(root, 720, 480);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
 ```
 
 ### GUI
