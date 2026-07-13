@@ -192,6 +192,14 @@ ffmpeg -vaapi_device /dev/dri/renderD128 \
     -c:v av1_vaapi -b:v 6000k \
     output.mp4
 
+# 相比vaapi，vulkan用到的显存更多，但是生成视频的码率更接近设置的码率，编码速度更快，生成的文件更小，最推荐！！！
+ffmpeg -init_hw_device 'vulkan=vk:0' \
+    -i input.mp4 \
+    -filter_hw_device vk -vf 'format=nv12,hwupload' \
+    -c:a libopus -b:a 160k \
+    -c:v av1_vulkan -b:v 6000k \
+    output.mp4
+
 # 方式二：如果已知原文件可以用gpu解码，编解码都用gpu（一条龙）
 # -hwaccel vaapi，指定硬件解码器加速方式用vaapi，这样输入视频流会尽量用GPU的VAAPI 解码器来处理，而不是用CPU的软件解码器
 # -hwaccel_output_format vaapi，指定硬件解码器的输出格式为 VAAPI surface（即 GPU 内存中的帧）
@@ -202,6 +210,12 @@ ffmpeg -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device /dev/dri/rend
     -i input.mp4 \
     -c:a libopus -b:a 160k \
     -c:v av1_vaapi -b:v 6000k \
+    output.mp4
+  
+ffmpeg -init_hw_device 'vulkan=vk:0' -hwaccel vulkan -hwaccel_output_format vulkan -hwaccel_device vk \
+    -i input.mp4 \
+    -c:a libopus -b:a 160k \
+    -c:v av1_vulkan -b:v 6000k \
     output.mp4
 
 # 方式三：当原文件可能可以用gpu解码时
@@ -215,16 +229,23 @@ ffmpeg -init_hw_device vaapi=foo:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_out
     -c:a libopus -b:a 160k \
     -c:v av1_vaapi -b:v 6000k \
     output.mp4
+    
+ffmpeg -init_hw_device 'vulkan=vk:0' -hwaccel vulkan -hwaccel_output_format vulkan \
+    -i input.mp4 \
+    -filter_hw_device vk -vf 'format=nv12|vulkan,hwupload' \
+    -c:a libopus -b:a 160k \
+    -c:v av1_vulkan -b:v 6000k \
+    output.mp4
 
 # -c:v av1_amf，使用av1_amf编码器（amd显卡）来编码视频流
 # -quality，指定编码的质量/速度，取值有speed，balanced，quality，high_quality，编码的速度由快到慢，但是同码率下画质由低到高
 # 它是av1_amf的私有选项，可以这样查看av1_amf的私有选项：ffmpeg -h encoder=av1_amf
 ffmpeg -i input.mp4 -c:a libopus -b:a 192k -c:v av1_amf -quality balanced -b:v 6500k output.mp4
 
-# vp8不支持rx9000系列显卡加速，并且不支持mp4格式，同画质下，码率要是h264的1.1~1.3倍，文件更大了
+# rx9000系列显卡不支持vp8编解码加速，并且不支持mp4格式，同画质下，码率要是h264的1.1~1.3倍，文件更大了
 ffmpeg -i input.mp4 -c:a copy -c:v libvpx -b:v 10783k output_vp8acc.mkv
 
-# vp9不支持rx9000系列显卡加速，同画质下，码率要是h264 0.5倍到0.7倍，但是cpu生成比vp8更慢
+# rx9000系列显卡加速不支持vp9编码加速，只支持解码加速，同画质下，码率要是h264 0.5倍到0.7倍，但是cpu生成比vp8更慢
 ffmpeg -i input.mp4 -c:a copy -c:v libvpx-vp9 -b:v 6500k output_vp9acc.mp4
 ```
 
