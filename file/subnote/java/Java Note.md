@@ -7569,6 +7569,68 @@ public void test() {
 }
 ```
 
+#### 责任链模式
+
+按照链的顺序执⾏⼀个个处理⽅法，链上的每⼀个任务都持有它后⾯那个任务的对象引⽤
+
+以⽅便⾃⼰这段执⾏完成之后，调⽤其后⾯的处理逻辑
+
+```java
+public interface Filter {
+    void filtering();
+}
+
+public abstract class AbstractFilter implements Filter{
+    private Filter filter;
+
+    public AbstractFilter(Filter filter) {
+        this.filter = filter;
+    }
+
+    @Override
+    public void filtering() {
+        System.out.println("invoke " + this.getClass().getSimpleName());
+        if (Objects.nonNull(filter)) {
+            filter.filtering();
+        }
+    }
+}
+
+public class XFilter extends AbstractFilter{
+    public XFilter(Filter filter) {
+        super(filter);
+    }
+}
+
+public class YFilter extends AbstractFilter{
+    public YFilter(Filter filter) {
+        super(filter);
+    }
+}
+
+public class ZFilter extends AbstractFilter{
+    public ZFilter(Filter filter) {
+        super(filter);
+    }
+}
+
+public class FilterChain {
+    public void runChain() {
+        ZFilter zFilter = new ZFilter(null);
+        YFilter yFilter = new YFilter(zFilter);
+        XFilter xFilter = new XFilter(yFilter);
+        xFilter.filtering();
+    }
+}
+
+public class ResponsibilityChainTest {
+    @Test
+    public void test() {
+        new FilterChain().runChain();
+    }
+}
+```
+
 ## 项目管理工具
 
 ### Maven

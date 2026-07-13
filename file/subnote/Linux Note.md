@@ -4011,7 +4011,7 @@ sudo pacman -S [mesa lib32-mesa] [xf86-video-amdgpu] vulkan-radeon  lib32-vulkan
 
 mesa和lib32-mesa提供的是开源的VA-API用于视频编解码加速
 
-此外还可以安装AMD闭源的AMF用于视频编解码加速，只需要安装amf-amdgpu-pro包就行了
+此外还可以安装AMD闭源的AMF用于视频编解码加速，只需要安装amf包就行了
 
 ```sh
 # 如果想要使用AMD闭源的AMF用于视频编解码加速，需要另外安装
@@ -4022,7 +4022,9 @@ mesa和lib32-mesa提供的是开源的VA-API用于视频编解码加速
 # ffmpeg -vaapi_device /dev/dri/renderD128 -i input.mp4 -vf 'format=nv12,hwupload' -c:a copy -c:v av1_vaapi -b:v 6500k output.mp4
 # ffmpeg -i input.mp4 -c:a copy -c:v av1_amf -quality balanced -b:v 6500k output.mp4
 # 虽然VA-API的命令更长，但是VA-API比AMF输出视频的速度更快，视频文件更小
-yay -S amf-amdgpu-pro
+# Fiji up to RDNA 2显卡，安装amf-amdgpu-pro
+# RDNA 3和新显卡，安装amf-amdgpu
+yay -S amf-amdgpu
 
 # libva-utils包的vainfo命令可以查看VA-API信息，如下面的AV1格式的信息
 # VAProfileAV1Profile0            : VAEntrypointVLD
@@ -4246,6 +4248,66 @@ sudo pacman -S kinfocenter
 sudo pacman -S cpu-x
 ```
 
+##### 安装mpv视频播放器
+
+官网：<https://mpv.io/>
+
+文档：<https://mpv.io/manual/stable/>，对于哪些配置放置到哪个文件，文档有详细说明
+
+与vlc不同的是，mpv不用另外安装解码插件，开箱即用（底层依赖ffmpeg），界面简洁，修改对应配置文件即可变成自己熟悉的播放器
+
+- 安装
+
+```sh
+sudo pacman -S mpv
+```
+
+- 配置
+    - 参考`/usr/share/doc/mpv/input.conf`修改快捷键，然后放置到`~/.config/mpv/input.conf`
+    - 参考`/usr/share/doc/mpv/mpv.conf`修改应用配置，然后放置到`~/.config/mpv/mpv.conf`
+    - 对于额外配置，如`ON SCREEN CONTROLLER`，创建文件：`~/.config/mpv/script-opts/osc.conf`，然后添加具体配置项
+- input.conf
+
+```conf
+RIGHT seek  3                          
+LEFT  seek -3
+
+UP    add volume 5
+DOWN  add volume -5
+WHEEL_UP      add volume 1
+WHEEL_DOWN    add volume -1
+
+ENTER set fullscreen yes
+```
+
+- mpv.conf
+
+```conf
+# 自动硬件解码
+hwdec=auto
+
+# 默认音量
+volume=60
+
+# 不显示osd条，设置后增大/减小音量时，就不再显示osd条
+osd-bar=no
+
+# 快进/退时显示osd的方式：no,bar,msg,msg-bar
+osd-on-seek=msg
+
+# 初始屏幕大小
+geometry=1920x1080
+```
+
+- osc.conf
+
+```conf
+# ON SCREEN CONTROLLER的设置
+
+# 显示视频总时长而不是剩余时长
+timetotal=yes
+```
+
 ##### 安装steam
 
 steam游戏存档位置：`~/.local/share/Steam/userdata/[SteamID]/[AppID]/remote/`
@@ -4270,6 +4332,10 @@ steam
 
 - 但是有些应用独立安装的wine可以运行，Proton - Experimental反而运行不了，这种情况下还是有必要独立安装wine的
 
+- 笔者的系统之前用独立安装的wine启动修改器是没问题的，换成steam的wine启动就出问题
+
+- 连续升级系统后，现在用独立安装的wine运行修改器也同样出问题了，也不知道是系统升级出了兼容问题还是后者本身就不支持
+
 ```sh
 export WINE_PATH="/path/to/SteamLibrary/steamapps/common/Proton - Experimental/files/bin"
 export PATH=$PATH:${WINE_PATH}
@@ -4281,9 +4347,7 @@ export PATH=$PATH:${WINE_PATH}
 
 ```sh
 # 需要启用multilib仓库来兼容32位的软件运行
-# 安装wine-mono时会安装wine
-sudo pacman -S wine
-
+# 安装wine-mono时会安装wine，无须单独指定安装wine
 # 安装Wine的.NET替代运行环境，用于运行依赖.NET 的Windows程序（推荐）
 # 如果不安装，首次启动wine时也会提示安装，但是这种安装下载速度可能很慢，容易失败，且不受系统包管理器管理（不推荐）
 sudo pacman -S wine-mono

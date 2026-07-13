@@ -188,8 +188,8 @@ ffprobe -i input.mp4
 ffmpeg -vaapi_device /dev/dri/renderD128 \
     -i input.mp4 \
     -vf 'format=nv12,hwupload' \
-    -c:a libopus -b:a 192k \
-    -c:v av1_vaapi -b:v 6500k \
+    -c:a libopus -b:a 160k \
+    -c:v av1_vaapi -b:v 6000k \
     output.mp4
 
 # 方式二：如果已知原文件可以用gpu解码，编解码都用gpu（一条龙）
@@ -200,8 +200,8 @@ ffmpeg -vaapi_device /dev/dri/renderD128 \
 # 笔者的rx9070的测试结果是花的时间比方式一更多
 ffmpeg -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device /dev/dri/renderD128 \
     -i input.mp4 \
-    -c:a libopus -b:a 192k \
-    -c:v av1_vaapi -b:v 6500k \
+    -c:a libopus -b:a 160k \
+    -c:v av1_vaapi -b:v 6000k \
     output.mp4
 
 # 方式三：当原文件可能可以用gpu解码时
@@ -212,8 +212,8 @@ ffmpeg -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device /dev/dri/rend
 ffmpeg -init_hw_device vaapi=foo:/dev/dri/renderD128 -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_device foo \
     -i input.mp4 \
     -filter_hw_device foo -vf 'format=nv12|vaapi,hwupload' \
-    -c:a libopus -b:a 192k \
-    -c:v av1_vaapi -b:v 6500k \
+    -c:a libopus -b:a 160k \
+    -c:v av1_vaapi -b:v 6000k \
     output.mp4
 
 # -c:v av1_amf，使用av1_amf编码器（amd显卡）来编码视频流
