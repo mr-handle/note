@@ -3996,16 +3996,20 @@ public class LogHomeConfiguration extends PropertyDefinerBase {
 # 在idea编辑运行设置，添加VM选项
 --module-path "/path/to/javafx-sdk/lib" --add-modules javafx.controls,javafx.fxml
 
+# 使用idea，也可以File -> Settings -> Appearance & Behavior -> Path Variables，添加JAVAFX_PATH变量并指定值为“/path/to/javafx-sdk/lib”
+# 然后在idea编辑运行设置，添加VM选项
+--module-path ${JAVAFX_PATH} --add-modules javafx.controls,javafx.fxml
+
 # 下面的VM选项有问题
 # java.lang.module.FindException: Module javafx.fxml not found，先用上面的方法吧
---module-path "/home/handle/Applications/repository/maven/org/openjfx/javafx-controls/25.0.3;/home/handle/Applications/repository/maven/org/openjfx/javafx-fxml/25.0.3" --add-modules javafx.controls,javafx.fxml
+--module-path "/path/to/org/openjfx/javafx-controls/25.0.3;/path/to/org/openjfx/javafx-fxml/25.0.3" --add-modules javafx.controls,javafx.fxml
 ```
 
 但是感觉这样做添加的javafx的maven依赖又多此一举了，如果使用模块的话就不用添加上面的VM选项了
 
 但是使用模块的话，mybatis的mapper识别不了，目前还没解决，又是一个坑
 
-最推荐最省事的是用自带javafx的jdk啊！
+感觉最省事的是用自带javafx的jdk啊，但缺点是你运行的时候也必须用自带javafx的jre！
 
 #### JavaFX的Scene Graph
 
@@ -4336,6 +4340,10 @@ cd 指定目录
 
 # 3.生成jre
 jlink --module-path jmods --add-modules java.xml --output jre
+
+# 生成jre，包含所有模块（实际上算是jdk的副本了）
+# 使用ALL-MODULE-PATH 时，必须显式提供 --module-path 参数
+jlink --module-path $JAVA_HOME/jmods --add-modules ALL-MODULE-PATH --output jre
 ```
 
 - windows系统
@@ -22266,7 +22274,21 @@ java -jar lombok.jar
 |Ctrl + Shift + X|转大写|
 |Ctrl + Shift + Y|转小写|
 
+#### eclipse使用心得
+
+下载插件特别慢，需要翻墙，下多几次还会被服务器的反爬虫机制阻挡了，下都下不了，很恶心
+
+还有就是配置导出乱七八糟的，没法像idea那样简单，玩不好估计有些配置会漏掉导致没法恢复所有配置
+
+properties文件的中文显示问题，虽然有插件可以正常显示了，但是那个颜色特别刺眼，看久了对视力不好，建议eclipse还是用yaml吧
+
+还有就是代码提示补全，感觉没有idea那么完善
+
 ### IDEA
+
+官网：<https://www.jetbrains.com/idea/>
+
+社区版：<https://github.com/JetBrains/intellij-community>
 
 |快捷键|功能|
 |:-|:-|
@@ -22282,6 +22304,12 @@ java -jar lombok.jar
 |Ctrl + Shift + L|代码格式化|
 |Ctrl + Alt + M|提取代码为作为方法|
 |Ctrl + Alt + C|修改变量作用域|
+
+#### idea使用心得
+
+idea目前是社区版和旗舰版合并为一个软件了，如果从官网下载的话，只有一个idea可以下载
+
+官方版idea本会比社区版大一倍，里面塞了很多插件，如果不打算使用订阅功能的话建议下载社区版就可以了
 
 ## Yaml
 
