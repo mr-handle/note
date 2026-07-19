@@ -176,8 +176,14 @@ Ollama是一个类似docker的用于本地快速部署模型进行推理的工�
 
 ```sh
 # ArchLinux安装Ollama
-# 如果是and显卡，除了rocm-hip-sdk，还需要安装ollama-rocm才能使用GPU加速
-sudo pacman -S ollama ollama-rocm
+sudo pacman -S ollama
+
+# GPU加速
+# 如果是amd显卡，有两种gpu加速方法，要注意的是ollama-vulkan和ollama-rocm不要同时安装
+# rocm加速：安装rocm-hip-sdk和ollama-rocm
+# vulkan加速：安装ollama-vulkan，据说比rocm更快，可以自己测试一下看看
+sudo pacman -S rocm-hip-sdk ollama-rocm
+sudo pacman -S ollama-vulkan
 
 # 如果想要修改ollama模型的保存位置
 # 如果是通过systemd启动，要通过sudo systemctl edit ollama 设置环境变量
