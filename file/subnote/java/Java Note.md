@@ -3886,6 +3886,49 @@ public class LogHomeConfiguration extends PropertyDefinerBase {
 </configuration>
 ```
 
+### ProcessBuilder
+
+ProcessBuilder 是 Java 中用于创建和管理操作系统进程（即执行外部命令行程序）的核心类
+
+相比早期的 Runtime.exec()，它提供了更灵活、更强大的进程控制能力
+
+每个 ProcessBuilder 实例都会管理一组进程属性
+
+当调用 start() 方法时，它会利用这些属性创建一个新的子进程，并返回一个 Process 对象来让你与这个子进程进行交互
+
+```java
+// 命令参数列表
+List<String> command = new ArrayList<>();
+command.add("ffprobe");
+command.add("-i");
+command.add("/path/to/input.mp4");
+
+ProcessBuilder processBuilder = new ProcessBuilder(command);
+// 合并错误流和标准流， 这样错误流和标准流就都能通过Process.getInputStream()读取
+// getInputStream() 和 getOutputStream() 的命名是站在父进程（Java 程序）的角度来定义的
+// 子进程的输出是父进程的输入，父进程的输出是子进程的输入
+processBuilder.redirectErrorStream(true);
+try {
+    Process process = processBuilder.start();
+    // 打印命令输出，这里是阻塞读，当父线程不用向子线程写数据的时候适用，如果是双向交互，则要开线程读 + 主线程 waitFor
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        String line;
+        while (null != (line = reader.readLine())) {
+            System.out.println(line);
+        }
+    }
+    // 阻塞等待子线程退出
+    int exitCode = process.waitFor();
+    if (0 == exitCode) {
+        System.out.println("command executed success!");
+    } else {
+        System.out.println("command executed failed，exit code: " + exitCode);
+    }
+} catch (IOException | InterruptedException e) {
+    throw new RuntimeException(e);
+}
+```
+
 ### JavaFX
 
 - 父pom
