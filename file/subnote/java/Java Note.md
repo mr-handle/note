@@ -16206,6 +16206,46 @@ public class UserVo {
 }
 ```
 
+## javacv
+
+javacv是一个opencv、ffmpeg的java api
+
+官网：<https://github.com/bytedeco/javacv>
+
+- 依赖
+
+```xml
+<dependency>
+    <groupId>org.bytedeco</groupId>
+    <artifactId>javacv-platform</artifactId>
+    <version>1.5.13</version>
+</dependency>
+```
+
+- ffmpeg例子
+
+```java
+try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber("/path/to/input.mp4")) {
+    grabber.start();
+
+    int videoBitrate = grabber.getVideoBitrate() / 1000;
+    String videoFrameRate = BigDecimal.valueOf(grabber.getVideoFrameRate()).setScale(2, RoundingMode.HALF_UP).toString();
+    String videoInformation = String.format("编解码器：%s，比特率：%d kb/s，分辨率：%dx%d，帧数：%s fps",
+                                            grabber.getVideoCodecName(), videoBitrate, grabber.getImageWidth(), grabber.getImageHeight(), videoFrameRate);
+    System.out.println(videoInformation);
+
+    int audioBitrate = grabber.getAudioBitrate() / 1000;
+    String audioFrameRate = BigDecimal.valueOf(grabber.getAudioFrameRate() * 1000).setScale(0, RoundingMode.HALF_UP).toString();
+    String audioInformation = String.format("编解码器：%s，比特率：%d kb/s，采样率：%s Hz，声道数：%d",
+                                            grabber.getAudioCodecName(), audioBitrate, audioFrameRate, grabber.getAudioChannels());
+    System.out.println(audioInformation);
+
+    grabber.stop();
+} catch (FrameGrabber.Exception e) {
+    throw new RuntimeException(e);
+}
+```
+
 ## swagger
 
 - 依赖
