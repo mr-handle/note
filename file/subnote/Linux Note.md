@@ -4325,6 +4325,10 @@ sudo pacman -S obs-studio
 # obs-vkcapture和lib32-obs-vkcapture，让obs-studio有能力捕获 Vulkan 或 OpenGL程序的画面
 yay -S obs-vkcapture lib32-obs-vkcapture
 
+# 对于wayland，obs失去焦点的情况下是无法使用快捷键的，可以安装obs-wayland-hotkeys-git插件解决
+# 安装完后首次打开obs即可进行快捷键设置，往后如果想要改快捷键可以到系统设置的快捷键设置那里进行设置
+yay -S obs-wayland-hotkeys-git
+
 # obs-studio-plugin-browser，可以让你在 OBS 的直播或录制画面里，直接“嵌入”一个网页
 sudo pacman obs-studio-plugin-browser
 
