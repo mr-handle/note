@@ -16230,13 +16230,13 @@ try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber("/path/to/input.mp4")) 
 
     int videoBitrate = grabber.getVideoBitrate() / 1000;
     String videoFrameRate = BigDecimal.valueOf(grabber.getVideoFrameRate()).setScale(2, RoundingMode.HALF_UP).toString();
-    String videoInformation = String.format("编解码器：%s，比特率：%d kb/s，分辨率：%dx%d，帧数：%s fps",
+    String videoInformation = String.format("视频编解码器：%s，比特率：%d kb/s，分辨率：%dx%d，帧数：%s fps",
                                             grabber.getVideoCodecName(), videoBitrate, grabber.getImageWidth(), grabber.getImageHeight(), videoFrameRate);
     System.out.println(videoInformation);
 
     int audioBitrate = grabber.getAudioBitrate() / 1000;
     String audioFrameRate = BigDecimal.valueOf(grabber.getAudioFrameRate() * 1000).setScale(0, RoundingMode.HALF_UP).toString();
-    String audioInformation = String.format("编解码器：%s，比特率：%d kb/s，采样率：%s Hz，声道数：%d",
+    String audioInformation = String.format("音频编解码器：%s，比特率：%d kb/s，采样率：%s Hz，声道数：%d",
                                             grabber.getAudioCodecName(), audioBitrate, audioFrameRate, grabber.getAudioChannels());
     System.out.println(audioInformation);
 

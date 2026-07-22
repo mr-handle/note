@@ -4215,9 +4215,6 @@ sudo pacman -S haruna
 # vlc-plugin-ffmpeg：ffempeg插件，装了就可以播放大多数格式的视频了（只装vlc播放H.264的mp4格式视频是没有画面的，会提示相关错误）
 sudo pacman -S vlc vlc-plugin-ffmpeg
 
-# 录屏软件
-sudo pacman -S obs-studio
-
 # 画图软件
 sudo pacman -S kolourpaint
 
@@ -4307,6 +4304,39 @@ geometry=1920x1080
 # 显示视频总时长而不是剩余时长
 timetotal=yes
 ```
+
+##### 安装OBS-Studio
+
+OBS：Open Broadcaster Software
+
+官网教程：<https://wiki.archlinux.org/title/Open_Broadcaster_Software>
+
+obs-vkcapture官网：<https://github.com/nowrep/obs-vkcapture>
+
+如果需要游戏录屏，推荐安装obs-vkcapture和lib32-obs-vkcapture
+
+尤其在游戏是窗口化的时候，如果用自带的屏幕捕获选择游戏进程，会连标题栏也一并捕获，这不符合游戏录屏的需求
+
+```sh
+# 本体
+sudo pacman -S obs-studio
+
+# obs插件（可选）
+# obs-vkcapture和lib32-obs-vkcapture，让obs-studio有能力捕获 Vulkan 或 OpenGL程序的画面
+yay -S obs-vkcapture lib32-obs-vkcapture
+
+# obs-studio-plugin-browser，可以让你在 OBS 的直播或录制画面里，直接“嵌入”一个网页
+sudo pacman obs-studio-plugin-browser
+
+# obs-gstreamer，将 GStreamer 多媒体框架的强大功能无缝集成到 OBS Studio 中
+yay -S obs-gstreamer
+```
+
+- 游戏录屏
+    - 在obs-studio，添加 `Game Capture` 源到 OBS scene
+    - 在Steam游戏-管理-属性-运行选项，下面两个运行选项任选其一
+        - 添加`obs-gamecapture %command%`，启用 Vulkan 和 OpenGL 游戏捕获
+        - 添加`env OBS_VKCAPTURE=1 %command%`，启用只通过 Vulkan 游戏捕获，推荐
 
 ##### 安装steam
 
