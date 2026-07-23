@@ -4384,7 +4384,13 @@ export PATH=$PATH:${WINE_PATH}
 # 安装wine-mono时会安装wine，无须单独指定安装wine
 # 安装Wine的.NET替代运行环境，用于运行依赖.NET 的Windows程序（推荐）
 # 如果不安装，首次启动wine时也会提示安装，但是这种安装下载速度可能很慢，容易失败，且不受系统包管理器管理（不推荐）
-sudo pacman -S wine-mono
+# wine-mono ：为依赖.NET的应用程序提供支持
+# wine-gecko：为依赖Internet Explorer的应用程序提供支持
+sudo pacman -S wine-mono wine-gecko
+
+# 通过winetricks安装windows的运行环境，可选
+# kdialog：安装完后执行winetricks会弹出gui
+yay -S winetricks kdialog
 ```
 
 - 2.配置wine字体
