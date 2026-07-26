@@ -4031,10 +4031,59 @@ try {
 
 #### 运行程序
 
-虽然`mvn javafx:run`可以直接运行程序了，但是无法进行调试，还是要通过添加VM选项参数指定javafx库位置来启动程序
+当直接运行继承了javafx.application.Application的类的main方法时，IDE（idea和eclipse）会无法正确加载 JavaFX 的模块路径（Module Path），导致报错
+
+由于 IDE （idea和eclipse）对普通 Java 主类和 JavaFX 主类的底层启动机制完全不同
+
+如果直接运行继承了 javafx.application.Application 的主类，IDEA 会尝试使用 Java 9+ 的 Module Path（模块路径） 来启动它
+
+但是，Maven 的依赖管理机制默认将 JavaFX 的 jar 包放在 Classpath（类路径） 中，而不是 Module Path 中
+
+这就导致：你的代码在 Classpath 里，但 JavaFX 框架期望在 Module Path 里
+
+于是启动报错：“Error: JavaFX runtime components are missing, and are required to run this application”
+
+下面的方法解决了运行和调试的问题
+
+但是还有一个坑，目前还没解决：如果使用模块的话就不用添加上面的VM选项了，但是mybatis的mapper识别不了
+
+##### 解决方案一
+
+使用`mvn javafx:run`可以直接运行程序，缺点是无法进行调试，可通过配置idea远程调试来解决
+
+缺点是每次调试都要执行两个应用（原本的javafx应用和调试应用）
+
+- javafx-maven-plugin插件加上远程调试的选项参数
+
+```xml
+<plugin>
+    <groupId>org.openjfx</groupId>
+    <artifactId>javafx-maven-plugin</artifactId>
+    <configuration>
+        <options>
+            <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</option>
+        </options>
+    </configuration>
+</plugin>
+```
+
+- 添加远程调试配置
+    - 添加"Remote JVM Debug"
+    - Debugger mode设置为：`Attach to remote JVM`
+    - Host设置为localhost，跟插件的选项参数的ip要一致
+    - Port设置为5005，跟插件的选项参数的端口要一致
+    - 最终自动生成的Command line arguments for remote JVM内容为`-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005`
+    - 点击应用-OK
+
+- 在终端或者通过idea的maven插件工具执行javafx:run，将会看到程序被挂起
+
+- 然后运行刚刚的远程调试配置，当程序运行到断点处即可看到效果
+
+##### 解决方案二
+
+用 idea 原生 Application 执行器启动，通过添加VM选项参数指定javafx库位置来启动程序，正常进行调试
 
 ```sh
-# 用 idea 原生 Application 启动，这样才能进行调试
 # 要先下载并解压好javafx-sdk
 # 在idea编辑运行设置，添加VM选项
 --module-path "/path/to/javafx-sdk/lib" --add-modules javafx.controls,javafx.fxml
@@ -4044,15 +4093,31 @@ try {
 --module-path ${JAVAFX_PATH} --add-modules javafx.controls,javafx.fxml
 
 # 下面的VM选项有问题
-# java.lang.module.FindException: Module javafx.fxml not found，先用上面的方法吧
+# java.lang.module.FindException: Module javafx.fxml not found，先用上面的方法指定模块路径吧
 --module-path "/path/to/org/openjfx/javafx-controls/25.0.3;/path/to/org/openjfx/javafx-fxml/25.0.3" --add-modules javafx.controls,javafx.fxml
 ```
 
-但是感觉这样做添加的javafx的maven依赖又多此一举了，如果使用模块的话就不用添加上面的VM选项了
+但是这样做添加的javafx的maven依赖又多此一举了
 
-但是使用模块的话，mybatis的mapper识别不了，目前还没解决，又是一个坑
+##### 解决方案三
 
-感觉最省事的是用自带javafx的jdk啊，但缺点是你运行的时候也必须用自带javafx的jre！
+用自带javafx的jdk啊，但缺点是你运行的时候也必须用自带javafx的jre！
+
+##### 终极方案
+
+用一个普通的 Java 类作为“跳板”来启动JavaFX
+
+这时IDEA 会把项目当成一个标准的 Java Application 来处理
+
+IDEA 自动把 Maven 依赖（包括 JavaFX 的模块）正确挂载到类路径和模块路径中
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Application.launch(FxApplication.class, args);
+    }
+}
+```
 
 #### JavaFX的Scene Graph
 
