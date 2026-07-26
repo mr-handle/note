@@ -840,7 +840,7 @@ unzip -d /path/to/directory xxx.zip
 
 ### 文件传输命令
 
-远程文件写法：user@remote:/home/handle/file.txt
+远程文件写法：user@remote:/path/to/file.txt
 
 ```sh
 # scp 即 secure copy，安全复制
@@ -935,8 +935,8 @@ grep：过滤查找
 grep 可选选项 查找内容 源文件
 
 # 如下两个命令的功能一样
-grep "handle" /home/handle/hello.txt
-cat /home/handle/hello.txt | grep "handle"
+grep "handle" /path/to/hello.txt
+cat /path/to/hello.txt | grep "handle"
 
 # 忽略大小写搜索 /var/log/syslog 中所有包含 error 的行
 grep -i "error" /var/log/syslog
@@ -2110,14 +2110,14 @@ if [[ 3 -eq 3 ]] && [[ 5 -lt 10 ]]; then
 fi
 
 # 判断文件是否存在
-if [[ -f /home/handle/Downloads/xxx.png ]]; then
+if [[ -f /path/to/file ]]; then
     echo "File exists."
 else
     echo "File does not exist."
 fi
 
 # 如果不用if语句可以这样写
-dir="/home/handle/mydir"
+dir="/path/to/mydir"
 [[ ! -d "$dir" ]] && echo "$dir does not exist"
 ```
 
@@ -2256,13 +2256,13 @@ echo "Hello, $name!"
 basename 字符串 [后缀]
 
 # 例子
-basename /home/handle/Documents/file.txt .txt
+basename /path/to/file.txt .txt
 
 # 返回字符串最后一个/前面的部分，常用于获取文件所在目录
 dirname 字符串
 
 # 例子
-dirname /home/handle/Documents/file.txt
+dirname /path/to/file.txt
 ```
 
 ##### 自定义函数
@@ -3693,7 +3693,7 @@ yay (Yet Another Yogurt)是AUR助手之一，Yogurt：是一个早期的AUR助�
 - 2.`~/.bashrc`文件中设置环境变量
 
 ```sh
-export YAY_HOME=/home/handle/Applications/yay_x86_64
+export YAY_HOME=/path/to/yay_x86_64
 export PATH=$PATH:${YAY_HOME}
 ```
 
@@ -5111,8 +5111,8 @@ sudo chmod u=rwx,g=rx,o=rx /mnt/data
 Type=Application
 # 指定桌面快捷方式图标下方显示的默认名称
 Name=WeChat
-Exec=/home/handle/Applications/WeChat.AppImage
-Icon=/home/handle/Applications/WeChat.png
+Exec=/path/to/WeChat.AppImage
+Icon=/path/to/WeChat.png
 Terminal=false
 Categories=Development;
 # 这个应用是否支持启动通知：应用启动时显示“正在启动”的动画，在任务栏显示一个“启动中”的高亮，等应用真正启动后再恢复正常
@@ -5333,79 +5333,6 @@ sudo fdisk -l
 # 对于ext4的分区，下面两个命令都可以
 e2label /dev/partition_name labelName
 tune2fs -L labelName /dev/partition_name
-```
-
-### uv的使用
-
-包管理器：uv pip
-
-```sh
-# archlinux安装uv
-sudo pacman -S uv
-
-# 创建一个新项目（python环境）
-uv init
-
-# 创建一个环境，比如在项目中删除.venv文件夹后可以执行，这样就重新创建一个环境了
-# --python 3.11：指定python版本
-# --system-site-packages：继承系统的包，但是`uv pip list` or `uv pip install`不会将系统的包算在其中，但是笔者试了不知道为什么带不进来
-uv venv [--python 3.11] [--system-site-packages]
-
-# 更新项目环境
-# 指定国内源
-uv sync --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
-
-# 安装依赖包
-# 也可以在安装依赖包的时候指定源，--index-url也可以简写为-i
-uv pip install matplotlib --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-
-# 激活环境：打开终端，进入项目根目录，执行如下命令
-# 一些ide如vscode在你打开终端的时候会自动执行这个命令
-source .venv/bin/activate
-
-# 清空不可访问的缓存（相当于没有项目用到的缓存）
-uv cache prune
-
-# 清空所有缓存（包括项目中会用到的缓存）
-uv cache clean
-
-# 在新项目中添加依赖
-uv add
-
-# 在新项目中删除依赖
-uv remove   
-```
-
-### miniforge的使用
-
-miniforge可以看成是增强版的miniconda，跟uv一样把它当成包管理器就行了
-
-它用的是mamba命令，conda命令执行的语句都可以将conda替换为mamba
-
-```sh
-# 安装miniforge
-yay -S miniforge
-
-# 安装完成为当前用户执行
-echo "[ -f /opt/miniforge/etc/profile.d/conda.sh ] && source /opt/miniforge/etc/profile.d/conda.sh" >> ~/.bashrc
-
-# 测试
-mamba --version
-
-mamba create -p /home/handle/Applications/miniforge/envs/cosyvoice -y python=3.10
-
-# 报'mamba' is running as a subprocess and can't modify the parent shell.
-# Thus you must initialize your shell before using activate and deactivate.
-# 就根据提示如执行下面的命令
-eval "$(mamba shell hook --shell bash)"
-
-mamba activate /home/handle/Applications/miniforge/envs/cosyvoice
-
-# 删除环境
-mamba env remove -p /home/handle/Applications/miniforge/envs/GPTSoVits
-
-# 清理所有未使用的包和缓存
-mamba clean -y --all
 ```
 
 ## NixOS

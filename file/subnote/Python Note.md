@@ -1,5 +1,86 @@
 # Python Note
 
+## 安装python包管理器
+
+### uv
+
+包管理器：uv pip
+
+```sh
+# archlinux安装uv
+sudo pacman -S uv
+
+# 创建一个新项目（python环境）
+uv init
+
+# 创建一个环境，比如在项目中删除.venv文件夹后可以执行，这样就重新创建一个环境了
+# --python 3.11：指定python版本
+# --system-site-packages：继承系统的包，但是`uv pip list` or `uv pip install`不会将系统的包算在其中，但是笔者试了不知道为什么带不进来
+uv venv [--python 3.11] [--system-site-packages]
+
+# 更新项目环境
+# 指定国内源
+uv sync --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
+# 安装依赖包
+# 也可以在安装依赖包的时候指定源，--index-url也可以简写为-i
+uv pip install matplotlib --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+# 激活环境：打开终端，进入项目根目录，执行如下命令
+# 一些ide如vscode在你打开终端的时候会自动执行这个命令
+source .venv/bin/activate
+
+# 清空不可访问的缓存（相当于没有项目用到的缓存）
+uv cache prune
+
+# 清空所有缓存（包括项目中会用到的缓存）
+uv cache clean
+
+# 在新项目中添加依赖
+uv add
+
+# 在新项目中删除依赖
+uv remove   
+```
+
+### miniforge
+
+miniforge可以看成是增强版的miniconda，跟uv一样把它当成包管理器就行了
+
+它用的是mamba命令，conda命令执行的语句都可以将conda替换为mamba
+
+```sh
+# archlinux安装miniforge
+yay -S miniforge
+
+# 安装完成为当前用户执行
+echo "[ -f /opt/miniforge/etc/profile.d/conda.sh ] && source /opt/miniforge/etc/profile.d/conda.sh" >> ~/.bashrc
+
+# 执行完成后会在~/.bashrc中追加下面的命令
+# 意思是：如果 /opt/miniforge/etc/profile.d/conda.sh 这个文件存在，那么就把它加载到当前 Shell 中（初始化 conda 环境）
+[ -f /opt/miniforge/etc/profile.d/conda.sh ] && source /opt/miniforge/etc/profile.d/conda.sh
+
+# 测试
+mamba --version
+
+mamba create -p /path/to/miniforge/envs/cosyvoice -y python=3.10
+
+# 报'mamba' is running as a subprocess and can't modify the parent shell.
+# Thus you must initialize your shell before using activate and deactivate.
+# 就根据提示如执行下面的命令
+eval "$(mamba shell hook --shell bash)"
+
+mamba activate /path/to/miniforge/envs/cosyvoice
+
+# 删除环境
+mamba env remove -p /path/to/miniforge/envs/GPTSoVits
+
+# 清理所有未使用的包和缓存
+mamba clean -y --all
+```
+
+## python知识点
+
 - python源文件默认是UTF-8编码的
 
 ```py
