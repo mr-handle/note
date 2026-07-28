@@ -22461,6 +22461,45 @@ idea目前是社区版和旗舰版合并为一个软件了，如果从官网下�
 
 看取舍了，如果不打算使用订阅功能并且不介意官方版的更多的基础功能的话建议下载社区版就可以了
 
+### zed
+
+```sh
+# zed，压缩包解压的版本运行后任务栏不显示正确的zed图标，archlinux先用包管理器的版本吧
+sudo pacman -S zed
+```
+
+安装完后到扩展页面搜索java，下载扩展，只要操作系统层面已经配置好java和maven，在zed完全开箱即用
+
+#### 调试设置
+
+在zed右下角状态栏点击调试图标，然后点击编辑debug.json，编辑内容如下，其中主类要根据具体项目更改
+
+```json
+[
+  {
+    "adapter": "Java",
+    "request": "launch",
+    "label": "Launch Debugger",
+    // if your project has multiple entry points, specify the one to use:
+    "mainClass": "具体全限定主类名",
+    //
+    // this effectively sets a breakpoint at your program entry:
+    "stopOnEntry": true,
+    // the working directory for the debug process
+    "cwd": "$ZED_WORKTREE_ROOT"
+  }
+]
+```
+
+在zed右下角状态栏点击调试图标，添加新会话，选择刚刚编辑的调试名称，然后就能开始调试了
+
+#### zed使用心得
+
+- markdown还不支持转pdf，没有相关的插件
+- 内存占用多，显存占用也多，还有点卡
+- 特别是markdown预览的时候，很明显的卡顿，并且预览同步延迟也很大
+- 更新到12.1后，调试没反应了，作为一个新兴的编辑器，还是先别用吧
+
 ## Yaml
 
 - `key:空格value`，标识一对键值对
