@@ -4243,6 +4243,15 @@ sudo pacman -S kinfocenter
 
 # archlinux版的cpu-z，也可以查看系统和电脑硬件信息
 sudo pacman -S cpu-x
+
+# zed，压缩包解压的版本运行后任务栏不显示正确的zed图标，先用包管理器的版本吧
+sudo pacman -S zed
+
+# 社区版vscode
+sudo pacman -S code
+
+# 社区版idea，会安装java，不建议这种方式安装
+sudo pacman -S intellij-idea-community-edition
 ```
 
 ##### 安装mpv视频播放器
