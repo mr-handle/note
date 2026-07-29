@@ -22338,17 +22338,17 @@ DNS1=114.114.114.114
                 - 勾上`Show line numbers`，显示行号
         - Keys
             - 搜索`Toggle Comment`，将`TM4E Language`那行的快捷键改成`Ctrl+/`，这样就可以在pom.xml里面使用该快捷键了
-
-##### 通用设置
-
-- 自动刷新文件夹改动，General->Workspace,勾上`Refresh using native hooks or polling`
-    - 设置源文件编码，`Text file encoding`设置为UTF-8
-    - 设置换行符，`New text file line delimiter`设置为Unix
-    - 手动构建自动保存，Build，勾上`Save automatically before manual build`
+        - Workspace，勾上`Refresh using native hooks or polling`，自动刷新文件夹改动
+            - `Text file encoding`，设置源文件编码为UTF-8
+            - `New text file line delimiter`，设置为Unix换行符
+            - Build
+                - 勾上`Save automatically before manual build`，手动构建前自动保存
 
 ##### Java设置
 
-- 设置编译器语法版本，Java->Compiler，`Compiler compliance level`设置为自己的Java版本
+- Java -> Compiler，`Compiler compliance level`设置为自己的Java版本作为编译器语法版本
+    - `Errors/Warnings` -> `Generic types` -> `Redundant type arguments(1.7 or higher)`设置为Warnings
+        - 这样泛型补全`List<String> list = new ArrayList<String>();`后，就会显示警告信息，然后就可以通过提示进行处理，目前只想到了这个解决办法
 
 - 设置代码补全，Java->Editor->Content Assist，
     - 取消只有按回车才触发代码补全提示，取消勾选`Disable insertion trigger except 'Enter'`
@@ -22358,9 +22358,12 @@ DNS1=114.114.114.114
 
 - 自定义模板，Java->Editor->Templates
     - `.sout` 自动补全
-![](image/code-template1.png)
+
+    ![code-template1](image/code-template1.png)
+
     - `fori` 自动补全
-![](image/code-template2.png)
+
+    ![code-template2](image/code-template2.png)
 
 - 设置JRE，Java->Installed JREs，点`Add`添加自己的Java版本
 
@@ -22421,6 +22424,7 @@ java -jar lombok.jar
 |Alt + Shift + R|统一修改变量名|
 |Ctrl + Shift + X|转大写|
 |Ctrl + Shift + Y|转小写|
+|Ctrl + Shift + O|优化导入语句|
 
 #### eclipse使用心得
 
@@ -22431,6 +22435,12 @@ java -jar lombok.jar
 properties文件的中文显示问题，虽然有插件可以正常显示了，但是那个颜色特别刺眼，看久了对视力不好，建议eclipse还是用yaml吧
 
 还有就是代码提示补全，感觉没有idea那么完善
+
+spring-tools-for-eclipse = eclipse-jee + Spring Tools Suite 插件，
+
+虽然eclipse-java也可以通过安装插件变成eclipse-jee或spring-tools-for-eclipse
+
+由于eclipse的插件下载很慢，强烈建议直接使用spring-tools-for-eclipse
 
 ### IDEA
 
@@ -22499,6 +22509,10 @@ sudo pacman -S zed
 - 内存占用多，显存占用也多，还有点卡
 - 特别是markdown预览的时候，很明显的卡顿，并且预览同步延迟也很大
 - 更新到12.1后，调试没反应了，作为一个新兴的编辑器，还是先别用吧
+
+### theia-ide
+
+协议友好，但是启动很慢，将来有可能替代vscode，拒绝微软强行喂的无用功能
 
 ## Yaml
 
