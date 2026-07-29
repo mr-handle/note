@@ -2809,11 +2809,23 @@ pactree -d1 pinta
 
 下载.AppImage格式的软件包后，先赋予该软件包执行权限，第一次先通过终端启动
 
+```sh
+sudo chmod +x /path/to/file.AppImage
+```
+
 如果运行异常，根据终端提示安装相应的依赖就可以了
 
 ```sh
 # 比如有些AppImage软件包是需要fuse2的
 sudo pacman -S fuse2
+```
+
+- 对于大型软件，如gimp，启动速度可能会很慢，可以解压appimage
+
+```sh
+# 执行后，当前目录下会生成一个名为 squashfs-root 的文件夹，里面包含了该软件运行所需的所有文件和依赖
+# 进入该目录，会看到一个名为 AppRun 的文件，这就是该软件的启动入口。直接运行它即可
+/path/to/file.AppImage --appimage-extract
 ```
 
 - 复制软件包里面的图标文件
