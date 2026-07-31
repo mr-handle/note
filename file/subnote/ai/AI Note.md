@@ -232,6 +232,27 @@ ollama run  模型名称:标签
 ollama stop 模型名称:标签
 ```
 
+### 拉取GGUF格式的模型
+
+ollama还可以拉取Hugging Face/魔塔社区的GGUF格式的模型在本地运行
+
+Hugging Face官网地址：<https://huggingface.co/models?library=gguf&sort=trending>
+
+魔塔社区官网地址：<https://www.modelscope.cn/models>
+
+```sh
+# 拉取Hugging Face的模型
+ollama pull hf.co/<username>/<model-repository>
+# 例
+ollama pull hf.co/AtomicChat/Qwen3.6-27B-DFlash-GGUF
+
+
+# 拉取魔塔社区的模型
+ollama run modelscope.cn/<username>/<model-repository>
+# 例
+ollama run modelscope.cn/hf/antirez-deepseek-v4-gguf
+```
+
 ### 修改上下文的词元长度
 
 ollama默认上下文长度是 4096 tokens

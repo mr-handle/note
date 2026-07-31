@@ -2747,6 +2747,11 @@ apt list --manual-installed
 
 官网：<https://archlinux.org/>
 
+- 经常使用的软件，建议通过包管理器安装
+
+- 不经常使用的软件建议使用免安装版本
+    - 如果没有免安装版本，则考虑appimage，对于较大的appimage文件，建议将其解压，节省启动时间
+
 ### pacman包管理器
 
 ```sh
@@ -2820,7 +2825,9 @@ sudo chmod +x /path/to/file.AppImage
 sudo pacman -S fuse2
 ```
 
-- 对于大型软件，如gimp，启动速度可能会很慢，可以解压appimage
+- 对于大型软件，如gimp，启动速度可能会很慢，可以解压appimage来提升启动速度
+    - 最终那 1~2 秒的 FUSE 挂载和镜像解压时间可以节省下来
+    - 对于theia-ide，appimage启动要32秒，解压后启动30秒，感觉还是软件本身的优化更重要
 
 ```sh
 # 执行后，当前目录下会生成一个名为 squashfs-root 的文件夹，里面包含了该软件运行所需的所有文件和依赖

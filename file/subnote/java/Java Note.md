@@ -22412,6 +22412,17 @@ java -jar lombok.jar
 
 - 2.在弹出的界面选择eclipse.exe的所在位置，然后重启Eclipse
 
+#### 安装其它插件
+
+- 可以在eclipse插件市场在线安装插件
+    - 建议先配置插件的国内镜像源（如清华镜像源）
+        - Preference -> `Install/Update` -> `Available Software Sites`，然后更改为国内源
+
+- 建议安装以下插件
+    - Kantan Properties Editor
+    - Mybatipse
+    - Spring Tools
+
 #### 快捷键
 
 |快捷键|功能|
