@@ -4161,6 +4161,19 @@ public class HelloWorld extends Application {
 }
 ```
 
+#### 获取屏幕尺寸
+
+```java
+// 获取主屏幕的物理边界
+Rectangle2D bounds = Screen.getPrimary().getBounds();
+
+// 获取主屏幕的可视边界（排除任务栏等系统UI）
+Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+
+double visualWidth = visualBounds.getWidth();
+double visualHeight = visualBounds.getHeight();
+```
+
 #### 控件
 
 ##### ChoiceBox
