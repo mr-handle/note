@@ -4103,6 +4103,10 @@ try {
 
 用自带javafx的jdk啊，但缺点是你运行的时候也必须用自带javafx的jre！
 
+##### 解决方案四
+
+把项目变成模块
+
 ##### 终极方案
 
 用一个普通的 Java 类作为“跳板”来启动JavaFX
@@ -4153,6 +4157,72 @@ public class HelloWorld extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+}
+```
+
+#### 控件
+
+- ChoiceBox，也就是单选下拉框
+
+```java
+public class ChoiceBoxDemo extends Application {
+    // ChoiceBox的项可以用最简单的String类型
+    // 也可以用复制的类型，如Pair（一个通用的键值对容器）
+    private static final ChoiceBox<Pair<String, String>> CHOICE_BOX = new ChoiceBox<>();
+
+    // 定义EMPTY_PAIR对象避免assetClass().getValue()空指针异常
+    private static final Pair<String, String> EMPTY_PAIR = new Pair<>("", "");
+
+    @Override
+    public void start(Stage primaryStage) {
+        Label label = new Label("Asset Class:");
+
+        CHOICE_BOX.setPrefWidth(200);
+        initChoice();
+
+        Button saveButton = new Button("Save");
+        saveButton.setOnAction(event -> {
+            System.out.println("saving " + CHOICE_BOX.getValue());
+        });
+
+        HBox hBox = new HBox(label, CHOICE_BOX, saveButton);
+        hBox.setSpacing(10.0);
+        hBox.setAlignment(Pos.CENTER);
+        hBox.setPadding(new Insets(40));
+
+        Scene scene = new Scene(hBox);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("ChoiceBoxDemo");
+        primaryStage.show();
+    }
+
+    private void initChoice() {
+        List<Pair<String, String>> list = new ArrayList<>();
+        list.add(new Pair<>("Equipment", "20000"));
+        list.add(new Pair<>("Furniture", "21000"));
+        list.add(new Pair<>("Investment", "22000"));
+
+        // 当使用复杂对象做ChoiceBox的项时，由于界面上只能显示文本（字符串）
+        // 就要用到StringConverter了，
+        CHOICE_BOX.setConverter(new StringConverter<Pair<String, String>>() {
+            // 对象 → 字符串（用于显示）
+            @Override
+            public String toString(Pair<String, String> pair) {
+                return pair.getKey();
+            }
+
+            // 字符串 → 对象（用于还原），这里用不到就不写逻辑了
+            @Override
+            public Pair<String, String> fromString(String string) {
+                return null;
+            }
+        });
+
+        CHOICE_BOX.getItems().add(EMPTY_PAIR);
+        CHOICE_BOX.getItems().addAll(list);
+        // 默认值
+        CHOICE_BOX.setValue(EMPTY_PAIR);
     }
 }
 ```
