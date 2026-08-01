@@ -22752,6 +22752,16 @@ idea目前是社区版和旗舰版合并为一个软件了，如果从官网下�
 
 看取舍了，如果不打算使用订阅功能并且不介意官方版的更多的基础功能的话建议下载社区版就可以了
 
+更新jdk时，ide无法识别新jdk，显示还是旧的jdk，这时需要在project struct里面删除原来的jdk，然后再添加一次，也可以不用这么麻烦重启电脑就行了
+
+另外不得不提一下maven和mavend了，在日常开发过程中，运行和调试都是idea内置的执行器在工作，跟maven和mavend没有半毛钱关系
+
+除非你在idea设置中委托给maven，但是这会导致调试无法进入断点，一般不会勾选委托给maven
+
+只有执行maven生命周期的任务，如：clean、compile、package、install等时，maven和mavend才有出场的机会
+
+而Sync Project、Sync All Maven Projects和Reload All Maven Projects也是idea在干活的哟
+
 ### zed
 
 ```sh
