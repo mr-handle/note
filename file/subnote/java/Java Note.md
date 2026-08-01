@@ -4163,7 +4163,9 @@ public class HelloWorld extends Application {
 
 #### 控件
 
-- ChoiceBox，也就是单选下拉框
+##### ChoiceBox
+
+青春版的单选下拉框，选项不可编辑，且下拉框的位置会改变
 
 ```java
 public class ChoiceBoxDemo extends Application {
@@ -4171,12 +4173,12 @@ public class ChoiceBoxDemo extends Application {
     // 也可以用复制的类型，如Pair（一个通用的键值对容器）
     private static final ChoiceBox<Pair<String, String>> CHOICE_BOX = new ChoiceBox<>();
 
-    // 定义EMPTY_PAIR对象避免assetClass().getValue()空指针异常
+    // 定义EMPTY_PAIR对象避免CHOICE_BOX.getValue()空指针异常
     private static final Pair<String, String> EMPTY_PAIR = new Pair<>("", "");
 
     @Override
     public void start(Stage primaryStage) {
-        Label label = new Label("Asset Class:");
+        Label label = new Label("Size:");
 
         CHOICE_BOX.setPrefWidth(200);
         initChoice();
@@ -4199,12 +4201,12 @@ public class ChoiceBoxDemo extends Application {
 
     private void initChoice() {
         List<Pair<String, String>> list = new ArrayList<>();
-        list.add(new Pair<>("Equipment", "20000"));
-        list.add(new Pair<>("Furniture", "21000"));
-        list.add(new Pair<>("Investment", "22000"));
+        list.add(new Pair<>("小", "100"));
+        list.add(new Pair<>("中", "200"));
+        list.add(new Pair<>("大", "300"));
 
         // 当使用复杂对象做ChoiceBox的项时，由于界面上只能显示文本（字符串）
-        // 就要用到StringConverter了，
+        // 就要用到StringConverter了
         CHOICE_BOX.setConverter(new StringConverter<Pair<String, String>>() {
             // 对象 → 字符串（用于显示）
             @Override
@@ -4223,6 +4225,78 @@ public class ChoiceBoxDemo extends Application {
         CHOICE_BOX.getItems().addAll(list);
         // 默认值
         CHOICE_BOX.setValue(EMPTY_PAIR);
+    }
+}
+```
+
+##### ComboBox
+
+完整版的单选下拉框，选项可编辑，且下拉框的位置固定，感觉更友好，高级操作如状态值的颜色编码形状渲染等也要用到它
+
+```java
+public class ComboBoxDemo extends Application {
+    // ComboBox的项可以用最简单的String类型
+    // 也可以用复制的类型，如Pair（一个通用的键值对容器）
+    private static final ComboBox<Pair<String, String>> COMBO_BOX = new ComboBox<>();
+
+    // 定义EMPTY_PAIR对象避免COMBO_BOX.getValue()空指针异常
+    private static final Pair<String, String> EMPTY_PAIR = new Pair<>("", "");
+
+    @Override
+    public void start(Stage primaryStage) {
+        Label label = new Label("Size:");
+
+        COMBO_BOX.setPrefWidth(200);
+        initComboBox();
+
+        Button saveButton = new Button("Save");
+        saveButton.setOnAction(event -> {
+            System.out.println("saving " + COMBO_BOX.getValue());
+        });
+
+        HBox hBox = new HBox(label, COMBO_BOX, saveButton);
+        hBox.setSpacing(10.0);
+        hBox.setAlignment(Pos.CENTER);
+        hBox.setPadding(new Insets(40));
+
+        Scene scene = new Scene(hBox);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("ComboBoxDemo");
+        primaryStage.show();
+    }
+
+    private void initComboBox() {
+        List<Pair<String, String>> list = new ArrayList<>();
+        list.add(new Pair<>("小", "100"));
+        list.add(new Pair<>("中", "200"));
+        list.add(new Pair<>("大", "300"));
+
+        COMBO_BOX.getItems().add(EMPTY_PAIR);
+        COMBO_BOX.getItems().addAll(list);
+        // 默认值
+        COMBO_BOX.setValue(EMPTY_PAIR);
+
+
+        //  JavaFX 的虚拟化渲染设计核心思想是
+        // 控件不会为每个数据项创建一个 UI 节点，而是只创建少量可复用的 Cell，通过不断调用 updateItem() 来"换皮"显示不同数据
+        // 定义一个"工厂"，通过ListView<Pair<String, String>来生产ListCell<Pair<String, String>>
+        // 这里也可以用StringConverter，显示优先级：Callback > StringConverter > toString()
+        Callback<ListView<Pair<String, String>>, ListCell<Pair<String, String>>> factory = listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(Pair<String, String> item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText("");
+                } else {
+                    // 设置Pair的key作为ListCell的文本
+                    setText(item.getKey());
+                }
+            }
+        };
+        // 下拉列表里每个选项怎么显示
+        COMBO_BOX.setCellFactory(factory);
+        // 选中后，按钮上显示什么，如果不设置，则会调用选项的toString方法
+        COMBO_BOX.setButtonCell(factory.call(null));
     }
 }
 ```
