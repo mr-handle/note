@@ -12759,6 +12759,117 @@ public class ApplicationController {
 }
 ```
 
+### 以OpenAI API为例使用Ollama
+
+Ollama还兼容OpenAI接口，使用demo如下
+
+- maven依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-openai</artifactId>
+</dependency>
+```
+
+- 配置
+
+```properties
+# ollama本身没有apiKey，但是又不能为空，随便填个值上去就行了
+# 对于其它模型供应商的apiKey，应该设置到vault或者环境变量中，然后通过占位符获取如${API_KEY}
+# 这里springai有个问题，官方文档里面说spring.ai.openai.chat.api-key是会覆盖spring.ai.openai.api-key的
+# 但是启动的时候，创建openAiSdkAudioSpeechModel bean时，还是会读spring.ai.openai.api-key，启动报错
+#spring.ai.openai.chat.api-key=ollama
+spring.ai.openai.api-key=ollama
+# ollama的本地服务器地址，只要不是openai的，貌似都要加v1
+spring.ai.openai.chat.base-url=http://localhost:11434/v1
+# 使用的模型名称，ollma list命令列出的模型名称复制过来就行了
+spring.ai.openai.chat.model=gemma4:e2b-it-qat
+```
+
+```java
+@RestController
+public class ApplicationController {
+    @Autowired
+    private OpenAiChatModel chatModel;
+
+    private final ChatClient chatClient;
+
+    @Autowired
+    public ApplicationController(OpenAiChatModel chatModel) {
+        this.chatClient = ChatClient.create(chatModel);
+    }
+
+    @GetMapping("/chatModelCall")
+    public Map<String, String> chatModelCall(@RequestParam(value = "message", defaultValue = "讲个笑话给我听") String message) {
+        // Use the model with thinking-capable models
+        ChatResponse response = chatModel.call(new Prompt(message));
+
+        AssistantMessage assistantMessage = response.getResult().getOutput();
+
+        // Access the reasoning process from metadata
+        String reasoning = Optional.ofNullable(assistantMessage)
+                                   .map(AbstractMessage::getMetadata)
+                                   .map(map -> map.get("reasoningContent"))
+                                   .map(reasoningContent -> {
+                                       if (reasoningContent instanceof String s) {
+                                           return s;
+                                       }
+                                       return null;
+                                   })
+                                   .orElse("");
+
+        // Get the final answer
+        String answer = Optional.ofNullable(assistantMessage).map(AssistantMessage::getText).orElse("");
+
+        Map<String, String> map = new HashMap<>();
+        map.put("Reasoning", reasoning);
+        map.put("Answer", answer);
+        map.put("Timestamp", String.valueOf(Instant.now().toEpochMilli()));
+        return map;
+    }
+
+    @GetMapping(value = "/chatModelStream", produces = "text/html;charset=utf-8")
+    public Flux<String> chatModelStream(@RequestParam(value = "message", defaultValue = "讲个笑话给我听") String message) {
+        return chatModel.stream(message);
+    }
+
+    @GetMapping("/chatClientCall")
+    public Map<String, String> chatClientCall(@RequestParam(value = "message", defaultValue = "讲个笑话给我听") String message) {
+        // Use the model with thinking-capable models
+        ChatResponse response = chatClient.prompt().user(message).call().chatResponse();
+
+        AssistantMessage assistantMessage = response.getResult().getOutput();
+
+        // Access the reasoning process from metadata
+        String reasoning = Optional.ofNullable(assistantMessage)
+                                   .map(AbstractMessage::getMetadata)
+                                   .map(map -> map.get("reasoningContent"))
+                                   .map(reasoningContent -> {
+                                       if (reasoningContent instanceof String s) {
+                                           return s;
+                                       }
+                                       return null;
+                                   })
+                                   .orElse("");
+
+        // Get the final answer
+        String answer = Optional.ofNullable(assistantMessage).map(AssistantMessage::getText).orElse("");
+
+        Map<String, String> map = new HashMap<>();
+        map.put("Reasoning", reasoning);
+        map.put("Answer", answer);
+        map.put("Timestamp", String.valueOf(Instant.now().toEpochMilli()));
+        return map;
+    }
+
+    @GetMapping(value = "/chatClientStream", produces = "text/html;charset=utf-8")
+    public Flux<String> chatClientStream(@RequestParam(value = "message", defaultValue = "讲个笑话给我听") String message) {
+        return chatClient.prompt().user(message).stream().content();
+    }
+}
+```
+
 ### ChatModel 和 ChatClient
 
 ChatModel 和 ChatClient 是两个核心的抽象，它们分别代表了底层交互接口和高级应用封装
@@ -22458,6 +22569,21 @@ spring-tools-for-eclipse = eclipse-jee + Spring Tools Suite 插件，
 官网：<https://www.jetbrains.com/idea/>
 
 社区版：<https://github.com/JetBrains/intellij-community>
+
+- 配置
+
+- File -> Settings
+    - Editor
+        - General
+            - `Auto Import`
+                - Java
+                    - 勾选`Add unambiguous imports on the fly`
+                    - 不要勾选`Optimize imports on the fly`，否则执行会触发导入语句优化的撤销操作时会抽风跟你二人转，设置保存时优化导入就行了
+    - Tools
+        - `Actions on Save`
+            - Action
+                - 勾选`Reformat code`，如果使用了版本控制，建议在提交代码的时候再执行代码格式化
+                - 勾选`Optimize imports`
 
 |快捷键|功能|
 |:-|:-|
