@@ -4403,6 +4403,20 @@ export WINE_PATH="/path/to/SteamLibrary/steamapps/common/Proton - Experimental/f
 export PATH=$PATH:${WINE_PATH}
 ```
 
+###### 安装decky-loader
+
+官网：<https://github.com/SteamDeckHomebrew/decky-loader>
+
+目前貌似只支持steamos，在archlinux上始终没有开发者模式，并没有造成功
+
+- 安装和卸载
+
+```sh
+sudo pacman -S jq
+curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install_release.sh | sh
+curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/uninstall.sh | sh
+```
+
 #### 安装wine
 
 - 1.安装

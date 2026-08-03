@@ -12829,6 +12829,24 @@ server:
 
 Spring AI的版本选择也是要考虑跟Spring Boot版本兼容的
 
+### ChatModel 和 ChatClient
+
+ChatModel 和 ChatClient 是两个核心的抽象，它们分别代表了底层交互接口和高级应用封装
+
+简单来说，ChatModel 是直接与底层大语言模型（LLM）通信的基础设施
+
+而 ChatClient 则是基于 ChatModel 构建的高级 API，旨在简化复杂 AI 应用的开发
+
+- ChatModel（底层对话模型）：
+    - 它是直接与具体大语言模型交互的底层接口，提供基础的 call() 和 stream() 方法
+    - 工作原理是接收 Prompt 作为输入，发送给后端大模型，并接收 ChatResponse 作为输出
+    - 适合简单的模型交互场景或需要精细控制底层参数的模型实验
+
+- ChatClient（高级聊天客户端）：
+    - 它是基于 ChatModel 构建的高级封装，提供了流畅的链式 API（Fluent API）
+    - 类似于应用程序开发中的“服务层”，它将与 LLM 及其他组件（如提示词模板、聊天记忆、RAG 组件等）交互的复杂性隐藏在背后，开发者可以快速组装一整套 AI 交互流程
+    - 适合快速构建标准化的复杂 AI 服务和业务接口
+
 - bom
 
 ```xml
@@ -12841,7 +12859,7 @@ Spring AI的版本选择也是要考虑跟Spring Boot版本兼容的
 </dependency>
 ```
 
-### 以Ollama为例使用Spring AI
+### 以Ollama的chat模型为例使用Spring AI
 
 - 依赖
 
@@ -12916,7 +12934,7 @@ public class ApplicationController {
 }
 ```
 
-### 以OpenAI API为例使用Ollama
+### 以OpenAI API为例使用Ollama的chat模型
 
 Ollama还兼容OpenAI接口，使用demo如下
 
@@ -13027,23 +13045,11 @@ public class ApplicationController {
 }
 ```
 
-### ChatModel 和 ChatClient
+### chat模型和embedding模型
 
-ChatModel 和 ChatClient 是两个核心的抽象，它们分别代表了底层交互接口和高级应用封装
+spring的官方文档只说了ollama的chat 模型是openai api兼容的
 
-简单来说，ChatModel 是直接与底层大语言模型（LLM）通信的基础设施
-
-而 ChatClient 则是基于 ChatModel 构建的高级 API，旨在简化复杂 AI 应用的开发
-
-- ChatModel（底层对话模型）：
-    - 它是直接与具体大语言模型交互的底层接口，提供基础的 call() 和 stream() 方法
-    - 工作原理是接收 Prompt 作为输入，发送给后端大模型，并接收 ChatResponse 作为输出
-    - 适合简单的模型交互场景或需要精细控制底层参数的模型实验
-
-- ChatClient（高级聊天客户端）：
-    - 它是基于 ChatModel 构建的高级封装，提供了流畅的链式 API（Fluent API）
-    - 类似于应用程序开发中的“服务层”，它将与 LLM 及其他组件（如提示词模板、聊天记忆、RAG 组件等）交互的复杂性隐藏在背后，开发者可以快速组装一整套 AI 交互流程
-    - 适合快速构建标准化的复杂 AI 服务和业务接口
+因此如果要使用ollama的embedding模型，目前最好还是使用ollama api吧
 
 ## Spring Security
 
@@ -21232,31 +21238,76 @@ exit
 - 下载redis镜像
 
 ```sh
-docker pull redis:7.4
+docker pull redis:8.10.0
+```
+
+docker redis默认不主动加载配置文件的，redis服务会直接以硬编码的内置默认参数运行
+
+如果需要自定义配置，去源码仓库下载默认配置文件redis.conf进行修改
+
+配置文件的配置项不是一成不变的，如果更新版本的话要以新的默认配置文件为参考
+
+```conf
+# 1. 引入官方默认配置文件，必须为容器内的绝对路径，不能写相对路径
+# 补充：docker redis不用引入默认配置文件，它自己自带默认参数运行的，只要将改动的内容写到redis.conf就行了
+# include /usr/local/etc/redis/redis.conf
+
+# 2.在下方写入需要覆盖的配置（后面的配置会顶掉上面引入的配置文件的相同配置）
+
+# 监听所有网卡的地址
+bind 0.0.0.0
+
+# 由于Docker 容器的生命周期依赖于前台的主进程
+# 如果设置为daemonize yes，redis 启动后会把自己变成后台进程
+# 此时，前台的父进程会立即退出，Docker 会认为“主程序结束了，容器该销毁了”，于是容器瞬间退出
+# 因此如果是docker版的redis，要设置为daemonize no
+daemonize no
+
+# 登录密码
+requirepass yourpassword
+
+# 快照（RDB）默认是开启，还要设置触发保存RDB的条件
+# save 指令是“追加型”的，先清空默认配置文件的save配置
+# save ""
+# 3600 秒内至少 1 次写操作 → 触发 RDB
+save 3600 1
+# 300 秒内至少 100 次写操作 → 触发 RDB
+save 300 100
+# 60 秒内至少 10000 次写操作 → 触发 RDB
+save 60 10000
+
+# 只追加文件（AOF）需要手动开启
+appendonly yes
+
+# 设置只追加文件每秒同步一次
+appendfsync everysec
+
+# 只追加文件的目录名称
+appenddirname "aof"
 ```
 
 - compose.yaml
 
 ```yaml
 redis:
-    image: redis:7.4
+    image: redis:8.10.0
     container_name: redis
     ports:
-        - 6379:6379
+        - "6379:6379"
     volumes:
-        - redis-data:/data
-        - redis-conf:/usr/local/etc/redis
-    networks: 
-        - my-net
+        - redisData:/data
+        - /home/handle/data/redis:/usr/local/etc/redis
+    # 使用自定义配置文件
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+        - dubhe-net
     restart: always
 networks: 
-    my-net: 
-        name: my-net
+    dubhe-net:
+        name: dubhe-net
 volumes: 
-    redis-data: 
-        name: redis-data
-    redis-conf: 
-        name: redis-conf
+    redisData:
+        name: redisData
 ```
 
 - 启动
