@@ -13051,6 +13051,326 @@ spring的官方文档只说了ollama的chat 模型是openai api兼容的
 
 因此如果要使用ollama的embedding模型，目前最好还是使用ollama api吧
 
+### 方法作为工具来调用
+
+工具调用分为两种：信息检索和采取行动
+
+信息检索：如获取当前日期时间和天气，然后模型润色后返回
+
+采取行动：执行模型生成的计划，如发送邮件
+
+有两种工具声明的方式，注解方式和编程方式（一步一步创建必要对象）
+
+下面只介绍注解的方式
+
+#### `@Tool`注解
+
+- 属性
+    - name：工具名称，如果不指定，会使用方法名
+    - description：工具描述，让模型了解该工具是干嘛的和如何使用该工具
+        - 如果不指定，会使用方法名，设置详细的描述是非常有必要并且至关重要
+    - returnDirect：工具调用结果是直接返回给客户端还是传给模型
+    - resultConverter：ToolCallResultConverter实现，用来转换工具调用结果为String类型的对象返回给模型
+
+- 注解的方法可以是静态方法或实例方法
+
+- 注解的方法的可以是任何可见性（public, protected, package-private, or private）
+
+- 注解的方法可以有0个或任意参数，参数类型可以是绝大多数类型
+
+- 注解的方法可以没有返回类型（void）或绝大多数返回类型
+    - 如果有返回类型，则该返回类型必须是可序列化的，因为返回值会被序列化传给模型
+
+- 注解的方法的所属类可以是顶级类或内部类，这个类可以是任何可见性，只要实例化的地方是可访问的就行
+
+- 注解的方法的所属类只要它是一个Spring bean，它就支持AOT 编译，不用额外为GraalVM编译器做配置
+    - 否则，你需要在这个类加上注解`@RegisterReflection(memberCategories = MemberCategory.INVOKE_DECLARED_METHODS)`
+    - 可以根据需要决定是否将其定义为Spring bean
+
+- 注解的方法的参数类型和返回值类型限制，不可以是如下类型
+    - Optional
+    - 异步类型 (e.g. CompletableFuture, Future)
+    - 响应式类型 (e.g. Flow, Mono, Flux)
+    - 函数式类型(e.g. Function, Supplier, Consumer)
+        - 其实通过使用基于函数式的工具规范来实现，是可以支持函数式类型的
+
+```java
+@Component
+publci class DateTimeTools {
+    @Tool(description = "Get the current date and time in the user's timezone")
+    public String getCurrentDateTime() {
+        return LocalDateTime.now().atZone(LocaleContextHolder.getTimeZone().toZoneId()).toString();
+    }
+}
+```
+
+#### `@ToolParam`注解
+
+`@Tool`注解的方法的参数还可以添加`@ToolParam`注解
+
+用于提供额外的参数信息，如参数描述，是可选还是必须，默认是必须的
+
+- 属性
+    - description：参数描述，可以让模型更好地了解如何去使用
+    - required：参数是可选还是必须，默认是必须的
+
+- 参数如果注解了`@Nullable`，它将被认为是可选的，除非用`@ToolParam`标识为必须了
+
+```java
+class DateTimeTools {
+    @Tool(description = "Set a user alarm for the given time")
+    void setAlarm(@ToolParam(description = "Time in ISO-8601 format") String time) {
+        LocalDateTime alarmTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_DATE_TIME);
+        System.out.println("Alarm set for " + alarmTime);
+    }
+}
+```
+
+#### 将工具添加到ChatClient
+
+如果使用的是`@Tool`注解方式声明的工具
+
+当调用ChatClient时，给tools()方法传一个该工具类的实例就可以了
+
+```java
+ChatClient.create(chatModel)
+    .prompt("What day is tomorrow?")
+    .tools(new DateTimeTools())
+    .call()
+    .content();
+```
+
+##### ToolCallback
+
+在底层，ChatClient会为工具类实例的每一个`@Tool`注解的方法生成一个ToolCallback并传给模型
+
+当然你也可以使用ToolCallbacks工具类手动完成这一步
+
+```java
+ToolCallback[] dateTimeTools = ToolCallbacks.from(new DateTimeTools());
+
+ChatClient.create(chatModel)
+    .prompt("What day is tomorrow?")
+    .tools(dateTimeTools)
+    .call()
+    .content();
+```
+
+除此之外tools()方法还接收ToolCallbackProvider实例
+
+##### 将默认工具添加到ChatClient
+
+defaultTools()指定的默认工具，对于同一个ChatClient.Builder创建的ChatClient是通用的，因此使用要特别小心
+
+当同时用defaultTools()和tools()指定时，后者会覆盖前者
+
+```java
+ChatModel chatModel = ...
+ChatClient chatClient = ChatClient.builder(chatModel)
+    .defaultTools(new DateTimeTools())
+    .build();
+```
+
+#### 将工具添加到ChatModel
+
+```java
+ChatModel chatModel = ...
+ToolCallback[] dateTimeTools = ToolCallbacks.from(new DateTimeTools());
+ChatOptions chatOptions = ToolCallingChatOptions.builder()
+    .toolCallbacks(dateTimeTools)
+    .build();
+Prompt prompt = new Prompt("What day is tomorrow?", chatOptions);
+chatModel.call(prompt);
+```
+
+##### 将默认工具添加到ChatModel
+
+```java
+ToolCallback[] dateTimeTools = ToolCallbacks.from(new DateTimeTools());
+ChatModel chatModel = OllamaChatModel.builder()
+    .ollamaApi(OllamaApi.builder().build())
+    .options(ToolCallingChatOptions.builder()
+            .toolCallbacks(dateTimeTools)
+            .build())
+    .build();
+```
+
+### 函数式作为工具来调用
+
+- 限制，以下类型不支持
+    - 基本数据类型
+    - Optional
+    - 集合类型(e.g. List, Map, Array, Set)
+    - 异步类型(e.g. CompletableFuture, Future)
+    - 响应式类型 (e.g. Flow, Mono, Flux)
+
+- WeatherService
+
+```java
+public class WeatherService implements Function<WeatherRequest, WeatherResponse> {
+    public WeatherResponse apply(WeatherRequest request) {
+        return new WeatherResponse(30.0, Unit.C);
+    }
+}
+
+public enum Unit { C, F }
+public record WeatherRequest(String location, Unit unit) {}
+public record WeatherResponse(double temp, Unit unit) {}
+```
+
+- 定义ToolCallback bean
+
+```java
+@Configuration(proxyBeanMethods = false)
+class WeatherTools {
+    WeatherService weatherService = new WeatherService();
+
+    @Bean
+    ToolCallback currentWeather() {
+        return FunctionToolCallback.builder("currentWeather", weatherService::getWeather)
+        .description("Get the weather in location")
+        .inputType(WeatherRequest.class)
+        .build();
+    }
+}
+```
+
+- 使用ToolCallback bean
+
+```java
+@Autowired
+ToolCallback currentWeather;
+
+// Pass it to ChatClient at request time
+ChatClient.create(chatModel)
+    .prompt("What's the weather like in Copenhagen?")
+    .tools(currentWeather)
+    .call()
+    .content();
+
+// Or register as a default tool for all requests via the builder
+ChatClient chatClient = ChatClient.builder(chatModel)
+    .defaultTools(currentWeather)
+    .build();
+```
+
+### Tool Callback
+
+ToolCallback接口提供一种方式，来定义一个可以被ai模型调用的工具，它包括了定义和执行的逻辑
+
+你可以从 MCP Client (using the Model Context Protocol)或ChatClient (to build a modular agentic application)定义一个ToolCallback
+
+Spring AI提供了两个内置实现：MethodToolCallback和FunctionToolCallback
+
+ToolCallback提供的方法如下：
+
+```java
+public interface ToolCallback {
+    /**
+     * Definition used by the AI model to determine when and how to call the tool.
+     */
+    ToolDefinition getToolDefinition();
+
+    /**
+     * Metadata providing additional information on how to handle the tool.
+     */
+    ToolMetadata getToolMetadata();
+
+    /**
+     * Execute tool with the given input and return the result to send back to the AI model.
+     */
+    String call(String toolInput);
+
+    /**
+     * Execute tool with the given input and context, and return the result to send back to the AI model.
+     */
+    String call(String toolInput, ToolContext tooContext);
+}
+```
+
+### Tool Definition
+
+ToolDefinition接口提供必要的信息以便于ai模型去了解工具的能力，这些必要信息包括工具名称，描述，入参结构
+
+每个ToolCallback实现类必须提供一个ToolDefinition实例来定义工具
+
+ToolDefinition包含以下方法
+
+```java
+public interface ToolDefinition {
+    /**
+     * The tool name. Unique within the tool set provided to a model.
+     */
+    String name();
+
+    /**
+     * The tool description, used by the AI model to determine what the tool does.
+     */
+    String description();
+
+    /**
+     * The schema of the parameters used to call the tool.
+     */
+    String inputSchema();
+}
+```
+
+ToolDefinition.Builder可以让你使用默认的实现DefaultToolDefinition构建一个ToolDefinition
+
+```java
+ToolDefinition toolDefinition = ToolDefinition.builder()
+    .name("currentWeather")
+    .description("Get the weather in location")
+    .inputSchema("""
+        {
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["C", "F"]
+                }
+            },
+            "required": ["location", "unit"]
+        }
+    """)
+    .build();
+```
+
+#### Method Tool Definition
+
+从方法构建工具时，会自动生成ToolDefinition
+
+当然也可以手动完成，代码如下：
+
+```java
+Method method = ReflectionUtils.findMethod(DateTimeTools.class, "getCurrentDateTime");
+ToolDefinition toolDefinition = ToolDefinitions.from(method);
+```
+
+从方法生成的ToolDefinition包含了方法名和工具名
+
+方法名作为工具描述，json结构作为方法入参
+
+如果方法有`@Tool`注解，则工具名和工具描述会从注解里面提取（如果设置了）
+
+如果你想要显式声明一部分或全部属性，可以使用ToolDefinition.Builder构建一个自定义的ToolDefinition实例
+
+```java
+Method method = ReflectionUtils.findMethod(DateTimeTools.class, "getCurrentDateTime");
+ToolDefinition toolDefinition = ToolDefinitions.builder(method)
+    .name("currentDateTime")
+    .description("Get the current date and time in the user's timezone")
+    .inputSchema(JsonSchemaGenerator.generateForMethodInput(method))
+    .build();
+```
+
+#### Function Tool Definition
+
+由于编程式的写法没有记笔记，可以参考spring ai的 Functions as Tools
+
 ## Spring Security
 
 Spring Security提供3大功能：认证、授权和防御常见攻击
@@ -21348,6 +21668,10 @@ Redis Insight是Redis官方推出的redis数据库管理工具
 
 官网：<https://redis.io/insight/>
 
+github：<https://github.com/redis/RedisInsight>
+
+官网下载要填各种信息，建议直接去github下载
+
 - 安装docker版本的redisinsight
 
 ```sh
@@ -21361,7 +21685,7 @@ redisinsight:
     image: redis/redisinsight:2.42
     container_name: redisinsight
     ports:
-        - 5540:5540
+        - "5540:5540"
     volumes:
         - redisinsight-data:/data
 
