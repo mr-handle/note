@@ -8125,7 +8125,7 @@ mvn spring-boot:repackage
 #### 创建Maven继承/聚合工程
 
 继承：在父工程中统一声明版本信息，是一种依赖管理的版本简化
-<br/>
+
 聚合：通过父工程统一构建子工程，它会优化构建顺序，是一种构建管理的简化
 
 - 创建一个maven项目作为父工程，只留下pom文件
@@ -8195,6 +8195,21 @@ mvn spring-boot:repackage
     </dependencies>
 </project>
 ```
+
+##### BOM（Bill of Materials，物料清单）
+
+- 有一个项目P，它只有一个`pom.xml`文件，并且里面声明了`<packaging>pom</packaging>`
+    - 其他项目不是通过 `<parent>`继承它，而是通过依赖声明引入它，那么这个项目P就扮演了BOM的角色
+        - 它的核心作用是统一版本管理，但是不能管理插件版本和配置
+        - 必须在 `<dependencyManagement>`标签内声明，并且必须指定`<type>pom</type>` 和 `<scope>import</scope>`
+        - 在`<pluginManagement>`里面的插件声明是无效的
+        - 这种方式告诉 Maven 将该 POM 中的依赖管理规则导入到当前项目中
+    - 其它项目通过`<parent>`继承它，那么这个项目P就扮演了普通父POM的角色
+        - 它的核心作用除了版本管理，还可以用于传递插件配置、项目属性、全局变量等，是一种强绑定关系的继承
+        - 通过`<parent>`引入父POM，一个Maven项目中只能有一个直接父POM
+            - 可以定义一个父POM，继承spring-boot-start-parent
+            - 然后让其它项目继承这个父POM
+        - 在`<pluginManagement>`里面的插件声明是有效的，并且主要就是使用父POM这种机制进行插件版本和配置的管理
 
 #### 打包时跳过测试
 
@@ -13370,6 +13385,157 @@ ToolDefinition toolDefinition = ToolDefinitions.builder(method)
 #### Function Tool Definition
 
 由于编程式的写法没有记笔记，可以参考spring ai的 Functions as Tools
+
+#### Result Conversion
+
+- ToolCallResultConverter接口
+
+```java
+@FunctionalInterface
+public interface ToolCallResultConverter {
+    /**
+     * Given an Object returned by a tool, convert it to a String compatible with the
+     * given class type.
+     */
+    String convert(@Nullable Object result, @Nullable Type returnType);
+}
+```
+
+- 使用自定义ToolCallResultConverter
+
+```java
+class CustomerTools {
+    @Tool(description = "Retrieve customer information", resultConverter = CustomToolCallResultConverter.class)
+    Customer getCustomerInfo(Long id) {
+        return customerRepository.findById(id);
+    }
+}
+```
+
+#### Tool Context
+
+toolContext选项如果同时出现在默认选项和运行时选项中，则会将其合并，并且运行时选项优先级更高
+
+- 在工具方法中声明ToolContext参数
+
+```java
+class CustomerTools {
+    @Tool(description = "Retrieve customer information")
+    Customer getCustomerInfo(Long id, ToolContext toolContext) {
+        return customerRepository.findById(id, toolContext.getContext().get("tenantId"));
+    }
+}
+```
+
+- 在toolContext()方法里面设置ToolContext
+
+```java
+// 使用ChatModel
+ChatModel chatModel = ...
+
+String response = ChatClient.create(chatModel)
+        .prompt("Tell me more about the customer with ID 42")
+        .tools(new CustomerTools())
+        .toolContext(Map.of("tenantId", "acme"))
+        .call()
+        .content();
+
+// 使用ChatModel
+ChatModel chatModel = ...
+ToolCallback[] customerTools = ToolCallbacks.from(new CustomerTools());
+ChatOptions chatOptions = ToolCallingChatOptions.builder()
+    .toolCallbacks(customerTools)
+    .toolContext(Map.of("tenantId", "acme"))
+    .build();
+Prompt prompt = new Prompt("Tell me more about the customer with ID 42", chatOptions);
+chatModel.call(prompt);
+```
+
+#### Return Direct
+
+returnDirect设置为true，工具调用后直接返回，而不是返回给模型
+
+```java
+class CustomerTools {
+    @Tool(description = "Retrieve customer information", returnDirect = true)
+    Customer getCustomerInfo(Long id) {
+        return customerRepository.findById(id);
+    }
+}
+```
+
+#### Tool Execution
+
+工具执行是使用提供的入参调用工具并返回结果的一个流程
+
+ToolCallingManager负责工具执行的生命周期
+
+```java
+public interface ToolCallingManager {
+    /**
+     * Resolve the tool definitions from the model's tool calling options.
+     */
+    List<ToolDefinition> resolveToolDefinitions(ToolCallingChatOptions chatOptions);
+
+    /**
+     * Execute the tool calls requested by the model.
+     */
+    ToolExecutionResult executeToolCalls(Prompt prompt, ChatResponse chatResponse);
+
+}
+```
+
+如果使用了任意的Spring AI Spring Boot Starters，DefaultToolCallingManager是自动配置好的ToolCallingManager实现
+
+当然你可以自己定制ToolCallingManager bean
+
+```java
+@Bean
+ToolCallingManager toolCallingManager() {
+    return ToolCallingManager.builder().build();
+}
+```
+
+- Spring AI支持3种管理工具执行生命周期的方式
+    - 推荐的方式是通过ChatClient管理的Framework-Controlled Tool Execution
+    - 需要自定义工具调用循环的时候，用Advisor-Controlled Tool Execution
+    - 需要全程手动管理的时候，用User-Controlled Tool Execution
+
+#### Exception Handling
+
+当工具调用失败时，可以捕获ToolExecutionException来处理错误
+
+- ToolExecutionExceptionProcessor可以用来处理ToolExecutionException，有两种处理方式
+    - 生成错误信息返回给AI模型
+    - 抛出一次给调用者处理
+
+```java
+@FunctionalInterface
+public interface ToolExecutionExceptionProcessor {
+    /**
+     * Convert an exception thrown by a tool to a String that can be sent back to the AI
+     * model or throw an exception to be handled by the caller.
+     */
+    String process(ToolExecutionException exception);
+}
+```
+
+如果你使用任何的Spring AI Spring Boot Starters, DefaultToolExecutionExceptionProcessor是自动配置好的默认的ToolExecutionExceptionProcessor实现
+
+- 有两种方式设置DefaultToolExecutionExceptionProcessor的错误处理方式
+
+```properties
+spring.ai.tools.throw-exception-on-error=false
+```
+
+```java
+@Bean
+ToolExecutionExceptionProcessor toolExecutionExceptionProcessor() {
+    return new DefaultToolExecutionExceptionProcessor(true);
+}
+```
+
+如果定义了自己的ToolCallback实现，取保错误发生时抛出ToolExecutionException
 
 ## Spring Security
 
