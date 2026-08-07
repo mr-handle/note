@@ -293,6 +293,12 @@ public class Pet {
         this.age = builder.age;
         this.weight = builder.weight;
     }
+
+    // 静态工厂方法，可在工厂方法中扩展逻辑
+    // 封装性和灵活性比用Builder的构造方法更好
+    public static Builder builder(String name) {
+        return new Builder(name);
+    }
 }
 
 // 使用
