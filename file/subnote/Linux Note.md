@@ -4370,6 +4370,20 @@ yay -S obs-gstreamer
         - 添加`obs-gamecapture %command%`，启用 Vulkan 和 OpenGL 游戏捕获
         - 添加`env OBS_VKCAPTURE=1 %command%`，启用只通过 Vulkan 游戏捕获，推荐
 
+##### 安装kdenlive
+
+```sh
+sudo pacman -S kdenlive
+```
+
+###### 导出视频
+
+鉴于笔者的前置经验：ffmpeg转格式时vulkan比vaapi快，并且文件也比vaapi的小
+
+想着kdenlive导出也用av1_vulkan编码器，但是得到的视频会有个别画面有点花屏
+
+用av1_vaapi不会有花屏现象，因此kdenlive还是用vaapi吧
+
 ##### 安装steam
 
 steam游戏存档位置：`~/.local/share/Steam/userdata/[SteamID]/[AppID]/remote/`

@@ -290,14 +290,17 @@ ffmpeg -i input.mp4 -c:a copy -c:v libvpx-vp9 -b:v 6500k output_vp9acc.mp4
 这是一个兼容性修复参数，不影响画质，不影响音画同步，只是让输出的文件更“标准”，在任何地方播放都不容易出问题
 
 ```sh
+# 方法一
 # avoid_negative_ts：避免（avoid）负数（negative）的时间戳（ts = timestamps）
 # make_zero：把（时间戳）变成零
 # -ss 00:01:30 放在-i之前，会在输入文件中跳转到指定位置
 # 注意，在大多数格式中无法精确跳转，因此 FFmpeg 会跳转到该位置之前最近的跳转点（即关键帧），因此不够精确
 ffmpeg -ss 00:01:30 -to 00:06:18 -i input.mp4   -c copy -avoid_negative_ts make_zero output.mp4
 
+# 方法二
 # -ss 00:01:30 放在输入文件后，输出文件前，会解码输入内容，但一直丢弃，直到时间戳达到指定位置
 # 因此速度会变慢，但是精确，如果输入文件小或者要求精确可以使用这种方式
+# 如果剪辑得到的目标视频时长比较短，也可以先用方法一粗略截取，然后用此方法再精确截取
 ffmpeg -i input.mp4 -ss 00:01:30 -to 00:06:18 -c copy -avoid_negative_ts make_zero output.mp4
 ```
 

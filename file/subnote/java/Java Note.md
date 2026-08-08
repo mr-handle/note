@@ -296,6 +296,7 @@ public class Pet {
 
     // 静态工厂方法，可在工厂方法中扩展逻辑
     // 封装性和灵活性比用Builder的构造方法更好
+    // 链式调用更自然：Pet.builder(...).age(...).weight(...).build();
     public static Builder builder(String name) {
         return new Builder(name);
     }
