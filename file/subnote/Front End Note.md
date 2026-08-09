@@ -884,11 +884,31 @@ var json2 = JSON.stringify(object)
 
 - 用const声明常量
 
-#### nodejs
+#### Node.js
 
 官网：<https://nodejs.org/zh-cn>
 
-##### 安装nodejs
+Node.js是一个组合了各种有用的库的JavaScript运行时环境
+
+Node.js使用谷歌的V8引擎来执行浏览器外的代码
+
+##### Linux安装Node.js
+
+去官网或用包管理器安装Node.js后
+
+- 在`~/.bashrc`添加如下配置，然后执行`source ~/.bashrc`
+
+```sh
+# 例：npm -g install packageName命令会把包安装到/usr/lib/node_modules目录下，会导致权限问题
+# 因此指定npm_config_prefix前缀让它安装到用户级目录下
+export npm_config_prefix="$HOME/.local"
+
+# 例：npm install -g @neutralinojs/neu，把包安装到指定目录后
+# 附带的可执行文件，neu命令行工具会被链接到"$HOME/.local/bin"下
+PATH="$HOME/.local/bin:$PATH"
+```
+
+##### Windows安装Node.js
 
 - 1.下载免安装版本，解压
 
@@ -901,25 +921,30 @@ var json2 = JSON.stringify(object)
 - 5.用管理员权限打开cmd运行如下命令
 
 ```sh
-# 查看环境变量是否设置成功
-node -v
-
 # 配置npm相关路径
 npm config set prefix "G:\handle\application\node-v20.17.0-win-x64\node_global"
 npm config set cache "G:\handle\application\node-v20.17.0-win-x64\node_cache"
+```
+
+- 6.执行完毕后，可在系统盘的当前用户文件夹看到`.npmrc`文件，可以打开查看配置的信息
+
+##### 设置镜像源
+
+```sh
+# 查看环境变量是否设置成功
+node -v
 
 # 设置国内镜像源，官方的是：https://registry.npmjs.org/
+# 如阿里巴巴的
 npm config set registry https://registry.npmmirror.com/
 
 # 查看镜像源是否设置成功
 npm get registry
 ```
 
-- 6.执行完毕后，可在系统盘的当前用户文件夹看到`.npmrc`文件，可以打开查看配置的信息
-
 ##### npm
 
-- npm是包管理工具，nodejs包含了npm
+- npm是Node.js官方的包管理工具，Node.js包含了npm
 
 - 常用命令
 
@@ -927,11 +952,26 @@ npm get registry
 # npm版本
 npm -v
 
-# 安装依赖，-g表示全局，给所有项目都安装
+# 安装包
+# -g表示全局，给所有项目都安装
 # 安装完会在node_modules/package.json中dependencies属性看到安装的依赖
 npm install [-g] js包名
-# 卸载依赖
-npm uninstall js包名
+
+# 更新包
+npm update [-g] packageName
+
+# 更新全部包
+npm update [-g]
+
+# 卸载包
+npm [-g] uninstall js包名
+
+# 列出已安装的包
+# --depth=0，只显示依赖树的顶级包
+npm -g list [--depth=0]
+
+# 列出已安装的版本已经老旧的或许需要更新的包
+npm -g outdated
 
 # 运行node_modules/package.json中scripts定义的脚本
 npm run 脚本名称

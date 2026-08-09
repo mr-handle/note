@@ -341,6 +341,33 @@ ffmpeg -i input.mp4 -ss 00:01:30 -to 00:06:18 -c copy -avoid_negative_ts make_ze
     - 日常音乐/视频/游戏录屏/直播：192 kbps，大多数人用普通耳机/音箱在 192 kbps 与 320 kbps 之间几乎听不出区别
     - 高保真音乐/专业场景：320 kbps或直接用 FLAC/WAV 无损
 
+## deno
+
+github：<https://github.com/denoland/deno>
+
+下载后解压放到某个目录并设置到PATH即可
+
+```sh
+deno --version
+```
+
+## tauri
+
+```sh
+# 笔者目前的电脑显示只用安装wget和xdotool
+sudo pacman -S --needed \
+  webkit2gtk-4.1 \
+  base-devel \
+  curl \
+  wget \
+  file \
+  openssl \
+  appmenu-gtk-module \
+  libappindicator-gtk3 \
+  librsvg \
+  xdotool
+```
+
 ## Markdown语法
 
 ```md
