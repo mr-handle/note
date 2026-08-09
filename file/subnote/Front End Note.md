@@ -905,7 +905,7 @@ export npm_config_prefix="$HOME/.local"
 
 # 例：npm install -g @neutralinojs/neu，把包安装到指定目录后
 # 附带的可执行文件，neu命令行工具会被链接到"$HOME/.local/bin"下
-PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 ##### Windows安装Node.js

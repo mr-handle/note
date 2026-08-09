@@ -347,11 +347,17 @@ github：<https://github.com/denoland/deno>
 
 下载后解压放到某个目录并设置到PATH即可
 
+优势：进程内通信
+
+劣势：打包体积会包含谷歌V8引擎，多出来70M
+
 ```sh
 deno --version
 ```
 
 ## tauri
+
+tauri目前展示页面时，标题栏的最小化，最大化和关闭按钮渲染有问题
 
 ```sh
 # 笔者目前的电脑显示只用安装wget和xdotool
@@ -366,6 +372,38 @@ sudo pacman -S --needed \
   libappindicator-gtk3 \
   librsvg \
   xdotool
+```
+
+## Neutralinojs
+
+相比于Electron，Neutralinojs的打包体积更小，运行的内存更少，运行速度看官方的对比也是更少的运行时间
+
+- 安装neu命令行工具
+
+```sh
+npm install -g @neutralinojs/neu
+```
+
+- 也可以不安装neu命令行工具，用npx执行对应的neu命令就行了
+
+```sh
+# 例：npx @neutralinojs/neu create myapp
+npx @neutralinojs/neu <command>
+```
+
+### 使用neu
+
+```sh
+# 创建新项目
+neu create 项目名
+
+cd 项目名
+
+# 运行项目
+neu run
+
+# 构建项目
+neu build --release
 ```
 
 ## Markdown语法
