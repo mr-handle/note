@@ -647,6 +647,53 @@ neu run
 neu build --release
 ```
 
+### 本地接口
+
+为了通过Neutralinojs服务，与本地操作进行交互，Neutralinojs为开发人员提供了一个JavaScript客户端库（即 Neutralino.js，一下称客户端库）
+
+Neutralinojs的JavaScript客户端实现在Neutralino.js文件中
+
+这是Neutralinojs项目中必须有这个客户端库的原因
+
+客户端库将其JavaScript接口暴露给浏览器的window作用域
+
+你可以用普通js，通过Neutralino或window.Neutralino访问这些接口
+
+如果你使用了前端框架来构建你的应用前端，可以从`@neutralinojs/lib`这个npm模块导入Neutralinojs命名空间来使用这些接口
+
+```js
+import { app } from '@neutralinojs/lib';
+
+const conf = await app.getConfig();  // Vanilla Js: await Neutralino.app.getConfig()
+```
+
+- 假设你需要从操作系统获取一个环境变量值，本地接口工作流程为
+    - 调用 Neutralino.os.getEnv这个js方法
+    - 客户端库发送WebSocket信息给Neutralinojs服务
+    - Neutralinojs服务执行本地操作，获取给定的环境变量值
+    - Neutralinojs服务发送包含该环境变量值的WebSocket信息给客户端库
+    - 客户端库解析从服务器得到的promise，最终得到结果
+
+客户端库维护一个任务池，来映射Neutralinojs服务的消息，通过请求的uuid来进行匹配
+
+Neutralinojs所有模式使用都这种通信机制，为开发人员提供了许多本地操作
+
+在Neutralinojs应用配置文件中，可以使用 nativeAllowList和nativeBlockList配置允许的和不允许的本地接口
+
+```json
+{
+  "nativeAllowList": [
+    "app.*",
+    "window.*",
+    "os.execCommand"
+  ],
+  "nativeBlockList": [
+    "filesystem.remove",
+    "extensions.*"
+  ]
+}
+```
+
 ## Markdown语法
 
 ```md
