@@ -432,6 +432,7 @@ neu build
 
 ```sh
 # 首先用 neutralinojs/neutralinojs-zero 模板，创建一个空的Neutralinojs项目
+# 可能需要魔法
 neu create myapp --template neutralinojs/neutralinojs-zero
 
 # 然后进入项目
@@ -441,7 +442,7 @@ cd myapp
 # 例1：创建react项目
 npx create-react-app react-src
 
-# 例2：创建vue项目
+# 例2：创建vue项目，默认的项目名为vue-project
 npm create vue@latest
 
 # 然后配置 Neutralinojs 项目
@@ -450,16 +451,28 @@ rm -rf www
 
 # 配置Neutralinojs项目以支持前端框架
 # 打开neutralino.config.json
-# 设置documentRoot的目录为你的前端框架的构建目录
+# 设置documentRoot的目录为你的前端框架的构建输出目录
 # 这样Neutralinojs应用就知道前端框架的资源位置了
-# 例：react通常生成build输出到build目录，因此设置如下
+# 例1：react通常生成build输出到build目录，因此设置如下
 "documentRoot": "/react-src/build/"
 
+# 例2:vue的构建输出目录
+"documentRoot": "/vue-project/dist/"
+
 # 从前端框架的默认资源目录下加载一个图标
+# 例1：react
 "modes": {
     "window": {
         // --- other options
         "icon": "/react-src/public/logo192.png"
+    }
+}
+
+# 例2：vue
+"modes": {
+    "window": {
+        // --- other options
+        "icon": "/vue-project/public/favicon.ico"
     }
 }
 ```
@@ -470,23 +483,54 @@ rm -rf www
 
 然而，你可以从npm仓库下载neutralino.js并和你的应用前端捆绑在一起
 
-```sh
-    "cli": {
-        // --- other options
-        "resourcesPath": "/react-src/build/",
-        // ---
-        "clientLibrary": "/www/neutralino.js", // <--- 删除此属性以避免从github发布中下载neutralino.js
-        // ---
-    }
+```json
+//  例1：react
+"cli": {
+    // --- other options
+    "resourcesPath": "/react-src/build/",
+    // ---
+    "clientLibrary": "/www/neutralino.js", // <--- 删除此属性以避免从github发布中下载neutralino.js
+    // ---
+}
+
+//  例2：vue
+"cli": {
+    // --- other options
+    "resourcesPath": "/vue-project/dist/",
+    // ---
+    "clientLibrary": "/www/neutralino.js", // <--- 删除此属性以避免从github发布中下载neutralino.js
+    // ---
+}
 ```
 
 至此，你可以像Neutralinojs应用那样构建和运行react应用了
+
+- 例1：构建和运行react应用
 
 ```sh
 # 进入react项目
 cd react-src
 
 # 构建react应用
+npm run build
+
+# 进入Neutralinojs项目
+cd ..
+
+# 运行Neutralinojs应用
+neu run
+```
+
+- 例2：构建和运行vue应用
+
+```sh
+# 进入react项目
+cd vue-project
+
+# 安装依赖包
+npm i
+
+# 构建应用
 npm run build
 
 # 进入Neutralinojs项目
@@ -503,7 +547,13 @@ neu run
 可以使用如下命令安装Neutralinojs客户端来初始化本地API
 
 ```sh
+# 例1：react
 cd react-src
+
+# 例2：vue
+cd vue-project
+
+# 安装
 npm install @neutralinojs/lib
 ```
 
@@ -513,6 +563,8 @@ npm install @neutralinojs/lib
 
 react的根html文件通常在`./public/index.html`，可以添加如下代码来加载这个客户端库
 
+vue的根html文件通常在`./index.html`，可以添加如下代码来加载这个客户端库
+
 ```html
 <script src="%PUBLIC_URL%/__neutralino_globals.js"></script>
 ```
@@ -521,7 +573,11 @@ react的根html文件通常在`./public/index.html`，可以添加如下代码�
 
 react的应用入口文件通常是`./src/index.js`
 
+vue的应用入口文件通常是`./src/main.js`
+
 因此，初始化过程可以在该文件，通过调用@neutralinojs/lib包的init方法进行
+
+- 例1:react
 
 ```js
 import React from 'react';
@@ -538,6 +594,22 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
+
+init(); // Add this function call
+```
+
+- 例2:vue
+
+```js
+import './assets/main.css'
+
+import { createApp } from 'vue'
+import App from './App.vue'
+
+// Import init function from "@neutralinojs/lib"
+import { init } from "@neutralinojs/lib"
+
+createApp(App).mount('#app')
 
 init(); // Add this function call
 ```
@@ -559,7 +631,7 @@ init(); // Add this function call
     ],
 ```
 
-接下来在`./src/App.js`添加如下代码
+对于react，接下来在`./src/App.js`添加如下代码
 
 ```js
 import { useEffect } from 'react'
@@ -590,10 +662,37 @@ function App() {
 export default App;
 ```
 
+对于vue，接下来在`./src/App.vue`添加如下代码
+
+```vue
+<script setup>
+  // 其它内容省略
+
+  // Import filesystem namespace
+  import { filesystem } from "@neutralinojs/lib"
+
+  import { onMounted } from 'vue'
+
+  onMounted(() => {
+    filesystem.readDirectory('./').then((data) => {
+      console.log(data)
+    }).catch((err) => {
+      console.error(err)
+    })
+  })
+</script>
+```
+
 最后运行Neutralinojs应用
 
 ```sh
+# 例1：react
 cd react-src
+
+# 例2：vue
+cd vue-project
+
+
 npm run build
 
 cd ..
@@ -616,6 +715,7 @@ neu命令行工具提供了内置特性来启用HMR，通过修补根html文件�
 修改配置文件来激活热重载
 
 ```json
+// react项目设置
 "cli": {
     // --- other options
     "frontendLibrary": {
@@ -626,6 +726,21 @@ neu命令行工具提供了内置特性来启用HMR，通过修补根html文件�
         "projectPath": "/react-src/",
         "initCommand": "npm install",
         "devCommand": "BROWSER=none npm start",
+        "buildCommand": "npm run build"
+    }
+}
+
+// vue项目设置
+"cli": {
+    // --- other options
+    "frontendLibrary": {
+        // 1.告诉neu命令行工具根html文件和开发服务的地址
+        "patchFile": "/vue-project/index.html",
+        "devUrl": "http://localhost:5173",
+        // 2.添加特定前端库开发命令
+        "projectPath": "/vue-project/",
+        "initCommand": "npm install",
+        "devCommand": "BROWSER=none npm run dev",
         "buildCommand": "npm run build"
     }
 }
