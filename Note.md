@@ -809,6 +809,32 @@ Neutralinojs所有模式使用都这种通信机制，为开发人员提供了�
 }
 ```
 
+### 发布应用
+
+构建的时候会生成各个平台特定的二进制文件+资源文件resources.neu
+
+打包的时候只需包含平台特定的二进制文件和resources.neu就可以了
+
+如为linux_x64平台打包，则只需包含myapp-linux_x64和resources.neu这两个文件就行了
+
+```sh
+# 生成各个平台特定的二进制文件+资源文件resources.neu
+# --release：将"neu build"生成的dist目录下以应用名为名称的整个文件夹，打包为"应用名-release.zip"文件,然后放到dist目录下
+# 笔者认为还不如不加这个参数
+neu build [--release]
+
+# 生成各个平台特定的二进制文件（内置了资源文件）
+neu build --embed-resources
+```
+
+内置资源文件的方式使得每次更新应用的资源文件必须重新构建
+
+如果你想在各个发布版本之间独立更新资源文件，而不重新执行构建
+
+使用标准的平台特定的二进制文件和resources.neu这种方式会更合适
+
+此外还可以使用hschneider/neutralino-build-scripts这个社区项目打包安装脚本，具体请参考Neutralinojs官网教程
+
 ## Markdown语法
 
 ```md
