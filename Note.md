@@ -396,8 +396,12 @@ npx @neutralinojs/neu <command>
 #### 使用普通js构建Neutralinojs应用
 
 ```sh
-# 创建新项目
+# 创建新项目，默认使用 neutralinojs-minimal 模板
 neu create 项目名
+
+# 使用指定模板：neutralinojs/neutralinojs-zero，可能需要魔法
+# 这个模板比neutralinojs-minimal更加精简，适合从零搭建，或者用它配置前端框架
+neu create myapp --template neutralinojs/neutralinojs-zero
 
 cd 项目名
 
@@ -760,6 +764,70 @@ neu run
 # 首先会执行buildCommand
 # 因此应用程序包会使用当前react项目的源代码
 neu build --release
+```
+
+### Neutralinojs应用配置
+
+在项目目录下的`neutralino.config.json`文件，包含了应用配置的详情
+
+每个Neutralinojs应用都会从配置文件加载三个基础属性：applicationId、url和defaultMode
+
+但是配置文件不是Neutralinojs必须的，因为Neutralinojs框架通常会为所有配置选项加载合理的默认值
+
+你可以使用一个结构良好的配置文件开发Neutralinojs应用
+
+也可以不需要配置文件，而是通过命令行参数来启动一个Neutralinojs应用
+
+```json
+{
+    // 标识应用程序的唯一字符串
+    "applicationId": "js.neutralino.sample",
+    // 应用程序版本
+    "version": "1.0.0",
+    // 应用程序的默认运行模式，接受的值为：window、browser、cloud和chrome
+    "defaultMode": "window",
+    // 静态服务器的文档根目录
+    // 如果使用resources目录作为文档根目录，可以设置如下
+    // documentRoot和url的配置要合适
+    // 如："documentRoot": "/resources/","url": "/"
+    // 或："documentRoot": "/","url": "/resources/"
+    "documentRoot": "/resources/",
+    // 应用程序的入口URL，Neutralinojs将首先加载这个URL
+    // 接受相对和绝对URL
+    // "/"：表示初始加载 "http://localhost:<port>/" URL（内部即加载"/index.html"）
+    // 也可以使用远程url，如："http://example.com"
+    "url": "/",
+    // 启用/禁用后台服务（禁用静态文件服务功能和本地接口消息功能）
+    // 如果加载一个远程url到浏览器组件，你可以设置为false
+    // 如果从本地源文件加载资源，确保设置为true
+    // 默认值是false
+    "enableServer": true,
+    // 启用或禁用本地接口
+    // 需要用到本地接口功能就设置为true
+    // 默认值是false
+    "enableNativeAPI": true,
+    "nativeAllowList": [
+        "app.*"
+    ],
+    "modes": {
+        "window": {
+        "title": "easy-cut",
+        "width": 800,
+        "height": 500,
+        "minWidth": 400,
+        "minHeight": 200,
+        "icon": "/www/icon.png"
+        }
+    },
+    "cli": {
+        "binaryName": "easy-cut",
+        "resourcesPath": "/www/",
+        "extensionsPath": "/extensions/",
+        "clientLibrary": "/www/neutralino.js",
+        "binaryVersion": "6.9.0",
+        "clientVersion": "6.9.0"
+    }
+}
 ```
 
 ### 本地接口

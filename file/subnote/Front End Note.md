@@ -1,10 +1,8 @@
-# FRONT END
+# 前端笔记
 
-## 前端篇
+## html
 
-### html
-
-#### html术语
+### html术语
 
 - 1.标签：一对`<>`  
     - 单标签：`<tagName />`
@@ -13,10 +11,10 @@
         - 结束标签：`</tagName>`
 - 2.属性：对标签特征进行设置的一种方式，一般在开始标签中定义
     - 当设置的属性值和属性名一样时，可以只写属性名
-- 3.文本：双标签中的文字，单标签是没有文本的
+- 3.文本：双标签的开始标签和结束标签中间的文字，单标签是没有文本的
 - 4.元素：可理解为一个定义好的标签就是一个元素（dom元素）
 
-#### html结构
+### html结构
 
 - 1.文档声明，html5文档类型声明：`<!DOCTYPE html>`
 
@@ -39,9 +37,9 @@
 </html>
 ```
 
-#### html标签
+### html标签
 
-##### 标题
+#### 标题
 
 h1-h6共有6级，文本字体大小依次递减
 
@@ -54,22 +52,23 @@ h1-h6共有6级，文本字体大小依次递减
 <h6>text</h6>
 ```
 
-##### 段落
+#### 段落
 
 ```html
 <p>text</p>
 ```
 
-##### 换行
+#### 换行
 
 ```html
 <!-- 不带分割线 -->
 <br />
+
 <!-- 带分割线 -->
 <hr />
 ```
 
-##### 列表
+#### 列表
 
 - 有序列表：ol
 - 无序列表: ul
@@ -83,6 +82,7 @@ h1-h6共有6级，文本字体大小依次递减
     <li>text2</li>
     <li>text3</li>
 </ol>
+
 <!-- 无序列表 -->
 <ul>
     <li>text1</li>
@@ -91,7 +91,7 @@ h1-h6共有6级，文本字体大小依次递减
 </ul>
 ```
 
-##### 超链接
+#### 超链接
 
 - href，定义要跳转的目标资源的地址，可以是
     - url
@@ -110,7 +110,7 @@ h1-h6共有6级，文本字体大小依次递减
 <a href="https://www.baidu.com" target="_blank">百度一下</a>
 ```
 
-##### 图片
+#### 图片
 
 - src，图片路径，可以是
     - url
@@ -123,14 +123,14 @@ h1-h6共有6级，文本字体大小依次递减
 <img src="" title="" alt="" />
 ```
 
-##### 表格
+#### 表格
 
 - thead，表头，可不写
 - tbody，表体，可不写
 - tfoot，表尾（如总计），可不写
 - tr，表格行
 - td，单元格
-    - rowspan，指定单元格占多少行，会把跟此单元格同一列的被占位置的单元格往右边挤，因此为了美观可以把被占位置的单元格删掉
+    - rowspan，指定单元格占多少行，会把跟此单元格同一列的被占位置的单元格往下边挤，因此为了美观可以把被占位置的单元格删掉
     - colpan，指定单元格占多少列，会把跟此单元格同一行的被占位置的单元格往右边挤，因此为了美观可以把被占位置的单元格删掉
 - th，自带加粗和居中效果的td
 - 如果表头、表体、表尾都不写，浏览器会将tr都放到tbody里面
@@ -150,7 +150,7 @@ h1-h6共有6级，文本字体大小依次递减
 </table>
 ```
 
-##### 表单
+#### 表单
 
 - 内部定义可以让用户输入信息的表单项标签
 
@@ -180,7 +180,9 @@ h1-h6共有6级，文本字体大小依次递减
 </form>
 ```
 
-###### 表单项标签
+##### 表单项
+
+###### input
 
 - input
     - name，提交时的参数名
@@ -228,8 +230,10 @@ h1-h6共有6级，文本字体大小依次递减
 </form>
 ```
 
+###### textarea
+
 - textarea，文本域（多行文本框）
-    - value就是textarea双标签中间的文本
+    - value就是textarea开始标签和结束标签中间的文本
 
 ```html
 <form action="" method="">
@@ -238,9 +242,11 @@ h1-h6共有6级，文本字体大小依次递减
 </form>
 ```
 
+###### select
+
 - select，下拉框
     - option，选项
-        - value，当不指定option的value属性值时，option就是textarea双标签中间的文本
+        - value，当不指定option的value属性值时，value就是option开始标签和结束标签中间的文本
         - selected，是否默认选中，写法：`selected="selected"`或`selected`
 
 ```html
@@ -255,19 +261,19 @@ h1-h6共有6级，文本字体大小依次递减
 </form>
 ```
 
-##### div
+#### div
 
 - 块元素，自己独占一行的元素
 - css样式的宽，高等，往往都生效
 
-##### span
+#### span
 
 - span，行内元素，不会自己独占一行的元素，img、a也是行内元素
 - css样式的宽，高等，很多都不生效
 
-### CSS
+## CSS
 
-#### CSS 语法
+### CSS 语法
 
 - CSS 规则由两个主要部分构成：
     - 1.`选择器`：通常是需要改变样式的`HTML元素`
@@ -275,7 +281,7 @@ h1-h6共有6级，文本字体大小依次递减
         - 声明用`{}`括起来，
         - 其中的每条声明由一个`属性`和一个`值`组成
         - 属性和值用`:`分开，每条声明以`;`结束
-    - CSS注释以 `/*` 开始, 以 `*/` 结束。
+    - CSS注释以 `/*` 开始, 以 `*/` 结束
 
 ```css
 p {
@@ -284,26 +290,40 @@ p {
 }
 ```
 
-#### 选择器
+### 选择器
 
-- #### id 选择器(#id)
+#### id 选择器(#id)
+
+- 定义css
 
 ```css
 #myId {}
+```
 
+- 使用css
+
+```html
 <tagName id="myId"></tagName>
 ```
 
-- #### class 选择器(.class)
+#### class 选择器(.class)
+
+- 定义css
 
 ```css
 .myClass1 {}
 .myClass2 {}
+```
 
+- 使用css
+
+```html
 <tagName class="myClass1 myClass2"></tagName>
 ```
 
-- #### element 选择器(html element)
+#### element 选择器(html element)
+
+- 定义css
 
 ```css
 div, p {}
@@ -311,6 +331,8 @@ div, p {}
 <div></div>
 <p></p>
 ```
+
+- 使用css：不用另外写语句，在该css生效的html文件中，对所有属于该类型的html元素都直接生效
 
 #### 插入样式表
 
@@ -334,12 +356,13 @@ div, p {}
 <div style="..."></div>
 ```
 
-#### 布局
+### 布局
 
-- 浮动，不会遮挡文字
-    - float
-        - left，向左浮动
-        - right，向右浮动
+#### 浮动，不会遮挡文字
+
+- float
+    - left，向左浮动
+    - right，向右浮动
 
 ```css
 .myClass {
@@ -347,18 +370,19 @@ div, p {}
 }
 ```
 
-- 定位
-    - position
-        - static，默认
-        - absolute，绝对，参考的是浏览器边缘
-        - relative，相对，参考的是元素原本的位置，元素原本的位置也不会被其它元素占用
-        - fix，相对，参考的是浏览器窗口，有点像excel的冻结行功能
-    - left
-    - right
-    - top
-    - bottom
-    - left和right只需要设置一个就行
-    - top和bottom只需要设置一个就行
+#### 定位
+
+- position
+    - static，默认
+    - absolute，绝对，参考的是浏览器边缘
+    - relative，相对，参考的是元素原本的位置，元素原本的位置也不会被其它元素占用
+    - fix，相对，参考的是浏览器窗口，有点像excel的冻结行功能
+- left
+- right
+- top
+- bottom
+- left和right只需要设置一个就行
+- top和bottom只需要设置一个就行
 
 ```css
 .myClass {
@@ -368,19 +392,20 @@ div, p {}
 }
 ```
 
-- 盒子模型
-    - width和height，定义容量（在最里面）
-    - border不占用容量（在容量外面）
-    - padding，内边距（上下左右），border往内距离容量边线的边距
-    - padding-left
-    - padding-right
-    - padding-rop
-    - padding-bottom
-    - margin，外边距（上下左右），border往外的边距
-    - margin-left
-    - margin-right
-    - margin-rop
-    - margin-bottom
+#### 盒子模型
+
+- width和height，定义容量（在最里面）
+- border不占用容量（在容量外面）
+- padding，内边距（上下左右），border往内距离容量边线的边距
+- padding-left
+- padding-right
+- padding-rop
+- padding-bottom
+- margin，外边距（上下左右），border往外的边距
+- margin-left
+- margin-right
+- margin-rop
+- margin-bottom
 
 ```css
 .myClass {
@@ -396,17 +421,58 @@ div, p {}
 }
 ```
 
-#### @keyframes
+### calc函数
+
+用于动态计算尺寸
+
+- 语法：calc(expression)
+    - 运算符（ "+", "-", "*", "/" ）前后都需要保留一个空格
+
+|值|描述|
+|:-|:-|
+|*expression*|必须，一个数学表达式，结果将采用运算后的返回值|
+
+```css
+div {
+    width: calc(100% - 20px);
+}
+```
+
+### animation
+
+语法：animation: name duration timing-function delay iteration-count direction fill-mode play-state;
+
+|值|说明|
+|:-|:-|
+|*[animation-name](https://www.runoob.com/cssref/css3-pr-animation-name.html)*|指定要绑定到选择器的关键帧的名称|
+|*[animation-duration](https://www.runoob.com/cssref/css3-pr-animation-duration.html)*|动画指定需要多少秒或毫秒完成|
+|*[animation-timing-function](https://www.runoob.com/cssref/css3-pr-animation-timing-function.html)*|设置动画将如何完成一个周期|
+|*[animation-delay](https://www.runoob.com/cssref/css3-pr-animation-delay.html)*|设置动画在启动前的延迟间隔|
+|*[animation-iteration-count](https://www.runoob.com/cssref/css3-pr-animation-iteration-count.html)*|定义动画的播放次数|
+|*[animation-direction](https://www.runoob.com/cssref/css3-pr-animation-direction.html)*|指定是否应该轮流反向播放动画|
+|[animation-fill-mode](https://www.runoob.com/cssref/css3-pr-animation-fill-mode.html)|规定当动画不播放时（当动画完成时，或当动画有一个延迟未开始播放时），要应用到元素的样式|
+|*[animation-play-state](https://www.runoob.com/cssref/css3-pr-animation-play-state.html)*|指定动画是否正在运行或已暂停|
+|initial|设置属性为其默认值。 [阅读关于 *initial*的介绍。](https://www.runoob.com/cssref/css-initial.html)|
+|inherit|从父元素继承属性。 [阅读关于 *initinherital*的介绍。](https://www.runoob.com/cssref/css-inherit.html)|
+
+例：
+
+```css
+.div {
+    animation:mymove 5s infinite;
+    -webkit-animation:mymove 5s infinite; /* Safari 和 Chrome */
+}
+```
+
+### @keyframes
 
 语法：@keyframes *animationname* {*keyframes-selector* {*css-styles;}*}
 
-| 值                    | 说明                                                                                      |
-|:-------------------- |:--------------------------------------------------------------------------------------- |
-| *animationname*      | 必需的。定义animation的名称。                                                                     |
-| *keyframes-selector* | 必需的。动画持续时间的百分比。合法值：0-100% from (和0%相同) to (和100%相同)**注意：** 您可以用一个动画keyframes-selectors。 |
-| *css-styles*         | 必需的。一个或多个合法的CSS样式属性                                                                     |
-
-例：
+|值|说明|
+|:-|:-|
+|*animationname*|必需的。定义animation的名称|
+|*keyframes-selector*|必需的。动画持续时间的百分比。合法值：0-100% from (和0%相同) to (和100%相同)**注意：** 您可以用一个动画keyframes-selectors。|
+|*css-styles*|必需的。一个或多个合法的CSS样式属性|
 
 ```css
 @keyframes dynamicBorder {
@@ -419,43 +485,22 @@ div, p {}
 }
 ```
 
-#### animation
+## js
 
-语法：animation: name duration timing-function delay iteration-count direction fill-mode play-state;
+### js使用json
 
-| 值                                                                                                   | 说明                                                                                   |
-|:--------------------------------------------------------------------------------------------------- |:------------------------------------------------------------------------------------ |
-| *[animation-name](https://www.runoob.com/cssref/css3-pr-animation-name.html)*                       | 指定要绑定到选择器的关键帧的名称                                                                     |
-| *[animation-duration](https://www.runoob.com/cssref/css3-pr-animation-duration.html)*               | 动画指定需要多少秒或毫秒完成                                                                       |
-| *[animation-timing-function](https://www.runoob.com/cssref/css3-pr-animation-timing-function.html)* | 设置动画将如何完成一个周期                                                                        |
-| *[animation-delay](https://www.runoob.com/cssref/css3-pr-animation-delay.html)*                     | 设置动画在启动前的延迟间隔。                                                                       |
-| *[animation-iteration-count](https://www.runoob.com/cssref/css3-pr-animation-iteration-count.html)* | 定义动画的播放次数。                                                                           |
-| *[animation-direction](https://www.runoob.com/cssref/css3-pr-animation-direction.html)*             | 指定是否应该轮流反向播放动画。                                                                      |
-| [animation-fill-mode](https://www.runoob.com/cssref/css3-pr-animation-fill-mode.html)               | 规定当动画不播放时（当动画完成时，或当动画有一个延迟未开始播放时），要应用到元素的样式。                                         |
-| *[animation-play-state](https://www.runoob.com/cssref/css3-pr-animation-play-state.html)*           | 指定动画是否正在运行或已暂停。                                                                      |
-| initial                                                                                             | 设置属性为其默认值。 [阅读关于 *initial*的介绍。](https://www.runoob.com/cssref/css-initial.html)      |
-| inherit                                                                                             | 从父元素继承属性。 [阅读关于 *initinherital*的介绍。](https://www.runoob.com/cssref/css-inherit.html) |
+```js
+// 定义一个json格式的字符串
+var json = '{"name": "zhangsan","age": 18,"isMale": true,"pets": ["dog", "cat"],"son": {"name": "xiaoming"}}'
 
-例：
+// json->object
+var object = JSON.parse(json)
 
-```css
-.div {
-    animation:mymove 5s infinite;
-    -webkit-animation:mymove 5s infinite; /* Safari 和 Chrome */
-}
+// object->json
+var json2 = JSON.stringify(object)
 ```
 
-#### calc 函数
-
-calc() 函数用于动态计算长度值，运算符（ "+", "-", "*", "/" ）前后都需要保留一个空格
-
-语法：calc(expression)
-
-| 值            | 描述                       |
-|:------------ |:------------------------ |
-| *expression* | 必须，一个数学表达式，结果将采用运算后的返回值。 |
-
-### JSP
+## JSP
 
 1) 输出<%:在文本中写<\%
 
@@ -717,7 +762,7 @@ jsp页面乱码解决方案：
 
 2）Servlet响应代码中加上：resp.setCharacterEncoding("UTF-8"); //设置HTTP 响应的编码
 
-#### JSP高级功能
+### JSP高级功能
 
 JSP的指令非常复杂，除了`<% ... %>`外，JSP页面本身可以通过`page`指令引入Java类：
 
@@ -739,7 +784,7 @@ JSP的指令非常复杂，除了`<% ... %>`外，JSP页面本身可以通过`pa
 </body>
 ```
 
-#### JSP Tag
+### JSP Tag
 
 JSP还允许自定义输出的tag，例如：
 
@@ -785,7 +830,7 @@ $.ajax({
 </c:if>
 ```
 
-#### 页面预览pdf
+### 页面预览pdf
 
 ```java
     @RequestMapping(value = "OnlineBrowse")
@@ -845,7 +890,7 @@ $.ajax({
     }
 ```
 
-### Thymeleaf
+## Thymeleaf
 
 1. 标签中变量写法：${qrCodeImage}
 2. 标签中路径写法：@{/qrCode/generator}
@@ -857,34 +902,7 @@ $.ajax({
 
 2. js中路径写法：[[@{/qrCode/generator}]]
 
-### js
-
-#### js使用json
-
-```js
-// 定义一个json格式的字符串
-var json = '{"name": "zhangsan","age": 18,"isMale": true,"pets": ["dog", "cat"],"son": {"name": "xiaoming"}}'
-// json->object
-var object = JSON.parse(json)
-// object->json
-var json2 = JSON.stringify(object)
-```
-
-### vue
-
-- 响应式特性：（变量）数据的变化可以更新到页面效果上
-
-- 单向绑定：数据变化->页面变化，前提数据是响应式
-
-- 双向绑定：数据变化<->页面变化，前提数据是响应式
-
-- script用ts
-
-- 用let声明变量
-
-- 用const声明常量
-
-#### Node.js
+## Node.js
 
 官网：<https://nodejs.org/zh-cn>
 
@@ -892,7 +910,7 @@ Node.js是一个组合了各种有用的库的JavaScript运行时环境
 
 Node.js使用谷歌的V8引擎来执行浏览器外的代码
 
-##### Linux安装Node.js
+### Linux安装Node.js
 
 去官网或用包管理器安装Node.js后
 
@@ -908,7 +926,7 @@ export npm_config_prefix="$HOME/.local"
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-##### Windows安装Node.js
+### Windows安装Node.js
 
 - 1.下载免安装版本，解压
 
@@ -928,7 +946,7 @@ npm config set cache "G:\handle\application\node-v20.17.0-win-x64\node_cache"
 
 - 6.执行完毕后，可在系统盘的当前用户文件夹看到`.npmrc`文件，可以打开查看配置的信息
 
-##### 设置镜像源
+### 设置镜像源
 
 ```sh
 # 查看环境变量是否设置成功
@@ -942,7 +960,7 @@ npm config set registry https://registry.npmmirror.com/
 npm get registry
 ```
 
-##### npm
+### npm
 
 - npm是Node.js官方的包管理工具，Node.js包含了npm
 
@@ -977,29 +995,36 @@ npm -g outdated
 npm run 脚本名称
 ```
 
-#### 创建、安装依赖、运行vue项目
+## vue
 
-##### 创建vue3项目
+- 响应式特性：（变量）数据的变化可以更新到页面效果上
+
+- 单向绑定：数据变化->页面变化，前提数据是响应式
+
+- 双向绑定：数据变化<->页面变化，前提数据是响应式
+
+- script用ts
+
+- 用let声明变量
+
+- 用const声明常量
+
+### 创建vue3项目
 
 ```sh
+# 创建vue3项目
 npm create vue@latest
-```
 
-##### 安装所有的依赖
-
-```sh
+# 安装所有的依赖
 npm i
-```
 
-##### 运行项目
-
-```sh
+# 运行项目
 npm run dev
 ```
 
-#### vue项目文件
+### vue项目文件
 
-##### main.ts
+#### main.ts
 
 ```ts
 // 1.引入createApp用于创建应用
@@ -1012,7 +1037,7 @@ import App from "./App.vue";
 createApp(App).mount('#app')
 ```
 
-##### vue文件
+#### vue文件
 
 vue文件里面可以写三种标签
 
@@ -1038,11 +1063,11 @@ vue文件里面可以写三种标签
 </style>
 ```
 
-#### vue语法
+### vue语法
 
-##### vue文件中的script写法
+#### vue文件中的script写法
 
-###### 写法1
+##### 写法1
 
 ```vue
 <script lang="ts">
@@ -1058,7 +1083,7 @@ vue文件里面可以写三种标签
 </script>
 ```
 
-###### 写法2
+##### 写法2
 
 ```vue
 <script lang="ts">
@@ -1075,7 +1100,7 @@ vue文件里面可以写三种标签
 </script>
 ```
 
-###### 写法3
+##### 写法3
 
 ```vue
 <script lang="ts" setup>
@@ -1085,7 +1110,7 @@ vue文件里面可以写三种标签
 </script>
 ```
 
-###### 写法4
+##### 写法4
 
 通过安装插件支持通过name属性定义组件名
 
@@ -1118,7 +1143,7 @@ export default defineConfig({
 </script>
 ```
 
-##### 变量定义及使用的写法
+#### 变量定义及使用的写法
 
 - 插值写法
 
@@ -1131,9 +1156,9 @@ export default defineConfig({
 </script>
 ```
 
-##### 响应式数据写法
+#### 响应式数据写法
 
-###### 基本类型写法
+##### 基本类型写法
 
 ```vue
 <template>
@@ -1150,9 +1175,9 @@ export default defineConfig({
 </script>
 ```
 
-###### 对象类型写法
+##### 对象类型写法
 
-##### ref写法
+#### ref写法
 
 ```vue
 <template>
@@ -1179,7 +1204,7 @@ export default defineConfig({
 </script>
 ```
 
-##### reactive写法
+#### reactive写法
 
 ```vue
 <template>
@@ -1208,7 +1233,7 @@ export default defineConfig({
 </script>
 ```
 
-##### toRef和toRefs写法
+#### toRef和toRefs写法
 
 ```vue
 <template>
@@ -1240,7 +1265,7 @@ export default defineConfig({
 </script>
 ```
 
-##### 方法定义及调用的写法
+#### 方法定义及调用的写法
 
 - 定义及调用
 
@@ -1269,7 +1294,7 @@ export default defineConfig({
 </script>
 ```
 
-##### computed写法
+#### computed写法
 
 ```vue
 <template>
@@ -1300,7 +1325,7 @@ export default defineConfig({
 </script>
 ```
 
-##### watch监视写法
+#### watch监视写法
 
 ##### 监视ref定义的基本类型数据
 
@@ -1520,7 +1545,7 @@ export default defineConfig({
 </script>
 ```
 
-##### 标签的ref属性
+#### 标签的ref属性
 
 - 子vue
 
@@ -1570,7 +1595,7 @@ export default defineConfig({
 </script>
 ```
 
-##### 自定义类型
+#### 自定义类型
 
 - 1.定义
 
@@ -1663,7 +1688,7 @@ function 方法名() {
 
 - 兄弟组件传值：子1传给父，父传给子2
 
-##### vue的html语法
+#### vue的html语法
 
 - 格式：v-xxx
 
@@ -1749,7 +1774,7 @@ return {xxxDAta, xxxFunction}
 const {xxxDAta, xxxFunction} = useXxx()
 ```
 
-#### Vue-Router
+### Vue-Router
 
 - 依赖
 
@@ -1819,9 +1844,9 @@ app.mount('#app')
 <RouterView />
 ```
 
-##### 路由传参
+#### 路由传参
 
-###### query参数
+##### query参数
 
 ```vue
 <script type="ts">
@@ -1848,7 +1873,7 @@ app.mount('#app')
 </template>
 ```
 
-###### params参数
+##### params参数
 
 ```ts
 // 路由写法
