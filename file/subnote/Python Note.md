@@ -18,9 +18,13 @@ uv init
 # --system-site-packages：继承系统的包，但是`uv pip list` or `uv pip install`不会将系统的包算在其中，但是笔者试了不知道为什么带不进来
 uv venv [--python 3.11] [--system-site-packages]
 
-# 更新项目环境
-# 指定国内源
-uv sync --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+# 根据 pyproject.toml 重新生成 uv.lock 锁定文件
+# 这一步只更新锁文件，不安装任何东西
+uv lock    
+
+# 更新项目环境：根据 uv.lock 将依赖安装到虚拟环境中
+# --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"：指定国内源
+uv sync [--default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"]
 
 # 安装依赖包
 # 也可以在安装依赖包的时候指定源，--index-url也可以简写为-i
@@ -116,7 +120,7 @@ height = 4
 # 还可以使用j或J后缀表示虚数
 1+2j
 
-# 对于交互式终端，最后一个表达式的值会赋给变量_，但是这个变量是只读的
+# 对于交互式终端，最后一个表达式的值会赋给变量"_"，但是这个变量是只读的
 # 当你给这个变量赋值时，会创建一个同名的局部变量
 ```
 
@@ -124,7 +128,8 @@ height = 4
 
 ```py
 # 字符串属于str类型，使用单引号或双引号包围都可以
-# 唯一区别就是'...'中无需转义"，"..."中无需转义'
+# 唯一区别就是单引号包围的字符串中的双引号无需转义：'..."...'
+# 双引号包围的字符串中的单引号无需转义："...'..."
 s = "hello world"
 
 # 字符串里面要表示单引号或双引号字符，用\转义

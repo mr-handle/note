@@ -27,7 +27,7 @@
 
 ```html
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
     <head>
         <meta charset="utf-8" />
         <title></title>
@@ -325,6 +325,35 @@ input、textarea、button、select、option都可以设置该属性
 
 - span，行内元素，不会自己独占一行的元素，img、a也是行内元素
 - css样式的宽，高等，很多都不生效
+
+#### iframe（框架标签）
+
+框架标签可以嵌入很多东西，如：普通网页、广告网页、pdf、图片、gif、mp4、压缩包（打不开的文件会直接弹出下载窗口）
+
+在src设置相应的url、相对地址等就行了
+
+- 属性
+    - src：资源，可以是网页，文件地址等
+    - name：框架名称，可以与其它标签的target属性配合使用
+    - frameborder：值可以是0（无边框）或1（有边框）
+
+```html
+<!-- 可以嵌入一个普通网页 -->
+<iframe src="https://www.baidu.com" width="" height="" frameborder="0"></iframe>
+
+<!-- iframe的name属性与超链接的target属性配合使用 -->
+<a href="https://www.baidu.com" target="theTarget">百度一下</a>
+<br/>
+<iframe name="theTarget" width="" height="" frameborder="0"></iframe>
+
+<!-- iframe的name属性与表单的target属性配合使用 -->
+<form action="https://cn.bing.com/search" target="theTarget">
+    <input type="text" name="q" />
+    <button value="搜索" />
+</form>
+<br/>
+<iframe name="theTarget" width="1280" height="720" frameborder="0"></iframe>
+```
 
 ## CSS
 

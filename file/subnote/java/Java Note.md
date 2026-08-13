@@ -33,9 +33,11 @@
 
 Oracle JDK的协议：jdk17+都是NFTC协议：免费使用 + 更新3年，3年后如果想要获得更新就要付费订阅了，当然可以选择不更新嘿嘿
 
-GraalVM Community Edition（CE）：GPLv2 + Classpath Exception协议，开源免费
+GraalVM Community Edition（CE）：GPLv2 + Classpath Exception协议，开源免费，虽然没有内置javafx，但是通过maven依赖引入javafx后，进行编译可以通过
 
 Oracle GraalVM：GFTC（GraalVM Free Terms and Conditions）协议，免费使用 + 更短更新周期（与Oracle JDK 的NFTC类似）
+
+Liberica Native Image Kit：LibericaJDK + GraalVM CE，对spring框架做了优化，如果需要编译javafx应用，需要下载完全版，标准版编译会报错的，跟GraalVM CE有点区别
 
 ##### 1.windows安装jdk
 
@@ -4732,6 +4734,8 @@ jpackage --type app-image \
 sudo pacman -S base-devel [zlib]
 
 # 如果是windows系统要先关闭`360`
+# target目录下生成的so文件是编译过程中的中间产物（共享库），是给链接器用的，运行时不需要
+# 生成的二进制文件是一个完全独立的本地可执行文件，不再需要目标机器上有jre
 mvn -Pnative native:compile
 
 # 如果报Execution of ..\jdk-xxx\bin\native-image.cmd @target\tmp\native-image-xxxxxxxxxx.args returned non-zero result
