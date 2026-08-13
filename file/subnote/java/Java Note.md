@@ -4633,6 +4633,32 @@ jlink.exe --module-path jmods --add-modules java.xml --output jre
 
 java16开始，可以使用jpackage将项目打包成Linux的deb和rpm，windows的exe，以及macOS的pkg和dmg
 
+```sh
+# 将jar打包：生成一个目录，包含bin目录和lib目录
+# jpackage会根据当前jdk将全部模块导出生成一个jre，直接双击bin目录的二进制文件即可运行该应用程序
+# --type app-image：生成一个目录
+# --name -n：生成的目录名称
+# --input -i：要打包的文件所在的目录，该目录的所有文件都会打包进应用程序镜像
+# --main-class com.example.Main：如果jar包的 MANIFEST.MF 中已经指定了 Main-Class，这个参数可以省略（如springboot插件生成的fat jar）
+# --main-jar fat.jar：应用程序主jar（包含主类）的文件名
+# --dest output：输出目录，可以不写，默认是当前目录（默认时在当前目录生成一个"--name"选项设置的值为名称的目录）
+# --app-version：应用程序/安装包版本
+# --java-options：指定程序运行时的jvm选项，一次只能指定一个
+jpackage --type app-image \
+    --name demo-app \
+    --input input \
+    --main-class com.example.Main \
+    --main-jar demo.jar \
+    --dest . \
+    --app-version "1.0.0" \
+    --java-options "-Xms8m" \
+    --java-options "-Xmx128m" \
+    --java-options "-XX:MetaspaceSize=16m" \
+    --java-options "-XX:MaxMetaspaceSize=256m" \
+    --java-options "-XX:+UseSerialGC" \
+    --java-options "-Dprism.order=sw"
+```
+
 #### 生成可执行文件graalvm
 
 - 父pom

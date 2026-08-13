@@ -174,8 +174,10 @@ h1-h6共有6级，文本字体大小依次递减
         - 请求体可以是字符或字节数据，可以提交文件
         - 比get效率低
 
+- target，跳转的新地址的打开方式，值：_self、_blank
+
 ```html
-<form action="" method="">
+<form action="" method="" target="">
     <!-- 在此填充表单项 -->
 </form>
 ```
@@ -230,6 +232,18 @@ h1-h6共有6级，文本字体大小依次递减
 </form>
 ```
 
+###### 普通按钮
+
+在表单中，普通按钮的type为button，如果不写type，默认为submit
+
+以下是表单中的普通按钮的两种写法
+
+```html
+<input type="button" value="普通按钮">
+
+<button type="button">普通按钮</button>
+```
+
 ###### textarea
 
 - textarea，文本域（多行文本框）
@@ -238,7 +252,7 @@ h1-h6共有6级，文本字体大小依次递减
 ```html
 <form action="" method="">
     <!-- 表单项 -->
-    个人简介：<textarea name="briefIntroduction">page load text</textarea>
+    个人简介：<textarea name="briefIntroduction" cols="30" rows="3">page load text</textarea>
 </form>
 ```
 
@@ -260,6 +274,47 @@ h1-h6共有6级，文本字体大小依次递减
     </select>
 </form>
 ```
+
+###### label
+
+label可以用for属性，通过id关联其它表单控件
+
+但是一般不与按钮进行关联，因为点label就相当于点了按钮，怪怪的
+
+下面的例子的效果：点击label，username输入框也会获得焦点
+
+```html
+<label for="usernameInput">用户名：</label>
+<input type="text" id="usernameInput" name="username" />
+```
+
+还有一种关联的写法
+
+```html
+<label for="usernameInput">
+    用户名：
+    <input type="text" name="username" />
+</label>
+```
+
+###### 表单信息分类
+
+```html
+<fieldset>
+    <legend>主要信息</legend>
+    <!-- 以下写放在主要信息里面的表单项 -->
+    用户名：<input type="text" name="username" />
+    <br />
+    密码：<input type="password" name="password" />
+    <br />
+</fieldset>
+```
+
+##### 禁用表单控件
+
+给表单控件加上disabled属性即可禁用该表单控件
+
+input、textarea、button、select、option都可以设置该属性
 
 #### div
 
@@ -914,7 +969,20 @@ Node.js使用谷歌的V8引擎来执行浏览器外的代码
 
 去官网或用包管理器安装Node.js后
 
-- 在`~/.bashrc`添加如下配置，然后执行`source ~/.bashrc`
+如果在用户目录下安装了另一个node，并且想要覆盖系统级的node
+
+在`~/.bashrc`添加如下配置，然后执行`source ~/.bashrc`
+
+```sh
+# 在`~/.bashrc`添加如下配置，然后执行`source ~/.bashrc`
+export NODE_HOME=/path/to/node
+
+# 由于系统的包管理器也安装了一个node.js，这里的路径设置必须放在最前面
+# 这样查找的时候就先找到用户目录下的node，然后就不会继续查找系统版本的node了
+export PATH="${NODE_HOME}/bin:$PATH"
+```
+
+- 在`~/.bashrc`添加如下配置，下面的配置用户级node和系统级node都可以配置，然后执行`source ~/.bashrc`
 
 ```sh
 # 例：npm -g install packageName命令会把包安装到/usr/lib/node_modules目录下，会导致权限问题
