@@ -3,6 +3,7 @@
 ## Java基础
 
 - 文件夹名称一律用小驼峰，并且单个单词的文件夹名称一律用单数形式
+    - 项目名用英文单词小写加`-`连接符定义，和maven的项目坐标名保持风格一致
 - 变量命名：变量名+变量类型，这样可以快速知道变量属于什么类型，并且不用输入那么多字母就弹出来代码补全了，省的都是时间啊
 - 用来存储对象的变量称为引用变量
 - 方法名有final修饰，表示此方法是终结方法，不能被子类重写
@@ -22225,7 +22226,11 @@ slaveof no one
 redis-sentinel sentinel.conf 
 ```
 
-#### 在 `java` 中使用 `jedis`
+#### Jedis
+
+官网：<https://github.com/redis/jedis>
+
+Jedis是以性能和简便为目标进行设计的Redis的java客户端
 
 命令行中操作redis的指令在jedis中都有对应的方法实现
 
@@ -22235,7 +22240,8 @@ redis-sentinel sentinel.conf
 <dependency>
     <groupId>redis.clients</groupId>
     <artifactId>jedis</artifactId>
-    <version>4.2.2</jedis.version>
+    <!-- 8.0.0开始支持java25 -->
+    <version>8.0.0</jedis.version>
 </dependency>
 ```
 
@@ -22284,6 +22290,21 @@ public void testTransaction() {
 
     jedis.close();
 }
+```
+
+#### lettuce
+
+Lettuce是一个可扩展的线程安全的Redis客户端，用于同步、异步和响应式使用
+
+但是Lettuce的版本更新没有Jedis跟进那么快
+
+```xml
+<dependency>
+    <groupId>io.lettuce</groupId>
+    <artifactId>lettuce-core</artifactId>
+    <!-- 7.x版本兼容到8.4、java24 -->
+    <version>7.6.0.RELEASE</version>
+</dependency>
 ```
 
 #### 分布式锁

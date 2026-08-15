@@ -29,15 +29,57 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
     <head>
-        <meta charset="utf-8" />
+        <meta charset="UTF-8" />
         <title></title>
+        <style></style>
     </head>
     <body>
+        <div></div>
+        <script></script>
     </body>
 </html>
 ```
 
 ### html标签
+
+#### 元信息/基本信息标签
+
+用来表示该网页的基本信息
+
+```html
+<!-- 配置字符编码 -->
+<meta charset="UTF-8" />
+<!-- 针对IE浏览器的一个兼容性设置 -->
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<!-- 针对移动端的一个配置 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- 配置网页的关键字，简单理解：搜索引擎会根据用户搜索的关键字，跟网页关键字进行比对，匹配的话该网页可能就会出现在搜索结果中 -->
+<meta name="keywords" content="关键字1,关键字2,关键字..." />
+<!-- 配置网页描述信息 -->
+<meta name="description" content="填写80字以内的一段跟网页内容相关的一段话" />
+
+<!-- 针对搜索引擎爬虫配置，content的值有很多，列举一些说明 -->
+<!-- index：允许搜索爬虫索引此页面 -->
+<!-- noindex：要求搜索爬虫不索引此页面 -->
+<!-- follow：允许搜索爬虫跟随此页面上的链接 -->
+<!-- nofollow：要求搜索爬虫不跟随此页面上的链接 -->
+<!-- all：相当于index和follow -->
+<!-- none：相当于noindex和nofollow -->
+<!-- noarchive：要求搜索引擎不缓存页面内容，可以用替代名称nocache -->
+<meta name="robots" content="nocache" />
+
+<!-- 配置网页作者 -->
+<meta name="author" content="handle" />
+
+<!-- 配置网页生成工具 -->
+<meta name="generator" content="如某个ide" />
+
+<!-- 配置网页版权信息 -->
+<meta name="copyright" content="2024-2026©版权所有" />
+
+<!-- 配置网页自动刷新，网页打开后3秒跳到百度，如果不设置url就原地刷新 -->
+<meta http-equiv="refresh" content="3;url=https://www.baidu.com" />
+```
 
 #### 标题
 
@@ -108,6 +150,10 @@ h1-h6共有6级，文本字体大小依次递减
 
 ```html
 <a href="https://www.baidu.com" target="_blank">百度一下</a>
+
+
+<a href="#anyId">跳转到某个标签</a>
+<p id="anyId">今天你很棒棒噢</p>
 ```
 
 #### 图片
@@ -355,7 +401,101 @@ input、textarea、button、select、option都可以设置该属性
 <iframe name="theTarget" width="1280" height="720" frameborder="0"></iframe>
 ```
 
+### 字符实体
+
+html实体：在html中的一种特殊的形式的内容，表示某个符号
+
+如：空格，当你在html里面写连续空格（按下多个空格键）的时候，浏览器只认第一个空格，余下的空格会当成对代码格式的调整
+
+- 写法有两种：
+    - 实体名称写法：`&实体名称;`
+    - 实体编号写法：`&#实体编号;`
+
+|符号|写法|
+|:-|:-|
+|空格|实体名称写法：`&nbsp;`，实体编号写法：`&#160`;|
+|`<`|`&lt;`|
+|`>`|`&gt;`|
+|`&`|`&amp;`|
+|`"`|`&quot;`|
+|反引号`´`|`&acute;`|
+|`¥`|`&yen;`|
+|商标`™`|`&trade;`|
+|注册商标`®`|`&reg;`|
+|版权`©`|`&copy;`|
+|乘法符号`×`|`&times;`|
+|除法符号`÷`|`&divide;`|
+
+### 全局属性（所有html标签都可以写的属性）
+
+- 属性
+    - id：给标签指定唯一标识
+        - 同一个html中的id是不能重复的
+        - 不能在`<html>`、`<head>`、`<meta>`、`<title>`、`<script>`、`<style>`中使用
+    - class：给标签指定类选择器名称，通过在css定义的类选择器给标签设置样式
+    - style：给标签设置样式
+    - dir：内容在屏幕的位置/方向，值：ltr（从左往右）或rtl（从右往左）
+        - 不能在`<html>`、`<head>`、`<meta>`、`<title>`、`<script>`、`<style>`中使用
+    - title：给标签设置一个鼠标在其范围悬停时的文字提示，一般超链接和图片用得比较多
+    - lang：给标签指定语言
+        - 不能在`<head>`、`<meta>`、`<title>`、`<script>`、`<style>`中使用
+
+### html元素间的关系
+
+父元素：元素a直接包裹元素b，元素a就是元素b的父元素
+
+子元素：元素a直接包裹元素b，元素b就是元素a的子元素
+
+祖先元素：父元素的父元素...，一直往外找，都是祖先，父元素也是祖先，但是一般不这么称呼
+
+后代元素：子元素的子元素...，一直往里找，都是后代，子元素也是后端元素，但是一般不这么称呼
+
+兄弟元素：具有相同父元素的元素，互为兄弟元素
+
 ## CSS
+
+CSS全称：Cascading Style Sheets（层叠样式表）
+
+CSS也是一种标记语言，用于给html结构设置样式，如文字大小、颜色、元素宽高等
+
+html搭建结构，css添加样式，实现结构和样式的分类
+
+### 样式表
+
+#### 1.行内/内联样式表
+
+```html
+<div style="..."></div>
+```
+
+#### 2.内部样式表
+
+```html
+...
+<head>
+    <style type="text/css">
+        ...
+    </style>
+</head>
+...
+```
+
+#### 3.外部样式表
+
+```html
+<!-- rel是relation，说明引入的文档与当前文档的关系 -->
+<link type="text/css" rel="stylesheet" href="xxx/xxx.css">
+```
+
+#### 样式表优先级
+
+行内样式 > （内部样式 = 外部样式）
+
+内部样式和外部样式优先级相同，后面的会覆盖前面的
+
+同名的属性，优先级高的顶掉优先级低的，不同名的属性最终都会生效
+
+同一个样式表中优先级也和顺序有关，后面的会覆盖前面的
 
 ### CSS 语法
 
@@ -371,16 +511,86 @@ input、textarea、button、select、option都可以设置该属性
 p {
     color: red;
     text-align: center;
+    /* css里面要严谨，带单位，不能只写数字 */
+    font-size: 30px;
 }
 ```
 
 ### 选择器
 
-#### id 选择器(#id)
+#### 通配选择器
+
+通配选择器对清除样式很有帮助
+
+```css
+/* 选中所有的html元素 */
+* {
+    background-color: white;
+}
+```
+
+#### 元素选择器
+
+根据元素的class属性的值，来选中某些元素
+
+为页面中某种元素统一设置样式
 
 - 定义css
 
 ```css
+/* 语法 */
+标签名 {
+    属性名: 属性值;
+}
+
+h1 {}
+div, p {}
+```
+
+- 使用css：不用另外写语句，在该css生效的html文件中，对所有属于该类型的html元素都直接生效
+
+```html
+<h1></h1>
+<div></div>
+<p></p>
+```
+
+#### 类选择器
+
+- 定义css
+
+```css
+/* 语法 */
+.类名 {
+    属性名: 属性值;
+}
+
+/* 选择html中所有class属性值为myClass1的元素 */
+.myClass1 {}
+
+/* 选择html中所有class属性值为myClass2的元素 */
+.myClass2 {}
+```
+
+- 使用css
+
+```html
+<!-- class属性的值可以包含多个类名，用空格隔开 -->
+<tagName class="myClass1 myClass2"></tagName>
+```
+
+#### id选择器
+
+根据元素的id的属性值，来精准选中某个元素
+
+- 定义css
+
+```css
+/* 语法 */
+#元素id {
+    属性名: 属性值;
+}
+
 #myId {}
 ```
 
@@ -390,54 +600,43 @@ p {
 <tagName id="myId"></tagName>
 ```
 
-#### class 选择器(.class)
+#### 复合/组合选择器
 
-- 定义css
+##### 交集选择器
 
-```css
-.myClass1 {}
-.myClass2 {}
-```
-
-- 使用css
-
-```html
-<tagName class="myClass1 myClass2"></tagName>
-```
-
-#### element 选择器(html element)
-
-- 定义css
+选中同时符合多个条件的元素
 
 ```css
-div, p {}
+/* 且 */
+选择器1选择器2...选择器n {}
 
-<div></div>
-<p></p>
+/* 虽然也可以这么写，但是很少用，因为id都可以唯一定位元素了，直接用id选择器定义样式就行了 */
+标签名.类名#元素id {
+
+}
+
+/* 选中class属性的值包含类名1和类名2的元素，一般不会这么用 */
+.类名1.类名2 {
+
+}
+
+/* html中使用css */
+<tagName class="类名1 类名2"></tagName>
 ```
 
-- 使用css：不用另外写语句，在该css生效的html文件中，对所有属于该类型的html元素都直接生效
+##### 并集选择器
 
-#### 插入样式表
+选中多个选择器对应的元素，通常用于集体声明
 
-- 1.外部样式表
+```css
+/* 或 */
+选择器1,选择器2,...,选择器n {}
 
-```html
-<link type="text/css" rel="stylesheet" href="xxx/xxx.css">
-```
-
-- 2.内部样式表
-
-```html
-<style type="text/css">
-    ...
-</style>
-```
-
-- 3.内联样式表
-
-```html
-<div style="..."></div>
+/* 美观的写法 */
+选择器1,
+选择器2,
+...,
+选择器n {}
 ```
 
 ### 布局
