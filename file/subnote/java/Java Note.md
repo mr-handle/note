@@ -22250,7 +22250,9 @@ Jedis是以性能和简便为目标进行设计的Redis的java客户端
 ```java
 @Test
 public void testJedis() {
-    Jedis jedis = new Jedis("www.laodeli.top", 6379);
+    // Jedis jedis = new Jedis("localhost", 6379);
+    // 指定用户名和密码，如果没有设置用户名，则默认用户名为default
+    Jedis jedis = new Jedis("redis://用户名:密码@ip:port");
 
     Assertions.assertEquals("PONG", jedis.ping());
 
@@ -22305,6 +22307,62 @@ Lettuce是一个可扩展的线程安全的Redis客户端，用于同步、异�
     <!-- 7.x版本兼容到8.4、java24 -->
     <version>7.6.0.RELEASE</version>
 </dependency>
+```
+
+#### Spring Data Redis
+
+Jedis不支持master/replica
+
+- maven依赖
+
+```xml
+<!-- 默认使用 Lettuce -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+
+<!-- 用于测试的依赖 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis-test</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+- 配置
+
+```properties
+# 写法一：指定url就行了，当设置了url时，host, port, username 和 password属性会被忽略
+spring.data.redis.url=redis://default:redis123@10.0.2.15:6379
+
+# 写法二：分开设置host, port, username 和 password
+#spring.data.redis.host=10.0.2.15
+#spring.data.redis.port=6379
+#spring.data.redis.username=default
+#spring.data.redis.password=redis123
+
+# 指定使用的数据库
+spring.data.redis.database=0
+
+# 配置自动装配的 RedisConnectionFactory 使用 SSL 和 redis 服务器通信
+#spring.data.redis.ssl.enabled=true
+
+# 自定义SSL信任材料可以在SSL bundle中配置，自动应用到RedisConnectionFactory中
+#spring.data.redis.ssl.bundle=example
+```
+
+- 然后就可以使用自动配置的：RedisConnectionFactory, StringRedisTemplate 或 RedisTemplate 了
+
+```java
+@Autowired
+private StringRedisTemplate stringRedisTemplate;
+
+@Test
+public void test() {
+    stringRedisTemplate.opsForValue().set("greet", "hello world");
+    System.out.println(stringRedisTemplate.opsForValue().get("greet"));
+}
 ```
 
 #### 分布式锁
