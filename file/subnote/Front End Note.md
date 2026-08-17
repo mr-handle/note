@@ -787,6 +787,215 @@ a:active {}
 input:focus,select:focus {}
 ```
 
+##### 结构伪类
+
+- first-child
+- last-child
+- nth-child(n)：第n个儿子元素，n的值可以是
+    - 0或不写，都不选中，一般不这么写
+    - n，都选中，一般不这么写
+    - 2n或even，表示选中偶数儿子
+    - 2n+1或odd，表示选中奇数儿子
+    - `-n+5`，表示选中前5个儿子
+- nth-last-child(n)：倒数第n个儿子元素，很少用
+- first-of-type
+- last-of-type
+- nth-of-type(n)：第n个某类型儿子元素
+- nth-last-of-type(n)：倒数第n个某类型儿子元素，很少用
+- only-child：选中独生儿子元素，要求其父元素只有一个儿子元素，很少用
+- only-of-type：选中独生某类型儿子元素，要求其父元素只有一个该类型的儿子元素，很少用
+
+###### 结构1
+
+```html
+<div>
+    <p>选中</p>
+    <p></p>
+</div>
+```
+
+```css
+/* 选中的是div的第一个儿子p元素（从div所有的儿子里面去找，即按照所有兄弟元素计算） */
+div>p:first-child{}
+```
+
+###### 结构2
+
+```html
+<div>
+    <!-- 都不会选中 -->
+    <span></span>
+    <p></p>
+</div>
+```
+
+```css
+/* 选中的是div的第一个儿子p元素（从div所有的儿子里面去找，即按照所有兄弟元素计算） */
+div>p:first-child{}
+```
+
+###### 结构3
+
+```html
+<div>
+    <p>>选中</p>
+    <marquee>
+        <p>选中</p>
+    </marquee>
+    <p></p>
+</div>
+```
+
+```css
+/* 选中的是div的后代p元素，且p的父元素是谁无所谓，但p必须是其父元素的第一个儿子（从div所有的儿子里面去找，即按照所有兄弟元素计算） */
+div p:first-child{}
+```
+
+###### 结构4
+
+```html
+<body>
+    <p>>选中</p>
+    <div>
+        <p>>选中</p>
+        <marquee>
+            <p>选中</p>
+        </marquee>
+        <p></p>
+    </div>
+</body>
+```
+
+```css
+/* 选中的是p元素，且p的父元素是谁无所谓，但p必须是其父元素的第一个儿子（从所有的儿子里面去找，即按照所有兄弟元素计算） */
+p:first-child{}
+```
+
+###### 结构5
+
+```html
+<div>
+    <p></p>
+    <p>选中</p>
+    <p></p>
+</div>
+```
+
+```css
+/* 第2个儿子 */
+div>p:nth-child(2) {}
+```
+
+###### 结构6
+
+```html
+<div>
+    <span></span>
+    <p>选中</p>
+    <p></p>
+</div>
+```
+
+```css
+/* 选中的是div的第一个儿子p元素（从div所有的儿子p元素里面去找，即按照所有同类型元素计算） */
+div>p:first-of-type {}
+```
+
+###### 结构7
+
+```html
+<html></html>
+```
+
+```css
+/* 选中的是根元素（html） */
+:root {}
+```
+
+###### 结构8
+
+```html
+<div></div>
+```
+
+```css
+/* 选中的是没有内容（连一个空格都不要有）的div元素 */
+div:empty {}
+```
+
+##### 否定伪类
+
+`:not`：排除满足括号中条件的元素
+
+```html
+<div>
+    <p></p>
+    <p class="excludeClass"></p>
+</div>
+```
+
+```css
+/* 选中的是div的儿子p元素，但是排除类名为excludeClass的元素 */
+div>p:not(.excludeClass) {}
+
+/* not里面可以有其它写法 */
+/* 选中的是div的儿子p元素，但是排除title属性值以hello开头的 */
+div>p:not([title^="hello"]) {}
+
+/* 选中的是div的儿子p元素，但是排除第一个儿子p元素 */
+div>p:not(:first-child) {}
+```
+
+##### UI伪类
+
+```html
+<input type="checkbox" />
+<input type="text" />
+<input type="text" disabled />
+```
+
+```css
+/* 选中的是勾选的复选框或单选按钮 */
+input:checked {}
+
+
+/* 选中的是可用的input元素（没有disabled属性），很少这么写 */
+input:enabled {}
+/* 相当于 */
+input {}
+
+/* 选中的是被禁用的input元素（有disabled属性） */
+input:disabled {}
+```
+
+##### 目标伪类
+
+```html
+<a href="#top">回到顶部</a>
+<div id="top">顶部</div>
+```
+
+```css
+/* 点击超链接的时候，就会选中超链接的目标，即选中锚点指向的元素 */
+div:target {}
+```
+
+##### 语言伪类
+
+根据语言属性的值选择元素
+
+```html
+<div lang="en_US">handle</div>
+```
+
+```css
+/* 选中div的lang的值是en_US的元素 */
+div:lang(en_US) {}
+
+/* 选中lang的值是zh_CN的元素 */
+:lang(zh_CN) {}
+```
+
 ### 布局
 
 #### 浮动，不会遮挡文字

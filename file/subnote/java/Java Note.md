@@ -8190,6 +8190,7 @@ mvn spring-boot:repackage
     </modules>
 
     <!-- 4.依赖声明，可以被子工程继承 -->
+    <!-- dependencyManagement只能做版本管理，像scope作用域配置必须在子模块中声明 -->
     <dependencyManagement>
         <dependencies>
             ...
@@ -19974,6 +19975,8 @@ git stash pop: 从Git栈中读取最近一次保存的内容，恢复工作区�
 
 ## 数据库
 
+ACID：（Atomicity）原子性、（Consistency）一致性、（Isolation）独立性、（Durability）持久性
+
 - sql语句和注释应该用通用写法，这样在不同数据库之间都兼容
 
 ```sql
@@ -21618,7 +21621,6 @@ end;
 
 ### Redis
 
-ACID：（Atomicity）原子性、（Consistency）一致性、（Isolation）独立性、（Durability）持久性
 CAP：（Consistency）强一致性、（Availability）可用性、（Partition tolerance）分区容错性
 CA：传统Oracle数据库
 AP：大多数网站架构的选择
@@ -22362,6 +22364,175 @@ private StringRedisTemplate stringRedisTemplate;
 public void test() {
     stringRedisTemplate.opsForValue().set("greet", "hello world");
     System.out.println(stringRedisTemplate.opsForValue().get("greet"));
+}
+```
+
+##### 配置Lettuce连接器
+
+###### 创建LettuceConnectionFactory
+
+```java
+// 写法一：单redis服务器
+@Configuration
+public class AppConfig {
+    @Bean
+    public LettuceConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory(new RedisStandaloneConfiguration("server", 6379));
+    }
+}
+
+// 写法二：使用LettuceClientConfigurationBuilder
+@Bean
+public LettuceConnectionFactory lettuceConnectionFactory() {
+    LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+        .useSsl().and()
+        .commandTimeout(Duration.ofSeconds(2))
+        .shutdownTimeout(Duration.ZERO)
+        .build();
+
+    return new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", 6379), clientConfig);
+}
+
+// 写法三：Unix domain sockets to communicate with Redis.Unix domain socket at /var/run/redis.sock
+@Configuration
+public class AppConfig {
+    @Bean
+    public LettuceConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory(new RedisSocketConfiguration("/var/run/redis.sock"));
+    }
+}
+
+// 写法四：写到主服务器，从备份服务器读
+@Configuration
+public class WriteToMasterReadFromReplicaConfiguration {
+    @Bean
+    public LettuceConnectionFactory redisConnectionFactory() {
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+        .readFrom(REPLICA_PREFERRED)
+        .build();
+
+        RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration("server", 6379);
+
+        return new LettuceConnectionFactory(serverConfig, clientConfig);
+    }
+}
+
+// 写法五：redis sentinel配置
+@Bean
+public RedisConnectionFactory lettuceConnectionFactory() {
+    RedisSentinelConfiguration sentinelConfig = new RedisSentinelConfiguration()
+        .master("mymaster")
+        .sentinel("127.0.0.1", 26379)
+        .sentinel("127.0.0.1", 26380);
+    return new LettuceConnectionFactory(sentinelConfig);
+}
+```
+
+##### 配置Jedis连接器
+
+```xml
+<dependency>
+    <groupId>redis.clients</groupId>
+    <artifactId>jedis</artifactId>
+</dependency>
+```
+
+###### 创建JedisConnectionFactory
+
+```java
+// 写法一：单redis服务器配置
+@Configuration
+public class RedisConfiguration {
+    @Bean
+    public JedisConnectionFactory redisConnectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration("server", 6379);
+        return new JedisConnectionFactory(config);
+    }
+}
+
+// 写法二：redis sentinel配置
+@Bean
+public RedisConnectionFactory jedisConnectionFactory() {
+    RedisSentinelConfiguration sentinelConfig = new RedisSentinelConfiguration()
+        .master("mymaster")
+        .sentinel("127.0.0.1", 26379)
+        .sentinel("127.0.0.1", 26380);
+    return new JedisConnectionFactory(sentinelConfig);
+}
+```
+
+##### RedisSentinelConfiguration
+
+RedisSentinelConfiguration可以通过RedisSentinelConfiguration.of(PropertySource)进行配置
+
+可配置属性如下
+
+```properties
+# 主节点名称
+spring.redis.sentinel.master=
+# 以英文逗号分隔的节点的host:port对
+spring.redis.sentinel.nodes=
+# 使用Redis Sentinel进行身份验证时使用的用户名（redis 6以上版本）
+spring.redis.sentinel.username=
+# 使用Redis Sentinel进行身份验证时使用的密码
+spring.redis.sentinel.password=
+# 与Redis节点进行身份验证时应用的用户名
+spring.redis.sentinel.dataNode.username=
+# 与Redis节点进行身份验证时应用的密码
+spring.redis.sentinel.dataNode.password=
+# 使用Redis数据节点进行身份验证时应用的数据库索引
+spring.redis.sentinel.dataNode.database=
+```
+
+有时候需要与sentinel进行直接互动
+
+`RedisConnectionFactory.getSentinelConnection()` 或 `RedisConnection.getSentinelCommands()` 可以访问配置的第一个活动哨兵
+
+##### RedisClusterConfiguration
+
+RedisClusterConnection 是对RedisConnection的扩展
+
+RedisClusterConnection也是通过RedisConnectionFactory创建，可以通过RedisClusterConfiguration进行配置
+
+RedisClusterConfiguration 也可以通过 RedisClusterConfiguration.of(PropertySource)进行配置
+
+可以配置如下属性
+
+```properties
+# 以英文逗号分隔的节点的host:port对
+spring.redis.cluster.nodes=
+# 允许的集群重定向次数
+spring.redis.cluster.max-redirects=
+```
+
+```java
+@Component
+@ConfigurationProperties(prefix = "spring.redis.cluster")
+@Getter
+@Setter
+public class ClusterConfigurationProperties {
+
+    /*
+    * spring.redis.cluster.nodes[0] = 127.0.0.1:7379
+    * spring.redis.cluster.nodes[1] = 127.0.0.1:7380
+    * ...
+    */
+    List<String> nodes;
+}
+
+@Configuration
+public class AppConfig {
+
+    /**
+     * Type safe representation of application.properties
+     */
+    @Autowired ClusterConfigurationProperties clusterProperties;
+
+    @Bean
+    public RedisConnectionFactory connectionFactory() {
+        return new LettuceConnectionFactory(
+            new RedisClusterConfiguration(clusterProperties.getNodes()));
+    }
 }
 ```
 

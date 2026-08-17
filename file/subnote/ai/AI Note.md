@@ -34,6 +34,14 @@ deepseek信息落后
 
 紫东太初相应慢，网页版如果末尾不加`？`会吞掉末尾用户输入内容，并且部分对话不带问号就发不出去，会提示请输入问题，比较难用
 
+## AI桌面端软件使用心得
+
+- Jan：<https://github.com/janhq/jan>
+    - 文件小，启动速度快，但是不能输入中文，看以后怎么样了
+
+- CherryStudio：<https://github.com/CherryHQ/cherry-studio>
+    - 文件比Jan大，启动还慢，但是可以输入中文，模型供应商比较多且不能隐藏，2.0版本开始不能删除聊天，先用着吧
+
 ## index-tts本地部署
 
 官网：<https://github.com/index-tts/index-tts>
