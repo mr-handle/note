@@ -263,6 +263,14 @@ ffmpeg -i input.mp4 -c:a copy -c:v libvpx -b:v 10783k output_vp8acc.mkv
 ffmpeg -i input.mp4 -c:a copy -c:v libvpx-vp9 -b:v 6500k output_vp9acc.mp4
 ```
 
+### 音频格式转换
+
+```sh
+# -sample_fmt s16：指定位深为s16（signed 16-bit integer），不指定的话默认是s32，根据源音频的位深进行设置就行了
+# 如果是默认s32位深，FLAC 容器装不下 32 位的数据，于是它会自动将 32 位截断/降级为 24 位再封装进 FLAC 文件中
+ffmpeg -i input.m4a -c:a flac -sample_fmt s16 output.flac
+```
+
 ### 视频截取
 
 视频并不是每一帧都是完整的画面。为了压缩体积，很多帧只记录了“和上一帧相比发生了什么变化”。只有“关键帧（I帧）”才是完整的画面。

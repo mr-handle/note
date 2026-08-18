@@ -4376,6 +4376,40 @@ yay -S obs-gstreamer
 sudo pacman -S kdenlive
 ```
 
+##### yt-dlp
+
+官网：<https://github.com/yt-dlp/yt-dlp>
+
+yt-dlp 是一个功能丰富的命令行音/视频下载器，支持很多视频网站，另外这个工具是无许可的
+
+- 安装
+
+```sh
+sudo pacman -S yt-dlp
+```
+
+- 也可以自己下载二进制文件
+    - 校验
+    - 改名为yt-dlp
+    - 放到`$HOME/.local/bin/yt-dlp`(懒得设置PATH了）
+    - 赋予执行权限
+
+```sh
+# 列出可用的格式列表
+# -F, --list-formats 
+yt-dlp -F "视频链接"
+
+# 下载完整视频
+yt-dlp "视频链接"
+
+# 只下载音频
+# -x, --extract-audio
+yt-dlp -x "视频链接"
+
+# 更新，会下载新的二进制文件然后将当前的旧版本替换
+yt-dlp -U
+```
+
 ###### 导出视频
 
 鉴于笔者的前置经验：ffmpeg转格式时vulkan比vaapi快，并且文件也比vaapi的小
