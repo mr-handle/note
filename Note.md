@@ -911,6 +911,32 @@ neu build --embed-resources
 
 此外还可以使用hschneider/neutralino-build-scripts这个社区项目打包安装脚本，具体请参考Neutralinojs官网教程
 
+## vscodium
+
+官网：<https://github.com/VSCodium/vscodium>
+
+- 安装依赖
+
+```sh
+# 安装jq
+sudo pacman -S jq
+
+# 安装rustup
+sudo pacman -S rustup
+
+# 安装最新稳定版的rust工具链
+rustup default stable
+```
+
+- 执行构建(构建过程中会出现各种问题，费力不讨好)
+
+```sh
+# 首先用uv工具指定python版本，并激活
+
+# -s不从vscode代码仓拉取代码
+./dev/build.sh
+```
+
 ## Markdown语法
 
 ```md

@@ -3760,6 +3760,30 @@ firefox
 # 搜索browser.safebrowsing.downloads.enabled，然后设置为false，立即生效
 ```
 
+###### librewolf浏览器
+
+以安全和隐私为目标的firefox的fork版本，社区维护
+
+以目前的使用情况来看，比firefox要占用更多内存
+
+```sh
+sudo pacman -S librewolf
+```
+
+###### zen浏览器
+
+官网：<https://zen-browser.app/>
+
+zen也是firefox的fork版本，不过对UI做了很前卫的设计
+
+目前个人使用的时候觉得工具栏显示书签的时候很丑
+
+另外，侧边栏设置为紧凑的时候，刚打开浏览器（设置为空白页）的时候
+
+侧边栏感觉是置顶了，鼠标不在侧边栏也一直显示侧边栏，书签栏会被侧边栏覆盖掉一部分
+
+目前还是试验性的产品，可以等等，这就是目前使用的心得
+
 ##### 安装Watt Tookit
 
 证书配置向导页面：<https://steampp.net/liunxSetupCer>
