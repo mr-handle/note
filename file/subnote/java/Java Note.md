@@ -22535,6 +22535,106 @@ public class AppConfig {
     }
 }
 ```
+##### [Reactive]RedisTemplate
+
+[Reactive]RedisTemplate提供高级别的交互（各种数据类型，并且自动做序列化/反序列化）
+
+[Reactive]RedisConnection提供低级别交互（返回字节数组）
+
+- 声明RedisTemplate bean
+
+```java
+@Configuration
+class MyConfig {
+    @Bean
+    LettuceConnectionFactory connectionFactory() {
+        return new LettuceConnectionFactory();
+    }
+
+    @Bean
+    RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
+
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        return template;
+    }
+}
+```
+
+- 使用Redistemplate
+
+```java
+public class Example {
+    // inject the actual operations
+    @Autowired
+    private RedisOperations<String, String> operations;
+
+    // Spring 自动调用 redisTemplate.opsForList()
+    // inject the template as ListOperations
+    @Resource(name="redisTemplate")
+    private ListOperations<String, String> listOps;
+
+    public void addLink(String userId, URL url) {
+        listOps.leftPush(userId, url.toExternalForm());
+    }
+}
+```
+##### StringRedisTemplate
+
+StringRedisTemplate专门处理字符串操作
+
+对应的低级别交互用StringRedisConnection（实现了DefaultStringRedisConnection）
+
+底层使用StringRedisSerializer序列化
+
+- 声明StringRedisTemplate bean
+
+```java
+@Configuration
+class RedisConfiguration {
+    @Bean
+    LettuceConnectionFactory redisConnectionFactory() {
+        return new LettuceConnectionFactory();
+    }
+
+    @Bean
+    StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+
+        StringRedisTemplate template = new StringRedisTemplate();
+        template.setConnectionFactory(redisConnectionFactory);
+        return template;
+    }
+}
+```
+
+- 使用StringRedisTemplate
+
+```java
+public class Example {
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    public void addLink(String userId, URL url) {
+        redisTemplate.opsForList().leftPush(userId, url.toExternalForm());
+    }
+}
+```
+
+##### RedisCallback
+
+RedisTemplate 和 StringRedisTemplate可以让你使用RedisCallback接口直接跟Redis对话
+
+```java
+public void useCallback() {
+    redisOperations.execute(new RedisCallback<Object>() {
+        public Object doInRedis(RedisConnection connection) throws DataAccessException {
+        Long size = connection.dbSize();
+        // Can cast to StringRedisConnection if using a StringRedisTemplate
+        ((StringRedisConnection)connection).set("key", "value");
+        }
+    });
+}
+```
 
 #### 分布式锁
 
