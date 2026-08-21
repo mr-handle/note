@@ -151,8 +151,16 @@ llama.cpp是本地部署ai模型的命令行工具
 
 arch教程官网：https://wiki.archlinux.org/title/Llama.cpp
 
+- 对于llama.cpp
+    - Dense 模型 → Vulkan 更合适：每次推理需完整扫过全部权重，瓶颈在内存带宽。
+        - Vulkan 驱动开销低、带宽利用率高，在消费级 AMD 硬件上表现更稳定。
+    - MoE 模型 → HIP 更合适：每次只激活一小部分专家，权重搬运量大幅减少，瓶颈转移到稀疏矩阵计算效率。
+
 ```sh
-# ggml-vulkan用于显卡加速，根据自己的硬件进行选择
+# ggml-vulkan和ggml-hip用于显卡加速
+# ggml-vulkan一般更节省内存，但是生成的词元速度比较慢
+# ggml-hip的软件包一般也更大，也更花内存，但是生成的词元速度更快
+# 根据自己的硬件条件进行选择，只安装一个就行了
 sudo pacman -S llama-cpp  ggml-cpu ggml-vulkan
 ```
 
@@ -167,19 +175,21 @@ llama-cli -hf org/model
 ### 运行
 
 ```sh
+# 命令行交互方式运行
 # -c 32768，指定上下文长度，越大越吃显存
 # -ctk q8_0，Key 张量：负责计算注意力权重（即"模型关注哪些 token"），相当于模型的"注意力分配器"
 # Key 对量化极其敏感，激进量化会明显降低输出质量
 # -ctv q8_0，Value 张量：负责提供实际的内容信息（即"模型从关注的 token 中提取什么"），相当于"信息载体"
 # Value 容忍度更高，激进量化仍有降级风险但相对安全
 # -ngl 要卸载到GPU的层数，可以是auto、all或一个整数，显存不够就调小
-# 命令行交互方式运行
+# -cmoe，将所有专家权重保留在内存中
+# --n-cpu-moe， 设置专家权重保留在内存中的数量
 llama-cli -m model.gguf -c 32768
 
 # 以API服务器运行，自带WebUI
 # 也可以使用cherry-studio这种桌面端软件进行链接，添加ai提供商，然后用openai的api，指定地址端口就行了
 # --no-webui，禁用WebUI，只提供API服务
-llama-server -m Ornith-1.5-9B-Q4_K_M.gguf -c 32768 --host 0.0.0.0 --port 8888 --no-webui
+llama-server -m Ornith-1.5-35B-Q4_K_M.gguf -ngl all --n-cpu-moe 18 -c 8192 --temp 0.2 --top-p 0.2 --host 0.0.0.0 --port 8888
 ```
 
 ## Ollama
@@ -233,7 +243,9 @@ sudo pacman -S ollama
 # GPU加速
 # 如果是amd显卡，有两种gpu加速方法，要注意的是ollama-vulkan和ollama-rocm不要同时安装
 # rocm加速：安装rocm-hip-sdk和ollama-rocm
-# vulkan加速：安装ollama-vulkan，据说比rocm更快，可以自己测试一下看看
+# vulkan加速：安装ollama-vulkan，据说比rocm更快
+# 笔者自己的测试结果是ollama-rocm软件包非常大，并且占用内存、推理速度都不如ollama-vulkan
+# 安装后记得重启电脑
 sudo pacman -S rocm-hip-sdk ollama-rocm
 sudo pacman -S ollama-vulkan
 
@@ -277,7 +289,8 @@ ollama ps
 
 # 运行模型
 # 如果进入了交互式聊天对话框，输入/bye停止会话
-ollama run  模型名称:标签
+# --verbose，在每个对话最后输出词元生成速度
+ollama run  模型名称:标签 --verbose
 
 # 停止运行的模型
 # 即使在终端停止了模型，只要用桌面客户端应用连接了ollama，发送消息就会唤醒或启动模型
@@ -355,6 +368,7 @@ OLLAMA_CONTEXT_LENGTH=8192 ollama serve
 ```sh
 curl http://localhost:11434/api/generate -d '{
     "model": "llama3.2",
+    "keep_alive": 30m,
     "prompt": "Why is the sky blue?",
     "options": {
         "num_ctx": 4096
