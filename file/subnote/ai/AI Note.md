@@ -139,6 +139,48 @@ uv pip install transformers==4.36.2 --index-url https://mirrors.tuna.tsinghua.ed
 # 当某个模型用uv run tts --list_models 显示已下载但是又报错说找不到就将该模型文件夹删了
 rm -rf ~/.local/share/tts/问题模型
 ```
+## llama.cpp
+
+官网：https://llama.app/
+
+llama.cpp是本地部署ai模型的命令行工具
+
+
+
+### 安装llama.cpp
+
+arch教程官网：https://wiki.archlinux.org/title/Llama.cpp
+
+```sh
+# ggml-vulkan用于显卡加速，根据自己的硬件进行选择
+sudo pacman -S llama-cpp  ggml-cpu ggml-vulkan
+```
+
+### 拉取模型
+
+```sh
+# 从Hugging Face拉取模型
+# 也可以自己从网上下载gguf模型然后运行
+llama-cli -hf org/model
+```
+
+### 运行
+
+```sh
+# -c 32768，指定上下文长度，越大越吃显存
+# -ctk q8_0，Key 张量：负责计算注意力权重（即"模型关注哪些 token"），相当于模型的"注意力分配器"
+# Key 对量化极其敏感，激进量化会明显降低输出质量
+# -ctv q8_0，Value 张量：负责提供实际的内容信息（即"模型从关注的 token 中提取什么"），相当于"信息载体"
+# Value 容忍度更高，激进量化仍有降级风险但相对安全
+# -ngl 要卸载到GPU的层数，可以是auto、all或一个整数，显存不够就调小
+# 命令行交互方式运行
+llama-cli -m model.gguf -c 32768
+
+# 以API服务器运行，自带WebUI
+# 也可以使用cherry-studio这种桌面端软件进行链接，添加ai提供商，然后用openai的api，指定地址端口就行了
+# --no-webui，禁用WebUI，只提供API服务
+llama-server -m Ornith-1.5-9B-Q4_K_M.gguf -c 32768 --host 0.0.0.0 --port 8888 --no-webui
+```
 
 ## Ollama
 
@@ -261,6 +303,34 @@ ollama pull hf.co/AtomicChat/Qwen3.6-27B-DFlash-GGUF
 ollama run modelscope.cn/<username>/<model-repository>
 # 例
 ollama run modelscope.cn/hf/antirez-deepseek-v4-gguf
+```
+
+### Modelfile
+
+ollama拉取模型的时候没有断点续传的功能
+
+如果网络卡的话可能还会出现下载进度倒退的情况
+
+对于从huggingface下载的gguf模型可以自己从网站上面下载
+
+好然后创建Modelfile，通过命令手动导入ollama，最后运行
+
+反正这也可以作为一个后备方案了
+
+```sh
+FROM /path/to/file.gguf
+
+PARAMETER temperature 0.2
+
+PARAMETER num_ctx 32768
+```
+
+- 添加Modelfile模型
+
+```sh
+ollama create choose-a-model-name -f <location of the file e.g. ./Modelfile>
+
+ollama run choose-a-model-name
 ```
 
 ### 修改上下文的词元长度
