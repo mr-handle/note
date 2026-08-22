@@ -1648,6 +1648,31 @@ npm -g outdated
 npm run 脚本名称
 ```
 
+### npx
+
+npx = 临时运行 npm 包的工具，Node.js 自带，用完即弃
+
+### pnpm
+
+pnpm是高级版的npm，需要自行安装
+
+npm的绝大部分命令都可以改成pnpm执行
+
+- 安装
+
+```sh
+# 在任意一个终端执行
+
+# 方法一
+npx get-pnpm
+
+# 方法二
+npm install -g pnpm
+
+# 测试
+pnpm --version
+```
+
 ## vue
 
 - 响应式特性：（变量）数据的变化可以更新到页面效果上

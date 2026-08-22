@@ -9365,6 +9365,8 @@ when(someService.someMethod(parameter...)).thenReturn(someValue);
 
 ## Lombok
 
+注意：java版本变更后，Lombok的版本也要跟着变，否则编译会报兼容问题的错误
+
 - maven依赖
 
 ```xml

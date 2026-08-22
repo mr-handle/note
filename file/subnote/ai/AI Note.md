@@ -156,12 +156,18 @@ arch教程官网：https://wiki.archlinux.org/title/Llama.cpp
         - Vulkan 驱动开销低、带宽利用率高，在消费级 AMD 硬件上表现更稳定。
     - MoE 模型 → HIP 更合适：每次只激活一小部分专家，权重搬运量大幅减少，瓶颈转移到稀疏矩阵计算效率。
 
+- 笔者用Ornith-1.5-9B-Q4_K_M.gguf模型测试llama.cpp(ggml-hip)和ollama(ollama-vulkan)
+    - 上下文：32768
+    - 显卡：RX9070
+    - 结果是使用的显存存6.7G左右，差别不大
+    - 生成响应词元的速度，llama.cpp（68t/s左右），ollama（58t/s左右），前者快了大概10个词元每秒
+
 ```sh
 # ggml-vulkan和ggml-hip用于显卡加速
 # ggml-vulkan一般更节省内存，但是生成的词元速度比较慢
 # ggml-hip的软件包一般也更大，也更花内存，但是生成的词元速度更快
 # 根据自己的硬件条件进行选择，只安装一个就行了
-sudo pacman -S llama-cpp  ggml-cpu ggml-vulkan
+sudo pacman -S llama-cpp  ggml-cpu ggml-hip
 ```
 
 ### 拉取模型
@@ -189,7 +195,7 @@ llama-cli -m model.gguf -c 32768
 # 以API服务器运行，自带WebUI
 # 也可以使用cherry-studio这种桌面端软件进行链接，添加ai提供商，然后用openai的api，指定地址端口就行了
 # --no-webui，禁用WebUI，只提供API服务
-llama-server -m Ornith-1.5-35B-Q4_K_M.gguf -ngl all --n-cpu-moe 18 -c 8192 --temp 0.2 --top-p 0.2 --host 0.0.0.0 --port 8888
+llama-server -m Ornith-1.5-35B-Q4_K_M.gguf -ngl all --n-cpu-moe 18 -ctv q8_0 -c 8192 --temp 0.2 --top-p 0.2 --host 0.0.0.0 --port 8888 --no-webui
 ```
 
 ## Ollama
