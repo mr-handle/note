@@ -1137,6 +1137,10 @@ body {
 }
 ```
 
+由于字体设计原因，文字最终呈现的大小，并不一定与font-size的值一直，可能大，也可能小
+
+文字相对字体设计框，并不是垂直居中的，通常都靠下一些
+
 #### 字体族
 
 声明字体族的时候应该统一都用sans-serif或者都用serif字体
@@ -1256,6 +1260,49 @@ div {
 }
 ```
 
+#### 行高
+
+由于字体设计原因，文字在一行中，并不是绝对垂直居中，字体有可能是超出了字体框的范围的
+
+如果行高设置成跟字体一样大小，可能就会上一行的字体底部跟下一行字体的顶部挤在一起
+
+- line-height的值可以是
+    - normal，默认，浏览器根据字体大小自适应行高
+    - 像素值
+    - 数值，参考自身font-size的倍数，这种写法用的多，1.5~2.0是比较常用的值，如1.5，最终行高为1.5 * font-size的值，
+    - 百分比，参考自身font-size的百分比，如数值写法1.5的百分比写法就是150%，最终行高为1.5 * font-size的值
+
+```css
+div {
+    font-size: 20px;
+    /*  */
+    line-height: 30px;
+}
+```
+
+如果行高过小，多行的文字会重叠
+
+行高最小值是0，不能是负数，设置为负数会被浏览器标识无效，并显示为normal的行高
+
+行高是可以继承的，因此用数值写法更方便继承
+
+- line-height和元素的height属性的关系
+    - 设置了height，高度就是height的值
+    - 没有设置height，高度就是line-height * 行数
+
+- 行高的应用场景
+    - 调整多行文字的间距
+    - 单行文字的垂直居中（非绝对垂直居中，观感上垂直居中）
+
+```css
+div {
+    height: 30px;
+    font-size: 20px;
+    /* line-height设置成和height一样就可以实现单行文本垂直居中了 */
+    line-height: 30px;
+}
+```
+
 #### 文本对齐
 
 - 水平对齐，属性名`text-align`，值有
@@ -1266,6 +1313,181 @@ div {
 ```css
 dev {
     text-align: left;
+}
+```
+
+- 垂直对齐
+    - 顶部：默认
+    - 居中
+        - 单行文本：line-height设置成和height一样
+        - 多行文本用定位解决
+    - 底部
+        - 单行文本：临时解决办法，设置line-height=height * 2 - font-size - x，x是根据字体族动态决定的一个微调值，更好的底部对齐用定位解决
+
+```css
+div {
+    height: 30px;
+    font-size: 20px;
+    /* line-height设置成和height一样就可以实现单行文本垂直居中了 */
+    line-height: 30px;
+}
+```
+
+#### vertical-align
+
+用于指定同一行元素之间，或表格单元格内文字的垂直对齐方式
+
+- 常用值
+    - baseline，默认，使元素的基线与父元素的基线对齐
+    - top，使元素的顶部与其所在行的顶部对齐
+    - middle，使元素的中部与父元素的基线加上父元素字母x的一半对齐（父元素字母x的中心点所在的那条线）
+    - bottom，使元素的底部与其所在行的底部对齐
+
+注意vertical-align不能控制块元素
+
+```html
+<div>
+    fatherx<span>xson</span
+</div>
+```
+
+```css
+div {
+    height: 300px;
+    font-size: 100px;
+    background-color: skyblue;
+}
+
+span {
+    font-size: 40px;
+    vertical-align: middle;
+    background-color: orange;
+}
+```
+
+### 列表相关属性
+
+这些属性都可以用在ul、ol、li元素上
+
+```html
+<ul>
+    <li></li>
+    <li></li>
+</ul>
+```
+
+```css
+ul {
+    /* 列表符号，即列表项前面的符号 */
+    /* 值有：none，square，lower-roman，upper-roman，decimal，lower-alpha，upper-alpha，disc */
+    list-style-type: none;
+
+    /* 列表符号的位置，给li标签设置背景色才能看出效果：inside、outside */
+    list-style-position: inside;
+
+    /* 自定义列表符号 */
+    list-style-image: url("/path/to/image");
+
+    /* 复合属性，数量、顺序随意 */
+    /* 这里自定义列表符号会覆盖decimal */
+    list-style: decimal inside url("/path/to/image");
+}
+li {
+    background-color: orange;
+}
+```
+
+### 边框相关属性
+
+这几个边框属性，除了table，th和td外，其它元素也可以用
+
+- border-style，边框风格，值有
+    - none，默认
+    - solid，实线
+    - dashed，虚线
+    - dotted，点线
+    - double，双实线
+
+```css
+table {
+    /* 这三个属性都要指定才会显示边框 */
+    border-width: 2px;
+    border-color: red;
+    border-style: solid;
+
+    /* 复合属性 */
+    border: 2px red solid;
+}
+
+th,td {
+    border: 2px green solid;
+}
+```
+
+### 表格独有属性
+
+```css
+table {
+    /* 复合属性 */
+    border: 2px red solid;
+
+    width: 500px;
+
+    /* 表格列宽：auto、fixed */
+    table-layout: fixed;
+    /* 单元格间距，border-collapse为separate时才有效果 */
+    border-spacing: 5px;
+    /* 合并相邻单元格的边框：collapse、separate */
+    border-collapse: collapse;
+    /* 隐藏没有内容的单元格：show、hide，设置为hide时， border-collapse为separate才有效果 */
+    empty-cells: hide;
+    /* 表格标题的位置：top、bottom */
+    caption-side: top;
+}
+```
+
+### 背景相关属性
+
+- background-position的值有
+    - 水平方向：left、center、right
+    - 垂直方向：top、center、bottom
+    - 如果只写一个方向的值，另一个方向的值默认为center
+    - 还可以指定坐标位置，分别表示x坐标和y坐标的值，如：100px 200px
+    - 只写一个坐标值，会被当作x坐标，y坐标默认为center
+
+```css
+div {
+    /* 背景颜色，默认transparent */
+    background-color: blue;
+    /* 背景图片 */
+    background-image: url("/path/to/image");
+    /* 背景图片的重复方式：repeat、no-repeat、repeat-x、repeat-y */
+    background-repeat: repeat;
+    /* 背景图片位置 */
+    background-position: left top;
+    /* 复合属性：属性值随意，顺序随意 */
+    background: blue url("/path/to/image") no-repeat left top;
+}
+```
+
+### 鼠标相关属性
+
+- cursor的值有
+    - pointer，小手
+    - move，移动图标
+    - text，文字选择器
+    - crosshair，十字架
+    - wait，等待
+    - help，帮助
+    - 还有其它值，就不一一列举了
+
+```css
+div {
+    cursor: pointer;
+
+    /* 还可以是图片，如果不显示，用ico格式试试 */
+    /* 末尾还要记得加上图片所代表的cursor的值，如pointer */
+    cursor: url("/path/to/image"), pointer;
 }
 ```
 
