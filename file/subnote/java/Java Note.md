@@ -38,7 +38,11 @@ GraalVM Community Edition（CE）：GPLv2 + Classpath Exception协议，开源�
 
 Oracle GraalVM：GFTC（GraalVM Free Terms and Conditions）协议，免费使用 + 更短更新周期（与Oracle JDK 的NFTC类似）
 
-Liberica Native Image Kit：LibericaJDK + GraalVM CE，对spring框架做了优化，如果需要编译javafx应用，需要下载完全版，标准版编译会报错的，跟GraalVM CE有点区别
+- Liberica Native Image Kit：LibericaJDK + GraalVM CE，对spring框架做了优化，如果需要编译javafx应用，需要下载完全版，标准版编译会报错的，跟GraalVM CE有点区别
+    - 官方明确说了不支持javafx的web和media相关的功能编译为本地二进制文件
+    - 25.0.4.1版本，笔者使用的时候，用普通类作为入口执行javafx程序运行报错
+    - 这个错误是跟javafx的webview相关的，这么推断要是用了media相关的控件或功能也会导致运行不起来
+    - 经过权衡觉得GraalVM CE可能更合适
 
 ##### 1.windows安装jdk
 
@@ -4632,6 +4636,31 @@ cd 指定目录
 jlink.exe --module-path jmods --add-modules java.xml --output jre
 ```
 
+#### SpringBoot的fat jar生成AOT Cache文件
+
+相比于编译本地镜像，AOT Cache是零侵入的，并且生成简单，是目前提升启动速度的最优解！
+
+```sh
+# 提取fat jar到app目录下
+# 注意提取后得到的目录名可以改变但是目录里面的文件结构不能动
+java -Djarmode=tools -jar app.jar extract --destination app
+
+# 进入app目录
+cd app
+
+# 生成aot文件，这个文件实际上就是机器码，因此不能跨平台使用，并且还要求java版本不能变
+# 生成aot文件后可以进一步用jpackage，指定好jvm参数，打包生成最终的带bin和lib的一个常见app目录
+# 注意-XX:AOTCacheOutput=app.aot是springboot打包的fat jar才支持使用
+# 注意这里可以指定垃圾收集器
+# 非springboot打包的jar还没研究
+java -XX:AOTCacheOutput=app.aot -Dspring.context.exit=onRefresh -jar app.jar
+
+# 运行
+# 生成aot文件的时候用的是什么垃圾收集器，这里就要用什么垃圾收集器运行
+# 直到java26才支持通用的非垃圾收集器特定格式的aot
+java -XX:AOTCache=app.aot -jar app.jar
+```
+
 #### jpackage
 
 java16开始，可以使用jpackage将项目打包成Linux的deb和rpm，windows的exe，以及macOS的pkg和dmg
@@ -4742,6 +4771,42 @@ mvn -Pnative native:compile
 # 如果报Execution of ..\jdk-xxx\bin\native-image.cmd @target\tmp\native-image-xxxxxxxxxx.args returned non-zero result
 native-image @target\tmp\native-image-xxxxxxx.args
 ```
+
+#### spring boot项目生成本地可执行文件
+
+- 为了简化配置，假设项目是继承自spring-boot-starter-parent的
+
+- maven依赖
+
+```xml
+<plugin>
+    <groupId>org.graalvm.buildtools</groupId>
+    <artifactId>native-maven-plugin</artifactId>
+</plugin>
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+</plugin>
+```
+
+- 生成本地可执行文件
+
+```sh
+# -Pnative，激活native profile（在spring-boot-starter-parent有声明）
+# 下面两个命令随便执行一个都可以
+
+# 编译慢，高级别优化，生成的可执行文件运行性能更好，适合生产发布
+mvn -Pnative native:compile
+
+# 编译快，只做基础优化，生成的可执行文件运行性能较低，适合日常开发
+mvn -Pnative package
+```
+
+简单说明
+
+首先，spring-boot-maven-plugin 执行 process-aot，生成 AOT 优化后的类、Bean 定义、资源配置等
+
+其次，native-maven-plugin 执行 native:compile，调用 GraalVM 的 native-image 工具，把预处理后的产物编译成原生可执行文件
 
 ## Java高级
 
