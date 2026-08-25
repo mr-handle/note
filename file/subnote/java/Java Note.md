@@ -34,11 +34,14 @@
 
 Oracle JDK的协议：jdk17+都是NFTC协议：免费使用 + 更新3年，3年后如果想要获得更新就要付费订阅了，当然可以选择不更新嘿嘿
 
-GraalVM Community Edition（CE）：GPLv2 + Classpath Exception协议，开源免费，虽然没有内置javafx，但是通过maven依赖引入javafx后，进行编译可以通过
+GraalVM Community Edition（CE）：GPLv2 + Classpath Exception协议，开源免费
+    - 虽然没有内置javafx，但是通过maven依赖引入javafx后，进行编译可以通过
+    - 带有javafx的web和media相关的功能也是不能编译为本地二进制文件的
 
 Oracle GraalVM：GFTC（GraalVM Free Terms and Conditions）协议，免费使用 + 更短更新周期（与Oracle JDK 的NFTC类似）
 
-- Liberica Native Image Kit：LibericaJDK + GraalVM CE，对spring框架做了优化，如果需要编译javafx应用，需要下载完全版，标准版编译会报错的，跟GraalVM CE有点区别
+- Liberica Native Image Kit：LibericaJDK + GraalVM CE
+    - 对spring框架做了优化，如果需要编译javafx应用，需要下载完全版，标准版编译会报错的，跟GraalVM CE有点区别
     - 官方明确说了不支持javafx的web和media相关的功能编译为本地二进制文件
     - 25.0.4.1版本，笔者使用的时候，用普通类作为入口执行javafx程序运行报错
     - 这个错误是跟javafx的webview相关的，这么推断要是用了media相关的控件或功能也会导致运行不起来
@@ -4327,6 +4330,12 @@ public class ComboBoxDemo extends Application {
     }
 }
 ```
+
+#### 打包javafx应用
+
+目前打包javafx应用为本地二进制文件时，运行总是会报错
+
+笔者决定放弃了，还是用AOT Cache吧，能提升多少算多少
 
 ### GUI
 
