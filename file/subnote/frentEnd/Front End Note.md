@@ -49,8 +49,10 @@
 ```html
 <!-- 配置字符编码 -->
 <meta charset="UTF-8" />
-<!-- 针对IE浏览器的一个兼容性设置 -->
+<!-- 针对IE浏览器的一个兼容性设置，让IE浏览器处于一个最优的渲染模式 -->
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<!-- 针对一些国产的“双核”浏览器的设置，让浏览器优先使用webkit内核去渲染网页 -->
+<meta name="rander" content="webkit">
 <!-- 针对移动端的一个配置 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <!-- 配置网页的关键字，简单理解：搜索引擎会根据用户搜索的关键字，跟网页关键字进行比对，匹配的话该网页可能就会出现在搜索结果中 -->
@@ -464,7 +466,9 @@ html实体：在html中的一种特殊的形式的内容，表示某个符号
 
 ### html5标签
 
-#### header
+#### 布局标签
+
+##### header
 
 整个页面，或部分区域的头部
 
@@ -474,7 +478,7 @@ html实体：在html中的一种特殊的形式的内容，表示某个符号
 </header>
 ```
 
-#### footer
+##### footer
 
 整个页面，或部分区域的底部
 
@@ -484,7 +488,7 @@ html实体：在html中的一种特殊的形式的内容，表示某个符号
 </footer>
 ```
 
-#### nav
+##### nav
 
 导航
 
@@ -494,7 +498,7 @@ html实体：在html中的一种特殊的形式的内容，表示某个符号
 </nav>
 ```
 
-#### article
+##### article
 
 文章、帖子、杂志、新闻、博客、评论等
 
@@ -510,7 +514,7 @@ article比section更强调独立性，一块内容如果比较独立，比较完
 </article>
 ```
 
-#### section
+##### section
 
 页面中的某段文字，或文章中的某段文字（里面文字通常会包含标题）
 
@@ -522,7 +526,7 @@ section强调的是分段或分块，如果你想将一块内容分成几段的�
 </section>
 ```
 
-#### aside
+##### aside
 
 侧边栏
 
@@ -530,6 +534,266 @@ section强调的是分段或分块，如果你想将一块内容分成几段的�
 <aside>
     <nav></nav>
 </aside>
+```
+
+#### 状态标签
+
+##### meter
+
+定义已知范围内的标量测量，也被称为gauge（尺度）
+
+如用来显示电量、磁盘用量等
+
+- 属性
+    - optimum，最优值，可选属性
+    - 其它几个属性不解释了
+
+```html
+<meter max="100" min="0" low="10" high="20" optimum="90" value="60"></meter>
+```
+
+##### progress
+
+显示某个任务完成的进度的指示器，一般用于表示进度条
+
+```html
+<progress max="100" value="80"></progress>
+```
+
+#### 列表标签
+
+##### datalist
+
+用于搜索框的关键字提示
+
+```html
+<form action="#">
+    <input type="text" list="hotkey" />
+    <button>search</button>
+</form>
+<datalist id="hotkey">
+    <option value="java"></option>
+    <option value="javascript"></option>
+    <option value="python"></option>
+</datalist>
+```
+
+##### details和summary
+
+details用于展示问题和答案，或对专有名词进行解释
+
+summary写在details的里面，用于指定问题或专有名词
+
+```html
+<details>
+    <summary>如何在archlinux安装jdk</summary>
+    <!-- 下面写补充summary内容的其它标签 -->
+    <p>一，……</p>
+    <p>二，……</p>
+</details>
+```
+
+#### 文本标签
+
+##### ruby和rt
+
+用于文本注音
+
+ruby包裹需要注音的文字
+
+rt写注音，rt写在ruby的里面
+
+```html
+<div>
+    <ruby>
+        <span>栗</span>
+        <rt>lì</rt>
+    </ruby>
+    <ruby>
+        <span>粟</span>
+        <rt>sù</rt>
+    </ruby>
+</div>
+```
+
+##### mark
+
+用于文本标记，默认效果相当于给文字加了黄色背景
+
+可以用来标记搜索结果中的关键字
+
+```html
+<p>Lorem ipsum <mark>dolor</mark> sit amet consectetur.</p>
+```
+
+#### 表单控件新增的属性
+
+- 属性名
+    - placeholder，提示文字，适用于文字输入类的表单控件
+    - required，表示该输入项必填，适用于除按钮外的其它表单控件
+        - 对于单选框，随便再任意一个选项上设置就行了
+        - 对于复选框，设置了该属性的选项表示必须勾选
+    - autofocus，自动获取焦点，适用于所有表单控件
+    - autocomplete，根据历史输入自动补全，可以设置为on或off，适用于文字输入类的表单控件
+        - 密码输入框、多行输入框不可用
+        - 还需要在浏览器设置开启这个功能
+    - pattern，填写正则表达式，适用于文本输入类表单控件
+        - 多行输入不可用，且空的输入框不会验证，往往与required配合
+
+```html
+<input type="text"
+        name="search"
+        placeholder="请输入帐号"
+        required
+        autofocus
+        autocomplete="on"
+        pattern="\w{6}"
+```
+
+#### 表单控件input新增的type属性值
+
+- 新增的type属性值
+    - email，邮箱类型的输入框，表单提交时会验证格式，输入为空则不验证格式
+    - url，url类型的输入框，表单提交时会验证格式，输入为空则不验证格式
+    - number，数字类型的输入框，表单提交时会验证格式，输入为空则不验证格式
+    - search，搜索类型的输入框，表单提交时不会验证格式
+    - tel，电话类型的输入框，表单提交时不会验证格式，在移动端使用时，会唤起数字键盘
+    - range，范围选择框，默认值为50，表单提交时不会验证格式
+    - color，颜色选择框，默认值为黑色，表单提交时不会验证格式
+    - date，日期选择框，默认值为空，表单提交时不会验证格式
+    - month，月份选择框，默认值为空，表单提交时不会验证格式
+    - week，周选择框，默认值为空，表单提交时不会验证格式
+    - time，时间选择框，默认值为空，表单提交时不会验证格式
+    - datetime-local，日期+时间选择框，默认值为空，表单提交时不会验证格式
+
+```html
+<form action="">
+    <input type="email" name="email" />
+    <input type="url" name="url" />
+    <input type="number" name="number" min="20" max="100" step="1" />
+    <input type="search" name="keyword" />
+    <input type="tel" name="phoneNumber" />
+    <input type="range" name="range" min="0" max="100" value="20" />
+    <input type="color" name="color" />
+    <input type="date" name="date" />
+    <input type="month" name="month" />
+    <input type="week" name="week" />
+    <input type="time" name="time" />
+    <input type="datetime-local" name="localDateTime" />
+    <br>
+    <button>submit</button>
+</form>
+```
+
+#### form新增的属性
+
+如果给form设置了novalidate，表单提交时不再进行校验
+
+```html
+<form action="" novalidate></form>
+```
+
+#### 视频标签
+
+用来定义视频
+
+- 属性
+    - src，值为url地址，视频地址
+    - width，像素值，视频播放器的宽度
+    - height，像素值，视频播放器的高度
+    - controls，无属性值，显示视频控件，如播放/暂停按钮
+    - muted，无属性值，视频静音
+    - autoplay，无属性值，视频自动播放
+    - loop，无属性值，视频循环播放
+    - poster，值为url地址，视频封面图片的地址
+    - preload，视频预加载，如果使用autoplay，则忽略该属性，属性值有
+        - none，不预加载视频
+        - metadata，仅预先获取视频的元数据（如长度），现在也会预加载一段视频
+        - auto，可以下载整个视频文件，即使用户不希望使用它（现在应该是浏览器自动协调了）
+
+```html
+<video src="/path/to/video" controls muted loop poster="/path/to/视频封面图片" preload="auto"></video>
+```
+
+#### 音频标签
+
+用来定义音频
+
+- 属性
+    - src，值为url地址，音频地址
+    - controls，无属性值，显示音频控件，如播放/暂停按钮
+    - muted，无属性值，音频静音
+    - autoplay，无属性值，音频自动播放
+    - loop，无属性值，音频循环播放
+    - preload，音频预加载，如果使用autoplay，则忽略该属性，属性值有
+        - none，不预加载音频
+        - metadata，仅预先获取音频的元数据（如长度），现在也会预加载一段音频
+        - auto，可以下载整个音频文件，即使用户不希望使用它（现在应该是浏览器自动协调了）
+
+```html
+<audio src="/path/to/audio" controls muted loop preload="auto"></audio>
+```
+
+#### 元素新增的全局属性
+
+- contenteditable，表示元素是否可被用户编辑，值有
+    - true
+    - false
+- draggable，表示元素是否可被用户拖动，值有
+    - true
+    - false
+- hidden，隐藏元素，效果和`display: none`一样
+- spellcheck，规定是否对元素进行拼写和语法检查，值有
+    - true，检查
+    - false，不检查
+- contextmenu，规定元素的上下文菜单，在用户鼠标右键点击时显示
+- data-x，用于存储页面的私有定制数据
+
+```html
+<div data-mydata1="hello" data-mydata2="world"></div>
+```
+
+### html5兼容性处理
+
+- 方法一，添加元信息，让浏览器处于最优渲染模式
+
+```html
+<!-- 针对IE浏览器的一个兼容性设置，让IE浏览器处于一个最优的渲染模式 -->
+<!-- 设置IE总是使用最新的文档模式进行渲染 -->
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<!-- 针对一些国产的“双核”浏览器的设置，让浏览器优先使用webkit内核（Chromium）去渲染网页，如360等壳浏览器 -->
+<meta name="rander" content="webkit">
+```
+
+- 方法二，使用html5shiv让低版本浏览器认识H5的语义化标签，这种方式对于H5的个别高级标签如video还是没法兼容的
+
+```html
+<!-- 下面三行的意思是判断如果ie浏览器的版本低于ie9，就导入html5shiv.js -->
+<!--[if lt ie 9]>
+<script src="/path/to/html5shiv.js"></script>
+<![endif]-->
+```
+
+这种html的判断写法还有如下扩展知识
+
+- lt，小于
+- lte，小于等于
+- gt，大于
+- gte，大于等于
+- !，逻辑非
+
+```html
+<!-- 仅IE8 -->
+<!--[if IE 8]>
+<![endif]-->
+
+<!-- IE8以下 -->
+<!--[if lt IE 8]>
+<![endif]-->
+
+<!-- 仅非IE8 -->
+<!--[if !IE 8]>
+<![endif]-->
 ```
 
 ## CSS
