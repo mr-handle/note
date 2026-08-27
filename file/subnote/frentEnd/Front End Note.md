@@ -2699,6 +2699,382 @@ div {
 
 Normalize.css是一种最新方案，它在清除默认样式的基础上，保留了一些有价值的默认样式
 
+## CSS3
+
+### CSS新特性的浏览器私有前缀写法顺序
+
+某个浏览器对某个css特性的支持情况，可以到<https://caniuse.com/>查询
+
+先写浏览器私有前缀写法，再写css
+
+```css
+div {
+    /* chromium系列浏览器 */
+    -webkit-border-radius: 20px;
+    /* 火狐系列浏览器 */
+    -moz-border-radius: 20px;
+    /* ie浏览器 */
+    -ms-border-radius: 20px;
+    /* opera浏览器 */
+    -o-border-radius: 20px;
+    border-radius: 20px;
+}
+```
+
+其实在编码的时候不用过于关注浏览器私有前缀，即便是为了老浏览器而加前缀
+
+也可以通过借助现代构建工具，自动帮我们添加这些前缀
+
+### 新增长度单位
+
+- vw和vh
+    - vw，视口宽度（viewport width）的百分之多少，如50vw就是视口宽度的50%
+    - vh，视口高度（viewport height）的百分之多少，如50vh就是视口高度的50%
+    - 在PC浏览器用得不多，在移动端比较常用
+    - 一般是vw用得比较多
+
+- vmin和vmax
+    - vmin，视口宽高中小者的百分之多少
+    - vmax，视口宽高中大者的百分之多少
+
+```css
+div {
+    width: 50vw;
+    height: 20vw;
+}
+```
+
+### 新增盒子模型相关属性
+
+#### box-sizing
+
+使用box-sizing可以设置盒模型的两种类型
+
+- 值
+    - content-box，width和height设置的是盒子内容区的大小（默认值）
+    - border-box，width和height设置的是盒子总大小（怪异盒模型）
+
+```css
+div {
+    width: 200px;
+    height: 200px;
+    padding: 5px;
+    border: 5px solid red;
+    box-sizing: border-box;
+}
+```
+
+#### resize
+
+用来控制是否允许用户调节元素大小
+
+- 值
+    - none，不允许用户调整元素大小（默认）
+    - horizontal，用户可以调整元素的宽度
+    - vertical，用户可以调整元素的高度
+    - both，用户可以调整元素的宽高
+
+```css
+div {
+    width: 400px;
+    height: 400px;
+    background-color: orange;
+    resize: vertical;
+    overflow: auto;
+}
+```
+
+#### box-shadow
+
+```css
+div {
+    width: 400px;
+    height: 400px;
+    background-color: orange;
+    margin: 0 auto;
+    margin-top: 100px;
+    font-size: 40px;
+
+    /* 没有阴影 */
+    box-shadow: none;
+
+    /* 写两个值：水平位置，垂直位置，都可以是负值 */
+    box-shadow: 10px 10px;
+
+    /* 写三个值：水平位置，垂直位置 阴影颜色 */
+    box-shadow: 10px 10px blue;
+
+    /* 写三个值：水平位置，垂直位置 阴影模糊程度 */
+    box-shadow: 10px 10px 10px;
+
+    /* 写四个值：水平位置，垂直位置 阴影模糊程度 阴影颜色，用得比较多 */
+    box-shadow: 10px 10px 10px blue;
+
+    /* 写五个值：水平位置，垂直位置 阴影模糊程度 外延值（阴影大小） 阴影颜色 */
+    box-shadow: 10px 10px 10px 10px blue;
+
+    /* 写五个值：水平位置，垂直位置 阴影模糊程度 外延值（阴影大小） 阴影颜色 内阴影 */
+    /* 不设置inset就是外部阴影，设置了就是内阴影 */
+    box-shadow: 10px 10px 10px 10px blue inset;
+}
+```
+
+#### opacity
+
+设置整个元素（包括元素里面的内容）的不透明度（可见度），值为0-1之间的小数，0是完全透明（完全看不到），1是完全不透明
+
+```css
+div {
+    width: 400px;
+    height: 400px;
+    background-color: orange;
+    font-size: 40px;
+    font-weight: bold;
+
+    opacity: 0.5;
+}
+```
+
+### 新增背景相关属性
+
+#### background-origin
+
+设置显示背景图的原点（起点）
+
+- 值
+    - padding-box，从padding区域开始显示背景图像（默认）
+    - border-box，从border区域开始显示背景图像
+    - content-box，从content区域开始显示背景图像
+
+```css
+div {
+    background-image: url("/path/to/image");
+    /* 测试background-origin的时候建议设置图片不重复显示 */
+    background-repeat: no-repeat;
+    background-origin: padding-box;
+}
+```
+
+#### background-clip
+
+设置背景图的向外裁剪的区域
+
+- 值
+    - padding-box，从padding区域开始向外裁剪背景图像（也就是只留下padding内的部分）
+    - border-box，从border区域开始向外裁剪背景图像（也就是只留下border内的部分），默认
+    - content-box，从content区域开始向外裁剪背景图像（也就是只留下content内的部分）
+    - text，背景图只呈现在文字上
+
+```css
+div {
+    width: 400px;
+    height: 400px;
+    background-color: skyblue;
+    margin: 0 auto;
+    font-size: 120px;
+    font-weight: bold;
+    padding: 50px;
+    border: 50px dashed rgba(255,0,0,0.7);
+    color: transparent;
+
+    background-image: url("/path/to/image");
+    /* 测试background-clip的时候建议设置图片不重复显示 */
+    background-repeat: no-repeat;
+    background-clip: text;
+}
+```
+
+#### background-size
+
+设置背景图片的大小
+
+```css
+div {
+    /* 写法一，用长度值指定，不允许负值 */
+    background-size: 1280px 720px;
+
+    /* 写法二，用元素宽高百分比指定，不允许负值 */
+    background-size: 100% 100%;
+
+    /* 写法三，auto，背景图片的真实大小，默认值 */
+    background-size: auto;
+
+    /* 写法四，contain，将背景图片等比例缩放，使背景图片的宽或高（取图片宽和高大者），与容器的宽或高相等 */
+    /* 再将完整背景图片包含在容器内，但要注意，可能会造成容器里部分区域没有背景图片 */
+    background-size: contain;
+
+    /* 写法五，cover，将背景图片等比例缩放，直到完全覆盖容器，图片会尽可能全部显示在元素上 */
+    /* 但要注意：背景图片可能显示不完整，这是相对比较好的选择 */
+    background-size: cover;
+}
+```
+
+#### background
+
+复合属性，很少用
+
+```css
+div {
+    /* background: 背景色 背景图 是否重复 位置 / 大小 原点 裁剪方式; */
+    /* 原点和裁剪方式如果一样，可以只写一个值，如果写了两个值，前面的是原点，后面的是裁剪方式 */
+    /* 位置必须写在大小前面，并且用/分开，并且位置可以用left、top、right、bottom关键字 */
+    /* 背景色 背景图 是否重复这三者的顺序可以内部微调 */
+    background: skyblue url("/path/to/image") no-repeat 10px 10px / 500px 500px border-box content-box;
+
+    /* 多背景图 */
+    background: url("/path/to/image") norepeat left top,
+                url("/path/to/image") norepeat right top,
+                url("/path/to/image") norepeat left bottom,
+                url("/path/to/image") norepeat right bottom;
+}
+```
+
+### 新增边框属性
+
+#### 边框圆角
+
+将盒子变为圆角
+
+```css
+div {
+    width: 400px;
+    height: 400px;
+    border: 2px solid black;
+    margin: 0 auto;
+
+    /* 同时设置四个角的圆角，最常用 */
+    /* 当值为正方形边长的一半时，变成圆 */
+    border-radius: 200px;
+    border-radius: 50%;
+
+    /* 也可以单独设置每一个角 */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 30px;
+    border-bottom-right-radius: 40px;
+
+    /* 还可以单独设置每一个角为椭圆，分别是x半径，y半径 */
+    border-top-left-radius: 10px 20px;
+    border-top-right-radius: 20px 10px;
+    border-bottom-left-radius: 30px 10px;
+    border-bottom-right-radius: 40px 20px;
+
+    /* 还有复合属性写法 */
+    /* 先写左上角的x半径值，然后顺时针写其它方向的x半径值 */
+    /* 后写左上角的y半径值，然后顺时针写其它方向的y半径值 */
+    border-radius: 10px 20px 30px 40px / 20px 10px 10px 20px;
+}
+```
+
+#### 边框外轮廓
+
+想像成盒子发出的光，不参与计算盒子的大小，也不占位
+
+outline-width，外轮廓宽度
+
+outline-color，外轮廓颜色
+
+- outline-style，外轮廓风格
+    - none，无轮廓
+    - dotted，点状轮廓
+    - dashed，虚线轮廓
+    - solid，实线轮廓
+    - double，双实线轮廓
+
+outline-offset，设置外轮廓与边框的距离，正负值都可以
+
+注意outline-offset不是outline的子属性，是一个独立属性
+
+```css
+div {
+    outline-width: 20px;
+    outline-color: orange;
+    outline-style: solid;
+
+    /* 复合属性写法，顺序随意，注意没有outline-offset */
+    outline: 20px orange solid;
+
+    outline-offset: 30px;
+}
+```
+
+### 新增文本属性
+
+#### text-shadow
+
+用来给文本添加阴影
+
+```css
+h1 {
+    font-size: 80px;
+    text-align: center;
+
+    /* text-shadow: 水平偏移值 垂直偏移值 模糊距离 阴影颜色 */
+    /* 水平偏移和垂直偏移为必填，可为负值 */
+    text-shadow: none;
+    text-shadow: 3px 3px;
+    text-shadow: 3px 3px orange;
+    text-shadow: 3px 3px 10px orange;
+}
+```
+
+#### white-space
+
+用来设置文本换行方式
+
+- 值
+    - normal，文本超出边界自动换行，文本中的换行被浏览器识别为一个空格（默认值）
+    - pre，原样输出，与pre标签的效果相同
+    - pre-wrap，在pre效果的基础上，超出元素边界自动换行
+    - pre-line，在pre效果的基础上，超出元素边界自动换行，且只识别文本中的换行，（始末位置的）空格会被忽略
+    - nowrap，强制不换行
+
+```css
+div {
+    width: 400px;
+    height: 400px;
+    border: 1px solid black;
+    font-size: 20px;
+
+    white-space: pre;
+}
+```
+
+#### text-overflow
+
+设置文本内容溢出时的呈现方式
+
+- 值
+    - clip，当内容溢出时，将溢出部分裁剪掉（默认）
+    - ellipsis，当内容溢出时，将溢出部分替换为英文省略号
+
+要使text-overflow属性生效，必须显式定义overflow为非visible值，white-space为nowrap
+
+```css
+div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+```
+
+#### text-decoration
+
+```css
+h1 {
+    font-size: 80px;
+
+    /* 子属性 */
+    /* solid，实线；double，双实线；dotted，点状线条；dashed，虚线；wavy，波浪线 */
+    text-decoration-line: overline;
+    text-decoration-style: dashed;
+    text-decoration-color: blue;
+
+    /* 复合属性 */
+    text-decoration: overline dashed blue;
+}
+```
+
 ### calc函数
 
 用于动态计算尺寸
