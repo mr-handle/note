@@ -2747,12 +2747,12 @@ apt list --manual-installed
 
 官网：<https://archlinux.org/>
 
+### pacman包管理器
+
 - 经常使用的软件，建议通过包管理器安装
 
 - 不经常使用的软件建议使用免安装版本
     - 如果没有免安装版本，则考虑appimage，对于较大的appimage文件，建议将其解压，节省启动时间
-
-### pacman包管理器
 
 ```sh
 # -S：同步
@@ -2886,7 +2886,7 @@ sudo pacman -S --needed base-devel git
 # 检查有没有安装go包（编译器）
 go version
 
-# 如果没有安装则安装
+# yay的编译需要go环境，如果没有安装则安装
 sudo pacman -S go
 
 # 以下用指令非root用户执行
@@ -3282,7 +3282,7 @@ mkinitcpio -P
 passwd
 ```
 
-##### 安装微码更新（可选）
+##### 安装微码更新（可选，强烈建议安装）
 
 它是内核在启动时加载的一段数据，用来修复CPU的硬件bug和安全漏洞
 
@@ -3579,9 +3579,7 @@ KDE由桌面环境Plasma、KDE Frameworks、KDE Applications三部分组成
 
 ##### 安装plasma和kde-applications
 
-motrix下载器无法接管火狐浏览器下载，可能是因为桌面放大的原因，设置好分辨率，保持原来的比例不要设置缩放
-
-所以plasma应该完整安装，而kde-applications则是根据需要安装就行了
+建议完整安装plasma，而kde-applications则是根据需要安装就行了
 
 - 安装plasma和kde-applications的全部应用
 
@@ -3601,7 +3599,8 @@ sudo pacman -S plasma-desktop
 
 # kde-gtk-config，官方的描述是同步KDE设置到GTK应用，人话就是让GTK应用（如Firefox）在KDE（基于QT）下的外观和行为更接近QT应用
 # 必须安装kde-gtk-config，否则火狐浏览器的最大化和最小化按钮是不显示的
-sudo pacman -S kde-gtk-config
+# breeze-gtk，用于GTK 2和GTK 3的Breeze小部件主题，如果不安装的话，会导致有些gtk应用（如meld）的最小化、最大化、关闭按钮有问题
+sudo pacman -S kde-gtk-config breeze-gtk
 
 # plasma-nm，管理网络连接，并且在任务栏显示网络托盘图标，可作为NetworkManager的GUI
 # plasma-pa，音量控制器，并且在任务栏显示托盘小喇叭
@@ -3747,6 +3746,8 @@ sudo pacman -S git
         - 重新执行安装，程序会自动跳过已下载的文件，继续构建流程
 
 ##### 安装火狐浏览器
+
+motrix下载器无法接管火狐浏览器下载，可能是因为桌面放大的原因，设置好分辨率，保持原来的比例不要设置缩放
 
 ```sh
 sudo pacman -S firefox
