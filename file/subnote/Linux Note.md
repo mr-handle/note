@@ -4395,12 +4395,6 @@ yay -S obs-gstreamer
         - 添加`obs-gamecapture %command%`，启用 Vulkan 和 OpenGL 游戏捕获
         - 添加`env OBS_VKCAPTURE=1 %command%`，启用只通过 Vulkan 游戏捕获，推荐
 
-##### 安装kdenlive
-
-```sh
-sudo pacman -S kdenlive
-```
-
 ##### yt-dlp
 
 官网：<https://github.com/yt-dlp/yt-dlp>
@@ -4433,6 +4427,12 @@ yt-dlp -x "视频链接"
 
 # 更新，会下载新的二进制文件然后将当前的旧版本替换
 yt-dlp -U
+```
+
+##### 安装kdenlive
+
+```sh
+sudo pacman -S kdenlive
 ```
 
 ###### 导出视频

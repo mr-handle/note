@@ -804,6 +804,8 @@ CSS也是一种标记语言，用于给html结构设置样式，如文字大小�
 
 html搭建结构，css添加样式，实现结构和样式的分类
 
+css不区分大小写
+
 ### 样式表
 
 #### 1.行内/内联样式表
@@ -3072,6 +3074,476 @@ h1 {
 
     /* 复合属性 */
     text-decoration: overline dashed blue;
+}
+```
+
+### 新增渐变
+
+#### 线性渐变
+
+多个颜色之间的渐变
+
+```css
+div {
+    /* 从上到下渐变，默认，后面还可以补充其它颜色的，这里不写那么多 */
+    background-image: linear-gradient(red, yellow, green);
+
+    /* 用关键词设置渐变的方向 */
+    /* 从左往右渐变 */
+    background-image: linear-gradient(to right, red, yellow, green);
+    /* 从左下到右上渐变 */
+    background-image: linear-gradient(to right top, red, yellow, green);
+
+    /* 用角度设置渐变的方向 */
+    /* 用角度表示，旋转中心是元素中心点，沿元素水平中心线顺时针旋转的角度 */
+    background-image: linear-gradient(20deg, red, yellow, green);
+
+    /* 调整开始渐变的位置 */
+    /* 从上到下渐变，0-50px高度时是纯红，50px-100px时又红渐变为黄 */
+    /* 在100px-150px时由黄渐变为绿，150px-元素的高度值时是纯绿 */
+    background-image: linear-gradient(red 50px, yellow 100px, green 150px);
+}
+```
+
+#### 径向渐变
+
+径就是半径
+
+```css
+div {
+    /* 以（元素宽高组成的）矩形的中心向外渐变，根据元素宽高的比例最终效果是圆/椭圆形状的渐变（阳光普照），默认 */
+    background-image: radial-gradient(red, yellow, green);
+
+    /* 可以通过关键字调整圆心位置 */
+    background-image: radial-gradient(at left top, red, yellow, green);
+
+    /* 可以通过坐标值调整圆心位置 */
+    background-image: radial-gradient(at 100px 50px, red, yellow, green);
+    
+    /* 可以通过circle关键字调整为正圆 */
+    background-image: radial-gradient(circle, red, yellow, green);
+
+    /* 可以调整两个半径值，当他们一样时就是正圆 */
+    background-image: radial-gradient(100px 100px, red, yellow, green);
+
+    /* 调整开始渐变的位置 */
+    /* 从里到外渐变，0-50px半径时是纯红，50px-100px时又红渐变为黄 */
+    /* 在100px-150px时由黄渐变为绿，150px-元素的半径值时是纯绿 */
+    background-image: radial-gradient(red 50px, yellow 100px, green 150px);
+
+    /* 综合写法 */
+    /* at前面分别是长半径和短半径值，at后面是圆心的位置 */
+    background-image: radial-gradient(100px 50px at 150px 150px, red 50px, yellow 100px, green 150px);
+}
+```
+
+#### 重复渐变
+
+```css
+div {
+    /* 重复线性渐变 */
+    background-image: repeat-linear-gradient(red 50px, yellow 100px, green 150px);
+
+    /* 重复径向渐变 */
+    background-image: radial-gradient(red 50px, yellow 100px, green 150px);
+}
+```
+
+- 渐变小案例1
+
+```css
+div {
+    width: 600px;
+    height: 800px;
+    padding: 20px;
+    border: 1px solid block;
+    margin: 0 auto;
+    background-image: repeat-linear-gradient(transparent 0px, transparent 29px, gray 30px);
+    background-clip: content-box;
+}
+```
+
+- 渐变小案例2
+
+```css
+div {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-image: repeat-radial-gradient(at 80px 80px, white, #333);
+}
+```
+
+### web字体
+
+#### 基本用法
+
+可以通过`@font-face`指定字体的具体地址，浏览器会自动下载该字体，这样就不依赖用户电脑上的字体了
+
+```html
+<head>
+    <style>
+        /* 普通写法 */
+        @font-face {
+            font-family: "customFontName1";
+            src: url("/path/to/font.ttf");
+        }
+        /* 兼容性最好的写法 */
+        @font-face {
+            font-family: "customFontName2";
+            font-display: swap;
+            /* 各种浏览器兼容的字体格式 */
+            /* IE9 */
+            src: url("/path/to/font.eot");
+            /* IE6-IE8 */
+            src: url("/path/to/font.eot?#iefix") format("embedded-opentype"),
+            /* chromium、firefox */
+            url("/path/to/font.woff2") format("woff2"),
+            url("/path/to/font.woff") format("woff"),
+            /* chromium、firefox、opera、safari、Android、ios 4.2+ */
+            url("/path/to/font.ttf") format("truetype"),
+            /* ios 4.1- */
+            url("/path/to/font.svg#webfont") format("svg");
+        }
+        h1 {
+            /* 使用上面引入的字体 */
+            font-family: "customFontName1";
+            font-size: 80px;
+        }
+    </style>
+</head>
+```
+
+#### 定制字体
+
+由于字体文件很大，使用完整的字体文件不现实，通常针对某几个文字进行单独定制，生成各种浏览器兼容的格式的字体然后引入
+
+可以使用web字体定制工具来定制字体，目前笔者没有去找，先省略
+
+#### 图标字体
+
+也就是矢量图标，把它看成是一种字体，如可以使用font-size来设置图标字体的大小
+
+相比图片更加清晰
+
+灵活性搞，更方便改变大小、颜色、风格等
+
+兼容性好，IE也能支持
+
+图标字体有各种平台的生成和使用方式，如阿里的，根据平台指南使用即可
+
+### 2D变换
+
+二维座标系如下图：
+
+![coordinate](image/coordinate.png)
+
+记住，只要是用transform这个属性，所有变换就都不能应用在行内元素
+
+#### 位移
+
+可以用位移改变元素的位置
+
+- 属性：transform，值有
+    - translateX
+    - translateY
+    - translate，写一个值代表水平方向，两个值代表水平和垂直方向
+
+位移与相对定位很相似，都不脱离文档流，不会影响到其它元素
+
+- 与相对定位的区别：
+    - 相对定位的百分比值参考的是其父元素的宽高
+    - 位移的百分比值参考的是其自身的宽高
+
+浏览器针对位移有优化，与定位相比，浏览器处理位移的效率更高
+
+位移对行内元素无效
+
+```css
+div {
+    /* 水平位移 */
+    transform: translateX(50px);
+    /* 垂直位移 */
+    transform: translateY(50px);
+    /* 水平+垂直位移的两种写法 */
+    transform: translate(50px, 50px);
+    transform: translateX(50px) translateY(50px);
+
+    /* 还可以用百分比，参考的是元素自身的宽高 */
+    transform: translate(50%, 50%);
+}
+```
+
+位移配合定位，可实现元素水平垂直居中
+
+```css
+.inner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+```
+
+#### 缩放
+
+让元素放大或缩小
+
+```css
+div {
+    /* 水平缩放，1表示不缩放，小于1缩小，大于1放大，可以为负值，效果是镜像缩放，几乎不用负值 */
+    transform: scaleX(1.5);
+    /* 垂直缩放，1表示不缩放，小于1缩小，大于1放大，可以为负值，效果是镜像缩放，几乎不用负值 */
+    transform: scaleY(0.5);
+    /* 同时进行水平和垂直方向缩放，写一个值表示水平和垂直缩放的值，两个值分别表示水平缩放值和垂直缩放值 */
+    transform: scale(1.5);
+    transform: scaleX(1.5) scaleY(1.5);
+}
+```
+
+借助缩放，可以实现小于浏览器支持的最小字体大小的文字
+
+#### 旋转
+
+让元素在二维平面内，顺时针或逆时针转（实际上就是绕着Z轴转）
+
+```css
+div {
+    /* 正值顺时针，负值逆时针 */
+    transform: rotateZ(30deg);
+    /* rotate只写一个值的时候和rotateZ是一样的效果 */
+    transform: rotate(30deg);
+}
+```
+
+#### 扭曲
+
+让元素在二维平面的水平或垂直方向或同时两个方向被拉扯，进而走形（如变成一个平行四边形）
+
+几乎用不到
+
+```css
+div {
+    /* 将元素的左上角、右下角分别往相反的水平方向拉扯，由于用得少，负值的拉扯就不记录了 */
+    transform: skewX(30deg);
+    /* 将元素的左上角、右下角分别往相反的垂直方向拉扯，由于用得少，负值的拉扯就不记录了 */
+    transform: skewY(30deg);
+
+    transform: skewX(30deg) skewY(30deg);
+    transform: skew(30deg, 30deg);
+
+    /* 只写一个值跟skewX(30deg)是一样的 */
+    transform: skew(30deg);
+}
+```
+
+#### 多重变换
+
+注意多重变换时，建议旋转放最后
+
+```css
+div {
+    /* 先位移后缩放 */
+    transform: translate(100px, 100px) scale(1.5);
+
+    /* 先缩放后位移，注意坐标系在元素缩放之前的那个位置 */
+    transform: scale(1.5) translate(100px, 100px);
+
+    /* 先位移后旋转 */
+    transform: translate(100px, 100px) rotate(30deg);
+
+    /* 先旋转后位移，注意坐标系在旋转之后变了 */
+    transform: rotate(30deg) translate(100px, 100px);
+}
+```
+
+#### 变换原点
+
+元素进行变换操作时，默认的原点是元素的中心，可以使用`transform-origin`设置变换操作的原点
+
+修改变换原点对位移没有影响，对旋转和缩放有影响
+
+如果给`transform-origin`提供两个值，第一个用于横座标，第二个用于纵坐标
+
+- 如果给`transform-origin`提供一个值
+    - 如果这个值是像素值，表示横座标，纵座标取元素高度50%
+    - 如果这个值是关键字，则另一个坐标取元素50%
+
+```css
+div {
+    width: 200px;
+    height: 200px;
+    background-color: deepskyblue;
+
+    /* 通过关键字调整变换原点 */
+    transform-origin: left top;
+    
+    /* 通过坐标值调整变换原点 */
+    transform-origin: 100px 100px;  
+
+    /* 通过百分比调整变换原点 */
+    transform-origin: 50% 50%;
+
+    /* 只给一个值，另外一个值就是50% */
+    transform-origin: 50%;
+    transform-origin: top;
+
+    /* 变换原点的位置对旋转有影响 */
+    transform: rotate(30deg);    
+    
+    /* 变换原点的位置对缩放有影响 */
+    transform: scale(0.5);
+
+    /* 变换原点的位置对位移无影响 */
+    transform: translate(100px, 100px);
+}
+```
+
+### 3D变换
+
+#### 3D空间与景深
+
+元素进行3D变换的首要操作：父元素必须开启3D空间
+
+- 使用`transform-style`开启3D空间，值有
+    - flat，让子元素位于此元素的二维平面内（2D空间），默认值
+    - preserve-3d，让元素位于此元素的三维空间内（3D空间）
+
+景深：指定观察者与Z=0平面的距离，能让发生3D变换的元素，产生透视效果，看起来更加立体
+
+- 使用`perspective`设置景深，也要设置到发生3D变换的元素的父元素，值有
+    - none，不指定透视，默认值
+    - 长度值，指定观察者与Z=0平面的距离，不允许负值
+
+```html
+<div class="outer">
+    <div class="inner"></div>
+</div>
+```
+
+```css
+.outer {
+    /* 开启3D空间 */
+    transform-style: preserve-3d;
+    /* 设置景深，如绕X轴旋转，可以先设置为元素的高的一半大一些，然后看效果，最终调大到合适的值 */
+    perspective: 500px;
+}
+.inner {
+    transform: rotateX(30deg);
+}
+```
+
+#### 透视点（观察者）位置
+
+透视点位置，就是观察者位置，默认的透视点在发生3D变换的元素的父元素的中心
+
+通常情况下，不需要调整透视点的位置
+
+一般只在一堆元素堆叠在一起不好观察的时候才会调整透视点的位置
+
+```html
+<div class="outer">
+    <div class="inner"></div>
+</div>
+```
+
+```css
+.outer {
+    /* 开启3D空间 */
+    transform-style: preserve-3d;
+    /* 设置景深，如绕X轴旋转，可以先设置为元素的高的一半大一些，然后看效果，最终调大到合适的值 */
+    perspective: 500px;
+
+    /* 设置透视点的位置，相对坐标轴往右偏移300px，往下偏移300px */
+    /* 相当于人向右移动300像素，然后蹲下300像素看元素 */
+    perspective-origin: 300px 300px;
+}
+.inner {
+    transform: rotateX(30deg);
+}
+```
+
+#### 3D位移
+
+3D位移是在2D位移的基础上，可以让元素沿着Z轴位移
+
+```css
+.outer {
+    /* 开启3D空间 */
+    transform-style: preserve-3d;
+    /* 设置景深，如绕X轴旋转，可以先设置为元素的高的一半大一些，然后看效果，最终调大到合适的值 */
+    perspective: 500px;
+}
+.inner {
+    /* 正值向屏幕外移动，负值像屏幕里移动，且不能写百分比，因为元素没厚度，不知道参考谁 */
+    /* 默认透视点位置看起来的效果有点像放大缩小，因此可以设置一个透视点位置来查看效果 */
+    transform: translateZ(200px);
+
+    /* 必须三个坐标的位移值都必须写，分别表示x轴、y轴和z轴的位移值 */
+    /* 并且z的值只能写像素值，不能写百分比，因为元素没厚度，不知道参考谁 */
+    transform: translate3d(100px, 100px, 200px);
+}
+```
+
+#### 3D旋转
+
+3D旋转就是在2D旋转的基础上，可以让元素沿着x和y轴旋转
+
+```css
+div {
+    /* 设置x轴旋转角度，面对x轴正方向，正值顺时针，负值逆时针 */
+    transform: rotateX(30deg);
+    /* 设置y轴旋转角度，面对y轴正方向，正值顺时针，负值逆时针 */
+    transform: rotateY(30deg);
+
+    /* 很少用，前三个参数分别代表x轴、y轴和z轴（1表示旋转，0表示不旋转），第四个参数表示旋转的角度，参数不能省略 */
+    /* 表示x、y、z分别旋转30度 */
+    transform: rotate3d(1, 1, 1, 30deg);
+}
+```
+
+#### 3D缩放
+
+3D缩放是在2D缩放的基础上，可以让元素沿着z轴缩放
+
+实际上很少用
+
+```css
+div {
+    /* 设置z轴方向的缩放比例，值为一个数字，小于1缩小，大于1放大，1不缩放 */
+    /* 由于元素没有厚度，实际上是缩放景深 */
+    /* 通过旋转才能看出效果 */
+    transform: scaleZ(1.5) rotateY(30deg);
+
+    /* 分别对应x、y、z轴的缩放值，参数不允许省略 */
+    transform: scale3d(1.2, 1.5, 1.8) rotateY(30deg);
+}
+```
+
+#### 3D多重变换
+
+```css
+div {
+    /* 设置变换原点 */
+    transform-origin: 200px 180px;
+    transform: rotateX(30deg);
+
+    /* 设置变换原点 */
+    transform-origin: 200px 0px;
+    transform: rotateY(30deg);
+
+    /* 多重变换，建议旋转操作放最后 */
+    transform: translateZ(100px) scaleZ(1.2) rotateY(30deg);
+}
+```
+
+#### 背部可见性
+
+```css
+div {
+    transform: rotateY(30deg);
+    /* 设置为hidden，旋转超过90度后的背部就看不到了，然后继续转到270度之后（变成正面了）又能看到 */
+    backface-visibility: hidden;
 }
 ```
 
