@@ -3844,6 +3844,347 @@ div {
 
 动画从开始到结束的过程都可以精细地控制，而过渡只关注开始和结束，无法对开始到结束的过程进行控制
 
+### 多列布局
+
+专门用于实现类似于报纸的布局
+
+```html
+<div class="outer">
+    <h1>新闻标题</h1>
+    <p>新闻内容1</p>
+    <img src="/path/to/image" alt="" />
+    <p>新闻内容2</p>
+</div>
+```
+
+```css
+.outer {
+    width: 1000px;
+    margin: 0 auto;
+
+    /* 直接指定列数 */
+    column-count: 5;
+
+    /* 指定每一列的宽度，浏览器自动计算列数 */
+    column-width: 220px;
+
+    /* 复合属性，浏览器根据列宽自动计算出来的列数和指定的列数做比较，谁小谁生效，不推荐使用 */
+    column: 3 220px;
+
+    /* 调整列间距 */
+    column-gap: 20px;
+
+    /* 每一列的边框宽度 */
+    column-rule-width: 2px;
+    /* 每一列的边框风格 */
+    column-rule-style: dashed;
+    /* 每一列的边框颜色 */
+    column-rule-color: red;
+
+    /* 边框复合属性 */
+    column-rule: 2px dashed red;
+}
+h1 {
+    /* 指定是否跨列，值：none、all，给要跨列的元素加上此属性 */
+    /* 标题横跨多列 */
+    column-span: all;
+    text-align: center;
+    font-size: 50px;
+}
+img {
+    /* 图片所在那一列宽度的100% */
+    width: 100%;
+
+    transition: 0.2s linear;
+}
+img:hover {
+    box-shadow: 0px 0px 20px black;
+    transform: scale(1.02);
+}
+```
+
+### 伸缩盒模型
+
+Flexible Box：伸缩盒模型，又称弹性盒子
+
+它可以轻松地控制：元素分布方式、元素对齐方式、元素视觉顺序（如写的时候是123顺序，呈现是按321顺序）……
+
+截至目前，除了IE浏览器不支持，其它浏览器均已全部支持
+
+伸缩盒模型的出现，逐渐演变出了一套新的布局方案——flex布局
+
+传统布局是指：基于传统盒模型，主要靠：display属性+position属性+float属性实现的布局
+
+flex布局目前在移动端应用比较广泛，因为传统布局不能很好地呈现在移动设备上
+
+#### 伸缩容器和伸缩项目
+
+伸缩容器：设置了`display: flex;`的元素，就是伸缩容器
+
+- 给容器设置`display: inline-flex;`也能使该元素成为伸缩容器，但是很少用
+    - 因为可以给伸缩容器的父元素也设置为伸缩容器
+    - 还有就是两个设置了`display: inline-flex;`由于换行会出现缝隙
+
+一个元素可以同时是伸缩容器和伸缩项目
+
+- 伸缩项目：伸缩容器的所有子元素自动成为伸缩项目
+    - 仅伸缩容器的子元素成为伸缩项目，孙子元素、重孙子元素等后代元素，不是伸缩项目
+    - 无论元素原来是哪种元素（块、行内块、行内），一旦成为伸缩项目，全都会块状化（变成块元素）
+
+```html
+<div class="outer">
+    <div class="inner">1</div>
+    <div class="inner">2</div>
+    <div class="inner">3</div>
+</div>
+```
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+}
+.inner {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    boder: 1px solid black;
+    box-sizing: border-box;
+}
+```
+
+#### 主轴方向
+
+主轴：伸缩项目沿着主轴排列，主轴默认是水平的，默认方向是从左到右（左边是起点，右边是终点）
+
+侧轴：与主轴垂直的就是侧轴，侧轴默认是垂直的，默认方向是从上到下（上边是起点，下边是终点）
+
+- 调整主轴方向用`flex-direction`，值有
+    - row，主轴方向水平从左到右，默认值
+    - row-reverse，主轴方向水平从右到左
+    - column，主轴方向垂直从上到下
+    - column-reverse，主轴方向垂直从下到上
+
+改变了主轴的方向，侧轴的方向也随之改变（始终跟主轴垂直）
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 调整主轴方向，水平从左到右，默认 */
+    flex-direction: row;
+}
+```
+
+#### 主轴换行方式
+
+- 设置主轴换行方式用`flex-wrap`，值有
+    - nowrap，不换行，伸缩项目全都挤在一行，默认值
+    - wrap，自动换行，伸缩容器宽度不够了自动换行
+    - wrap-reverse，反向换行
+        - wrap是从伸缩容器左上角开始从左到右，然后第二行是下一行，继续从左到右……
+        - wrap-reverse是从伸缩容器左下角开始从左到右，然后第二行是上一行，继续从左到右……
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 默认：nowrap，伸缩项目全都挤在一行 */
+    flex-wrap: wrap;
+}
+```
+
+#### 主轴复合属性
+
+flex属性复合了flex-direction和flex-wrap
+
+不建议使用
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 主轴复合属性，没有顺序要求 */
+    flex: row wrap;
+}
+```
+
+#### 主轴的对齐方式
+
+- 使用`justify-content`属性设置主轴的对齐方式，值有
+    - flex-start，伸缩项目整体对齐到主轴的起始位置，默认
+    - flex-end，伸缩项目整体对齐到主轴的终点位置
+    - center，伸缩项目整体居中对齐
+    - space-between，伸缩项目均匀分布，两端对齐，最常用
+    - space-around，伸缩项目均匀分布，两端距离是中间距离的一半
+    - space-evenly，伸缩项目均匀分布，两端距离与中间距离一致
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 默认：nowrap，伸缩项目全都挤在一行 */
+    flex-wrap: wrap;
+
+    /* 主轴的对齐方式，对齐到主轴的起始位置，默认 */
+    justify-content: flex-start;
+}
+```
+
+#### 侧轴对齐
+
+##### 伸缩项目只有一行
+
+- 使用`align-items`属性设置伸缩项目只有一行的场景下的侧轴对齐，值有
+    - flex-start，伸缩项目整体与侧轴的起始位置对齐
+    - flex-end，伸缩项目整体与侧轴的终点位置对齐
+    - center，伸缩项目整体与侧轴的中点对齐
+    - baseline，伸缩项目的第一行文字的基线（x底部）对齐
+    - stretch，如果伸缩项目未设置高度，将占满整个容器的高度，默认值
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 默认：nowrap，伸缩项目全都挤在一行 */
+    flex-wrap: wrap;
+
+    /* 主轴的对齐方式，对齐到主轴的起始位置，默认 */
+    justify-content: flex-start;
+
+    /* 侧轴的对齐方式（伸缩项目只有一行），伸缩项目与侧轴的起始位置对齐 */
+    align-items: flex-start;
+}
+```
+
+##### 伸缩项目有多行
+
+- 使用`align-content`属性设置伸缩项目有多行的场景下的侧轴对齐，值有
+    - flex-start，伸缩项目整体与侧轴的起始位置对齐
+    - flex-end，伸缩项目整体与侧轴的终点位置对齐
+    - center，伸缩项目整体与侧轴的中点对齐
+    - space-between，伸缩项目与侧轴两端对齐，中间均匀分布
+    - space-around，伸缩项目间的距离相等，比伸缩项目到侧轴边缘的距离大一倍
+    - space-evenly，伸缩项目均匀分布，伸缩项目间的距离，与伸缩项目到侧轴边缘的距离一致
+    - stretch，拉伸，如果伸缩项目未设置高度，占满整个侧轴，默认值
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 默认：nowrap，伸缩项目全都挤在一行 */
+    flex-wrap: wrap;
+
+    /* 主轴的对齐方式，对齐到主轴的起始位置，默认 */
+    justify-content: flex-start;
+
+    /* 侧轴的对齐方式（伸缩项目有多行），伸缩项目与侧轴的起始位置对齐 */
+    align-content: flex-start;
+}
+```
+
+#### 实现元素水平垂直居中
+
+```css
+.outer {
+    width: 400px;
+    height: 400px;
+    background-color: #888;
+
+    display: flex; 
+
+    /* 写法一 */
+    /* justify-content: center;
+    align-items: center; */
+}
+.inner {
+    width: 100px;
+    height: 100px;
+    background-color: orange;
+
+    /* 写法二 */
+    margin: auto;
+}
+```
+
+#### 伸缩项目在主轴上的基准长度
+
+```html
+<div class="outer">
+    <div class="inner">1</div>
+    <div class="inner inner2">2</div>
+    <div class="inner">3</div>
+</div>
+
+```
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 默认：nowrap，伸缩项目全都挤在一行 */
+    flex-wrap: wrap;
+
+    /* 主轴的对齐方式，对齐到主轴的起始位置，默认 */
+    justify-content: flex-start;
+}
+.inner {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+.inner2 {
+    /* 设置伸缩项目在主轴上的基准长度 */
+    /* 若主轴是横向的，给伸缩项目设置的width的值将失效 */
+    /* 若主轴是纵向的，给伸缩项目设置的height的值将失效 */
+    /* 默认是auto，原本给伸缩项目设置的宽或高是多少就是多少 */
+    /* 浏览器会根据这个值来计算主轴上是否还有富余的空间 */
+    /* 一般不会去设置它 */
+    flex-basis: 300px;
+}
+```
+
 ### calc函数
 
 用于动态计算尺寸
