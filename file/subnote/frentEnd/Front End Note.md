@@ -3547,6 +3547,303 @@ div {
 }
 ```
 
+### 过渡
+
+#### 基础用法
+
+过渡可以在不使用flash动画，不使用js的情况下，让元素从一种样式，平滑过渡为另一种样式
+
+- `transition-property`，定义哪个属性需要过渡，常用值
+    - none，不定义任何过渡属性
+    - all，所有能过渡的属性都过渡
+    - 具体某个属性名，如：width、height，多个属性用英文逗号隔开
+
+不是所有属性都能过渡，值为数字，或者值能转为数字的属性，都支持过渡，否则不支持过渡
+
+常见的支持过渡的属性有：颜色、长度值、百分比、z-index、opacity、2D变换属性、3D变换属性、阴影
+
+- `transition-duration`，设置完成过渡需要的时间，即一个状态过渡到另一个状态要耗时多久，常用值
+    - 0，没有任何过渡时间，默认值
+    - 数字+s/ms，指定秒数或毫秒数
+    - 列表
+        - 如果想让所有属性都持续同一个时间，就只写一个值
+        - 如果想让每个属性持续不同的时间，就写一个时间的列表，多个时间用英文逗号隔开
+
+```css
+.box {
+    width: 100px;
+    height: 100px;
+    background-color: orange;
+    opacity: 0.5;
+
+    /* 指定需要过渡效果的属性，多个属性用英文逗号隔开 */
+    transition-property: width,height,background-color;
+
+    /* 让所有能过渡的属性，都过渡 */
+    transition-property: all;
+
+    /* 分别设置过渡时间，多个时间用英文逗号隔开 */
+    transition-duration: 1s,1s,1s;
+    /* 只设置一个时间，所有过渡的属性都用它 */
+    transition-duration: 1s;
+}
+.box:hover {
+    width: 400px;
+    height: 400px;
+    background-color: green;
+    transform: rotate(30deg);
+    box-shadow: 0px 0px 10px black;
+    opacity: 1;
+}
+```
+
+#### 高级用法
+
+`transition-delay`，设置开始过渡的延迟时间，单位是m或ms
+
+- `transition-timing-function`，设置过渡的类型，常用值
+    - ease，平滑过渡，默认值
+    - linear，线性过渡
+    - ease-in，慢->快
+    - ease-out，快->慢
+    - ease-in-out，慢->快->慢
+    - step-start，等同于step(1,start)
+    - step-end，等同于step(1,end)
+    - step(整数,?)，接受两个参数的步进函数
+        - 第一个参数必须为正整数，指定函数的步数
+        - 第二个参数取值可以是start或end，指定每一步的值发生变化的时间点，默认值是end
+    - cubic-bezie(数值,数值,数值,数值)，特定的贝塞尔曲线
+        - 在线制作贝塞尔曲线：<https://cubic-bezier.com>，然后复制就行了
+
+```css
+.box {
+    width: 100px;
+    height: 100px;
+    background-color: orange;
+
+    /* 让所有能过渡的属性，都过渡 */
+    transition-property: all;
+    /* 只设置一个时间，所有过渡的属性都用它 */
+    transition-duration: 1s;
+
+    /* 过渡延迟 */
+    transition-delay: 2s;
+
+    /* 过渡类型 */
+    transition-timing-function: ease;
+}
+```
+
+#### 过渡复合属性
+
+用得比较多
+
+```css
+.outer {
+    width: 1000px;
+    height: 100px;
+    border: 1px solid black;
+}
+.inner {
+    width: 100px;
+    height: 100px;
+    background-color: orange;
+    /* 如果只设置一个时间，表示duration */
+    /* 如果设置了两个时间，第一个是duration，第二个是delay */
+    /* 所有值顺序随意 */
+    transition: 2s 2s linear all;
+}
+
+.outer:hover .inner {
+    width: 1000px;
+}
+```
+
+### 动画
+
+帧：一段动画，就是一段时间内连续播放n个画面，每一张画面，就是一帧
+
+一定时间内连续快速播放若干个帧就成了人眼中所看到的动画
+
+同样的时间内，播放的帧数越多，画面看起来越流畅
+
+关键帧：在构成一段动画的若干帧中，起到决定性作用的2-3帧
+
+#### 动画基本用法
+
+- 先定义，后应用动画到元素
+- from、to和百分比可以混着写，但不建议这么做
+
+```html
+<div class="outer">
+    <div class="inner"></div>
+</div>
+```
+
+```css
+.outer {
+    width: 1000px;
+    height: 100px;
+    border: 1px solid black;
+}
+.inner {
+    width: 100px;
+    height: 100px;
+    background-color: deepskyblue;
+
+    /* 应用动画到元素 */
+    animation-name: myAnimation;
+    /* 动画持续时间 */
+    animation-duration: 3s;
+    /* 动画延迟时间 */
+    animation-duration: 0.5s;
+}
+
+/* 定义一个动画（实际上是定义一组关键帧），写法一 */
+@keyframes myAnimation {
+    /* 第一帧 */
+    from {
+        /* 第一帧不做什么的话可以不写 */
+    }
+    /* 最后一帧 */
+    to {
+        transform: translate(900px);
+        /* 会渐变成最终的颜色 */
+        background-color: red;
+    }
+}
+
+/* 定义一个动画（实际上是定义一组关键帧），写法二 */
+@keyframes myAnimation2 {
+    /* 第一帧 */
+    0% {
+        /* 第一帧不做什么的话可以不写 */
+    }
+    /* 中间按需定义 */
+    50% {
+        background-color: green;
+    }
+    /* 最后一帧 */
+    100% {
+        transform: translate(900px);
+        /* 会渐变成最终的颜色 */
+        background-color: red;
+    }
+}
+```
+
+##### @keyframes
+
+语法：
+
+```css
+/* 定义动画的名称 */
+@keyframes animationName {
+    /* 动画持续时间的百分比 */
+    /* 可以是0-100%的任意值，或from (和0%相同) 或to (和100%相同) */
+    from {
+        /* 一个或多个合法的CSS样式，即 */
+        /* 属性: 值; */
+        background: linear-gradient(to right, #2196F3,#fdfdfd,#2196F3) repeat-x 0 0;
+    }
+    
+    to {
+        background: linear-gradient(to right, #2196F3,#fdfdfd,#2196F3) repeat-x 500px 0;
+    }
+}
+```
+
+#### 动画其它属性
+
+- `animation-timing-function`，设置动画的类型，值
+    - ease，平滑动画，默认值
+    - linear，线性动画
+    - ease-in，慢->快
+    - ease-out，快->慢
+    - ease-in-out，慢->快->慢
+    - step-start，等同于`step(1,start)`
+    - step-end，等同于`step(1,end)`
+    - `step(整数,?)`，接受两个参数的步进函数
+        - 第一个参数必须为正整数，指定函数的步数
+        - 第二个参数取值可以是start或end，指定每一步的值发生变化的时间点，默认值是end
+    - cubic-bezie(数值,数值,数值,数值)，特定的贝塞尔曲线
+        - 在线制作贝塞尔曲线：<https://cubic-bezier.com>，然后复制就行了
+
+- `animation-iteration-count`，设置动画的播放次数，值
+    - 一个正整数，动画循环次数
+    - infinite，无限循环
+
+- `animation-direction`，设置动画的方向，值
+    - normal，正常方向，默认
+    - reverse，反方向运行
+    - alternate，动画先正常运行再反方向运行，并持续交替
+    - alternate-reverse，动画先反方向运行在正常运行，并持续交替
+
+- `animation-fill-mode`，设置动画之外的状态（不发生动画的时候在哪里），值
+    - forwards，设置对象状态为动画结束时的状态
+    - backwards，设置对象状态为动画开始时的状态
+
+- `animation-play-state`，设置动画的播放状态，值
+    - running，运动，默认
+    - paused，暂停
+
+```css
+.inner {
+    width: 100px;
+    height: 100px;
+    background-color: deepskyblue;
+
+    /* 应用动画到元素 */
+    animation-name: myAnimation;
+    /* 动画持续时间 */
+    animation-duration: 3s;
+    /* 动画延迟时间 */
+    animation-duration: 0.5s;
+
+    /* 其它属性 */
+    /* 设置动画的类型 */
+    animation-timing-function: linear;
+    /* 动画播放的次数 */
+    animation-iteration-count: 2;
+    /* 动画的方向 */
+    animation-direction: reverse;
+    /* 动画以外的状态（不发生动画的时候在哪里） */
+    animation-fill-mode: forwards;
+}
+.outer:hover .inner {
+    /* 动画的播放状态 */
+    animation-play-state: paused;
+}
+```
+
+#### 动画复合属性
+
+- 属性：animation，值
+    - 只设置一个时间表示duration
+    - 设置两个时间，分别表示duration和delay
+    - 其它属性没有数量和顺序要求
+
+```css
+.inner {
+    width: 100px;
+    height: 100px;
+    background-color: deepskyblue;
+
+    animation: myAnimation 1s 0.5s linear infinite reverse forwards;
+}
+.outer:hover .inner {
+    /* 暂停一般不用复合属性animation来写 */
+    /* 而是单独使用animation-play-state */
+    animation-play-state: paused;
+}
+```
+
+#### 动画与过渡的区别
+
+动画不需要任何的触发条件，过渡必须要有触发条件，如鼠标hover
+
+动画从开始到结束的过程都可以精细地控制，而过渡只关注开始和结束，无法对开始到结束的过程进行控制
+
 ### calc函数
 
 用于动态计算尺寸
@@ -3561,53 +3858,6 @@ div {
 ```css
 div {
     width: calc(100% - 20px);
-}
-```
-
-### animation
-
-语法：animation: name duration timing-function delay iteration-count direction fill-mode play-state;
-
-|值|说明|
-|:-|:-|
-|*[animation-name](https://www.runoob.com/cssref/css3-pr-animation-name.html)*|指定要绑定到选择器的关键帧的名称|
-|*[animation-duration](https://www.runoob.com/cssref/css3-pr-animation-duration.html)*|动画指定需要多少秒或毫秒完成|
-|*[animation-timing-function](https://www.runoob.com/cssref/css3-pr-animation-timing-function.html)*|设置动画将如何完成一个周期|
-|*[animation-delay](https://www.runoob.com/cssref/css3-pr-animation-delay.html)*|设置动画在启动前的延迟间隔|
-|*[animation-iteration-count](https://www.runoob.com/cssref/css3-pr-animation-iteration-count.html)*|定义动画的播放次数|
-|*[animation-direction](https://www.runoob.com/cssref/css3-pr-animation-direction.html)*|指定是否应该轮流反向播放动画|
-|[animation-fill-mode](https://www.runoob.com/cssref/css3-pr-animation-fill-mode.html)|规定当动画不播放时（当动画完成时，或当动画有一个延迟未开始播放时），要应用到元素的样式|
-|*[animation-play-state](https://www.runoob.com/cssref/css3-pr-animation-play-state.html)*|指定动画是否正在运行或已暂停|
-|initial|设置属性为其默认值。 [阅读关于 *initial*的介绍。](https://www.runoob.com/cssref/css-initial.html)|
-|inherit|从父元素继承属性。 [阅读关于 *initinherital*的介绍。](https://www.runoob.com/cssref/css-inherit.html)|
-
-例：
-
-```css
-.div {
-    animation:mymove 5s infinite;
-    -webkit-animation:mymove 5s infinite; /* Safari 和 Chrome */
-}
-```
-
-### @keyframes
-
-语法：@keyframes *animationname* {*keyframes-selector* {*css-styles;}*}
-
-|值|说明|
-|:-|:-|
-|*animationname*|必需的。定义animation的名称|
-|*keyframes-selector*|必需的。动画持续时间的百分比。合法值：0-100% from (和0%相同) to (和100%相同)**注意：** 您可以用一个动画keyframes-selectors。|
-|*css-styles*|必需的。一个或多个合法的CSS样式属性|
-
-```css
-@keyframes dynamicBorder {
-    0% {
-        background: linear-gradient(to right, #2196F3,#fdfdfd,#2196F3) repeat-x 0 0;
-    }
-    100% {
-        background: linear-gradient(to right, #2196F3,#fdfdfd,#2196F3) repeat-x 500px 0;
-    }
 }
 ```
 
