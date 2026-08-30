@@ -1797,7 +1797,7 @@ table {
 
 ```css
 div {
-    /* 背景颜色，默认transparent */
+    /* 背景颜色，默认transparent，会被背景图片覆盖 */
     background-color: blue;
     /* 背景图片 */
     background-image: url("/path/to/image");
@@ -4143,13 +4143,14 @@ flex属性复合了flex-direction和flex-wrap
 
 #### 伸缩项目在主轴上的基准长度
 
+设置伸缩项目在主轴上的基准长度用`flex-basis`
+
 ```html
 <div class="outer">
     <div class="inner">1</div>
     <div class="inner inner2">2</div>
     <div class="inner">3</div>
 </div>
-
 ```
 
 ```css
@@ -4185,6 +4186,356 @@ flex属性复合了flex-direction和flex-wrap
 }
 ```
 
+#### 伸缩项目-拉伸
+
+`flex-grow`用来定义伸缩项目的放大比例，默认为0，即：纵使主轴存在剩余空间，也不拉伸
+
+- 规则
+    - 若所有伸缩项目的`flex-grow`值都是1，则它们将等分剩余空间（如果有剩余空间）
+    - 若总共三个伸缩项目，`flex-grow`的值分别是1、2和3，则，分别瓜分到1/6、2/6和3/6的剩余空间
+
+```html
+<div class="outer">
+    <div class="inner">1</div>
+    <div class="inner inner2">2</div>
+    <div class="inner">3</div>
+</div>
+```
+
+```css
+.outer {
+    width: 1000px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 默认：nowrap，伸缩项目全都挤在一行 */
+    flex-wrap: wrap;
+
+    /* 主轴的对齐方式，对齐到主轴的起始位置，默认 */
+    justify-content: flex-start;
+}
+.inner {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    border: 1px solid black;
+    box-sizing: border-box;
+
+    /* 拉伸比例 */
+    flex-grow: 1;
+}
+.inner2 {
+    width: 300px;
+}
+```
+
+#### 伸缩项目-收缩
+
+`flex-shrink`用来定义伸缩项目的收缩比例，默认为1，即：如果父元素空间不足，伸缩项目将会缩小
+
+收缩也会有个极限，就是保证伸缩项目里面的内容可见
+
+```html
+<div class="outer">
+    <div class="inner">1</div>
+    <div class="inner inner2">2</div>
+    <div class="inner">3</div>
+</div>
+```
+
+```css
+.outer {
+    width: 400px;
+    height: 600px;
+    background-color: #888;
+
+    /* 将元素自身变为伸缩容器（或者说开启了flex布局），其直接子元素就自动变成了伸缩项目（item）了 */
+    display: flex; 
+
+    /* 默认：nowrap，伸缩项目全都挤在一行 */
+    /* flex-wrap: wrap; */
+
+    /* 主轴的对齐方式，对齐到主轴的起始位置，默认 */
+    justify-content: flex-start;
+}
+.inner {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    border: 1px solid black;
+    box-sizing: border-box;
+
+    flex-grow: 1; 
+    
+    /* 收缩比例，默认值就是1 */
+    /* flex-shrink: 1;  */
+}
+.inner1 {
+    flex-shrink: 1;
+}
+.inner2 {
+    width: 300px;
+    flex-shrink: 2;
+}
+.inner3 {
+    flex-shrink: 3;
+}
+```
+
+inner1、inner2、inner3宽度分别是200、300、200像素，总占宽度700px，但outer宽度为400像素
+
+因为设置了不换行，因此自动收缩，总收缩值700-400=300
+
+分母：`200*1 + 300*2 + 200*3` = 1400
+
+- 收缩比：
+    - inner1收缩比=(200*1)/1400
+    - inner2收缩比=(300*2)/1400
+    - inner3收缩比=(200*3)/1400
+
+- 收缩值：
+    - inner1收缩比*总收缩值
+    - inner2收缩比*总收缩值
+    - inner3收缩比*总收缩值
+
+- 收缩后宽度：
+    - inner1=inner1宽度-inner1收缩值
+    - inner2=inner2宽度-inner2收缩值
+    - inner3=inner3宽度-inner3收缩值
+
+#### flex复合属性
+
+flex属性复合了：flex-grow flex-shrink flex-basis
+
+```css
+.inner {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    border: 1px solid black;
+    box-sizing: border-box;
+
+    /* 可以拉伸 */
+    flex-grow: 1; 
+    
+    /* 可以收缩 */
+    flex-shrink: 2; 
+
+    /* 基准长度 */
+    flex-basis: 100px;
+
+    /* 这三个属性的复合写法，顺序和个数都有要求 */
+    flex: 1 2 100px;
+
+    /* 可以拉伸，可以收缩，不设置基准长度，可以简写为：flex: auto; */
+    flex: 1 1 auto;
+
+    /* 可以拉伸，可以收缩，基准长度设置为0，这个用得比较多，可以简写为：flex: 1; */
+    flex: 1 1 0;
+
+    /* 不可拉伸，不可收缩，不设置基准长度，可以简写为：flex: none; */
+    flex: 0 0 auto;
+
+    /* 不可拉伸，可以收缩，不设置基准长度，默认值，可以简写为：flex: 0 auto; */
+    flex: 0 1 auto;
+}
+```
+
+#### 伸缩项目排序
+
+order属性定义伸缩项目的排列顺序，数值越小，排列越靠前，默认是0
+
+```css
+.inner {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    border: 1px solid black;
+    box-sizing: border-box;
+
+    /* 可以拉伸，可以收缩，基准长度设置为0*/
+    flex: 1 1 0;
+}
+.inner2 {
+    /* order默认值是0，值小的排前面显示 */
+    order: -1;
+}
+.inner3 {
+    order: -2;
+}
+```
+
+#### 伸缩项目单独对齐
+
+`align-self`可以单独调整某个伸缩项目的对齐方式，默认是auto，表示继承父元素的align-items属性
+
+用得不多
+
+```css
+.inner {
+    width: 200px;
+    height: 200px;
+    background-color: skyblue;
+    border: 1px solid black;
+    box-sizing: border-box;
+
+    /* 可以拉伸，可以收缩，基准长度设置为0*/
+    flex: 1 1 0;
+}
+.inner2 {
+    /* 元素与侧轴单独对齐 */
+    align-self: center;
+}
+```
+
+### 响应式布局
+
+#### 媒体查询
+
+媒体查询不会提升优先级（还是遵循后写覆盖先写），因此要先写普通样式，再写媒体查询样式
+
+##### 媒体类型
+
+- 媒体类型
+    - all，检测所有设备
+    - screen，检测电子屏幕，包括电脑屏幕、平板屏幕、手机屏幕等
+    - print，检测打印机
+
+```css
+h1 {
+    background-image: linear-gradient(30deg, red, yellow, green);
+}
+/* 只有在打印机或打印预览才应用的样式 */
+@media print {
+    h1 {
+        background: transparent;
+    }
+}
+
+/* 只有在屏幕上才应用的样式 */
+@media screen {
+    h1 {
+        font-family: "宋体";
+    }
+}
+
+/* 一直都应用的样式，这么写没什么意义 */
+@media all {
+    h1 {
+        color: red;
+    }
+}
+```
+
+##### 媒体特性
+
+|值|描述|
+|:-|:-|
+|width|检测视口宽度|
+|min-width|检测视口最小宽度|
+|max-width|检测视口最大宽度|
+|height|检测视口高度|
+|min-height|检测视口最小高度|
+|max-height|检测视口最大高度|
+|device-width|检测设备屏幕宽度|
+|min-device-width|检测设备屏幕最小宽度|
+|max-device-width|检测设备屏幕最大宽度|
+|orientation|检测视口的旋转方向（是否横屏）<br>1.portrait，视口处于纵向，即高度大于等于宽度<br>2.landscape，视口处于横向，即宽度大于高度|
+
+```css
+/* 检测到视口的宽度为800px时，应用的样式 */
+@media (width:800px) {}
+
+/* 检测到视口的宽度大于等于800px时，应用的样式 */
+@media (min-width:800px) {}
+
+/* 检测到视口的宽度小于等于800px时，应用的样式 */
+@media (max-width:800px) {}
+```
+
+##### 媒体查询运算符
+
+```css
+/* 与运算符，检测到视口的宽度为800px-900px时，应用的样式 */
+@media (min-width:800px) and (max-width:900px) {}
+
+@media screen and (min-width:800px) and (max-width:900px) {}
+
+/* 或运算符，检测到视口的宽度大于等于900px，或小于等于800px，新语法用or */
+@media screen and (min-width:900px),(max-width:800px) {}
+@media screen and (min-width:900px) or (max-width:800px) {}
+
+/* 否定运算符 */
+@media not screen {}
+
+
+/* 肯定运算符，加与不加这个运算符都一样 */
+/* 主要用于浏览器兼容，ie不认识only，会把整个样式忽略 */
+@media only screen {}
+```
+
+#### 常用屏幕宽度阈值
+
+- 超小屏幕：小于768px
+- 中等屏幕：768px~992px
+- 大屏幕：992px~1200px
+- 超大屏幕：大于1200px
+
+```css
+/* 超小屏幕 */
+@media screen and (max-width:768px) {}
+
+/* 中等屏幕 */
+@media screen and (min-width:768px) and (max-width:992px) {}
+
+/* 大屏幕 */
+@media screen and (min-width:992px) and (max-width:1200px) {}
+
+/* 超大屏幕 */
+@media screen and (min-width:1200px) {}
+```
+
+```html
+<head>
+    <!-- 先引入普通样式，再引入各个屏幕宽度的样式 -->
+    <link rel="stylesheet" href="/path/to/index.css">
+    <link rel="stylesheet" href="/path/to/small.css">
+    <link rel="stylesheet" href="/path/to/medium.css">
+    <link rel="stylesheet" href="/path/to/large.css">
+    <link rel="stylesheet" href="/path/to/huge.css">
+    <!-- 如果不在屏幕宽度样式文件里面写媒体查询，还可以这在这里写 -->
+    <link rel="stylesheet" media="screen and (min-width:1200px)" href="/path/to/huge.css">
+</head>
+```
+
+### BFC
+
+BFC：Block Formatting Context，块级格式上下文，可以理解成元素的一个特异功能
+
+- 当元素满足某些条件后，特异功能被激活（即该元素创建了BFC，又称开启了BFC）
+    - 其子元素不会再产生margin塌陷问题
+    - 自己不会被其它浮动元素所覆盖
+    - 就算其子元素浮动，元素自身高度也不会塌陷
+
+- 想要给元素开启BFC，就让它变成下面的元素就行了
+    - 根元素
+    - 浮动元素
+    - 绝对定位、固定定位的元素
+    - 行内块元素（也可以设置`display: inline-block;`）
+    - 表格单元格：table、thead、tbody、tfoot、th、td、tr、caption
+        - 如果不想写在表格里面，可以用`display: table;`
+    - overflow的值不为visible的块元素
+    - 伸缩项目
+    - 多列容器，即设置`column-count`属性，如`column-count: 1;`
+    - column-span为all的元素（即使该元素没有包裹在多列容器中）
+    - display属性的值设置为flow-root的元素
+        - 这种方式是副作用最小的，缺点是ie浏览器不支持（即约等于没有副作用哈哈）
+
+不要疯狂追求开启BFC，平时怎么写就怎么写，当发生诡异问题的时候再想想开启BFC的事
+
 ### calc函数
 
 用于动态计算尺寸
@@ -4194,11 +4545,12 @@ flex属性复合了flex-direction和flex-wrap
 
 |值|描述|
 |:-|:-|
-|*expression*|必须，一个数学表达式，结果将采用运算后的返回值|
+|expression|必须，一个数学表达式，结果将采用运算后的返回值|
 
 ```css
 div {
-    width: calc(100% - 20px);
+    width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
 }
 ```
 
