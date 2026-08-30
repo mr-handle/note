@@ -4556,7 +4556,174 @@ div {
 
 ## js
 
-### js使用json
+### 注释
+
+```js
+// 注释内容
+```
+
+### 字符串
+
+```js
+// 可以用双引号包裹
+"hello world";
+
+// 也可以用单引号包裹
+'hello world';
+
+// 字符串里面有单引号时，用双引号包裹字符串
+"It's javascript";
+
+// 字符串里面有双引号时，用单引号包裹字符串
+'say "hello world"';
+
+// 也可以用反斜杠\进行转义
+'It\'s javascript';
+
+"say \"hello world\"";
+
+// 字符串长度
+'hello'.length
+
+// 字符串转小写
+'Hello World!'.toLowerCase();
+
+// 字符串转大写
+'hello'.toUpperCase();
+
+// 去掉字符串开始和末尾的空格
+" hello world ".trim();
+```
+
+### 数字
+
+```js
+123;
+
+3.14;
+
+// JavaScript不区分整数和小数，可以一起使用而无需转换
+10+3.14;
+```
+
+### 布尔
+
+```js
+var isGood = false;
+isGood = true;
+```
+
+### 运算符
+
+- 加减乘除：`+ - * /`
+
+```js
+// 字符串拼接：hello
+"he" + "llo";
+
+// 赋值运算符：=
+var i = 3;
+```
+
+### 变量
+
+```js
+var x = 100;
+x + 10;
+var y = x + 10;
+x = 200;
+```
+
+### 方法
+
+```js
+// 定义无参方法
+function print() {
+    return "hello world";
+}
+
+// 定义有参方法
+function sum(x, y) {
+    return x + y;
+}
+
+// 使用无参方法
+print();
+
+// 使用有参方法
+sum(1, 2);
+```
+
+### 条件表达式
+
+```js
+// if表达式
+if(3 > 1) {
+
+} else if(3 < 1) {
+
+} else {
+    
+}
+```
+
+### 数组
+
+```js
+var array = ["a", "b"];
+
+// 数组的元素的类型可以不是相同类型
+var array2 = ["a", 1, array, false];
+
+// 访问数组元素
+array[0];
+array[array.length -1];
+
+// 修改数组元素的值
+array[0]="A";
+
+// 数组长度
+array.length;
+
+// 拼接数组
+var array = ["a", "b"];
+var array2 = ["c", "d"];
+// [ "a", "b", "c", "d" ]
+array.concat(array2);
+
+// 删除数组最后一个元素并返回
+array.pop();
+
+// 在数组末尾添加一个元素并返回数组长度
+array.push("c");
+
+// 将数组元素倒序
+array.reverse();
+```
+
+### 对象
+
+```js
+// 定义对象
+var pet = {
+    name: "dog",
+    age: 2,
+    // 对象还可以定义方法
+    toString: function() {
+        return this.name + " " + this.age;
+    }
+};
+
+// 访问对象属性
+pet.name;
+pet["name"];
+
+// 修改对象属性
+pet.name = "cat";
+pet["name"] = "cat";
+```
+
+### json
 
 ```js
 // 定义一个json格式的字符串
