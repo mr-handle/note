@@ -139,17 +139,16 @@ uv pip install transformers==4.36.2 --index-url https://mirrors.tuna.tsinghua.ed
 # 当某个模型用uv run tts --list_models 显示已下载但是又报错说找不到就将该模型文件夹删了
 rm -rf ~/.local/share/tts/问题模型
 ```
+
 ## llama.cpp
 
-官网：https://llama.app/
+官网：<https://llama.app/>
 
 llama.cpp是本地部署ai模型的命令行工具
 
-
-
 ### 安装llama.cpp
 
-arch教程官网：https://wiki.archlinux.org/title/Llama.cpp
+arch教程官网：<https://wiki.archlinux.org/title/Llama.cpp>
 
 - 对于llama.cpp
     - Dense 模型 → Vulkan 更合适：每次推理需完整扫过全部权重，瓶颈在内存带宽。
@@ -167,7 +166,7 @@ arch教程官网：https://wiki.archlinux.org/title/Llama.cpp
 # ggml-vulkan一般更节省内存，但是生成的词元速度比较慢
 # ggml-hip的软件包一般也更大，也更花内存，但是生成的词元速度更快
 # 根据自己的硬件条件进行选择，只安装一个就行了
-sudo pacman -S llama-cpp  ggml-cpu ggml-hip
+sudo pacman -S llama-cpp ggml-hip
 ```
 
 ### 拉取模型

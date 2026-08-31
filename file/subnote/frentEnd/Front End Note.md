@@ -4554,15 +4554,217 @@ div {
 }
 ```
 
-## js
+## JavaScript
+
+JavaScript是一种运行在客户端（浏览器）的编程语言，实现人机交互效果
+
+- JavaScript作用
+    - 网页特效（监听用户的一些行为让网页做出对应的反馈）
+    - 表单验证（针对表单数据的合法性进行判断）
+    - 数据交互（获取后台数据，渲染到前端）
+    - 服务端编程（node.js）
+
+- JavaScript组成
+    - ECMAScript语言基础
+        - 规定了JavaScript基础语法核心知识
+    - Web APIs
+        - DOM，页面文档对象模型，可以操作页面文档，如对页面元素进行操作
+        - BOM，浏览器对象模型，操作浏览器，如页面弹窗、检测窗口宽度、存储数据到浏览器等
+
+### JavaScript书写位置
+
+- 跟CSS类似，JavaScript也有三种书写位置
+    - 行内JavaScript
+    - 内部JavaScript
+    - 外部JavaScript
+
+#### 行内/内联JavaScript
+
+基本不用这种写法
+
+```html
+<body>
+    <button onclick="alert('你点我了')">点我</button>
+</body>
+```
+
+#### 内部JavaScript
+
+理论上`<script></script>`可以放在html的任何位置
+
+由于浏览器会按照从上到下的顺序加载html内容
+
+一般将`<script></script>`放在html底部附近
+
+这样避免了：如果先加载的js期望修改html，由于html尚未被加载而失效
+
+```html
+<body>
+    <!-- 其它html元素 -->
+    <script>
+        // 在这里写js
+    </script>
+</body>
+```
+
+#### 外部JavaScript
+
+```html
+<body>
+    <!-- 其它html元素 -->
+    <!-- 在这里导入js -->
+    <script src="/path/to/file.js">
+        // 外部js中间不要写代码，会被忽略
+    </script>
+</body>
+```
 
 ### 注释
 
 ```js
-// 注释内容
+// 单行注释
+
+/* 多行注释 */
 ```
 
-### 字符串
+### 结束符
+
+英文分号作为js语句的结束符
+
+实际开发中可以不写，浏览器可以自动推断语句的结束位置
+
+为了风格统一，结束符要么每句都写，要么每句都不写
+
+```js
+var x = 2;
+```
+
+### 输入语法
+
+```js
+// 显示一个对话框，对话框中包含一条文字信息，用来提示用户输入文字
+prompt("hint");
+```
+
+### 输出语法
+
+```js
+// 向body输出内容，如果内容是标签，会被解析成网页元素
+document.write("content");
+document.write("<h1>title</h1>");
+
+// 向页面弹出警告对话框
+alert("content");
+
+// 向控制台输出内容，一般调试使用
+console.log("content");
+```
+
+### JavaScript代码执行顺序
+
+按html文档流顺序执行JavaScript代码
+
+alert和prompt会跳过页面渲染先被执行
+
+### 变量
+
+变量是存储数据的容器
+
+```js
+// 想要使用变量，首先需要创建变量（也称为声明/定义变量）
+// 声明多个变量用英文逗号隔开，但一般不这么用
+// let：允许、让
+let name;
+
+// 赋值
+name = "handle";
+
+// 使用变量
+alert(name);
+
+// 声明并赋值（变量初始化）
+let name = "handle";
+
+// 更新变量
+name = "Handle";
+name = prompt("hint");
+```
+
+- let和var
+    - var可以先使用，再声明（不合理）
+    - var声明过的变量可以重复声明（不合理）
+    - var是较旧的js代码使用的，现在不推荐使用了
+    - let声明过的变量不允许重复声明
+    - let是为了解决var的一些问题而出现的
+
+### 常量
+
+```js
+// 常量不允许重新赋值，声明的时候必须赋值
+const PI = 3.14;
+```
+
+### 数据类型
+
+- 基本数据类型
+    - number，数字类型
+        - 有一个特殊值`NaN`，即非数字，是不正确或未定义的数学操作所得到的结果
+        - 任何对`NaN`的操作都会返回`NaN`
+    - string，字符串类型
+    - boolean，布尔类型，只有两个字面量
+        - true
+        - false
+    - undefined，未定义类型，只有一个字面量：undefined
+        - 只声明变量，不赋值的情况下，变量的默认值就是undefined
+    - null，空类型，null表示赋值了，但是内容为空
+        - 官方解释：把null作为尚未创建的对象，即如果对象还没创建好，可以先给变量赋值为null
+
+```js
+let name;
+// undefined
+console.log(name);
+
+// NaN
+console.log(undefined + 1);
+
+let name = null;
+// null
+console.log(name);
+
+// 1
+console.log(null + 1);
+```
+
+- 引用数据类型：object对象
+
+JavaScript是弱数据类型，变量到底属于哪种数据类型只有赋值后才能确认
+
+#### 数字
+
+整数、小数、正数、负数
+
+```js
+123;
+
+3.14;
+```
+
+##### 运算符
+
+- 赋值运算符：=
+- 加减乘除、取模：`+ - * / %`
+
+```js
+// 赋值运算符：=
+let i = 3;
+
+// JavaScript不区分整数和小数，可以一起使用而无需转换
+10+3.14;
+```
+
+#### 字符串
+
+双引号、单引号、反引号（``）都可以包裹字符串
 
 ```js
 // 可以用双引号包裹
@@ -4593,45 +4795,142 @@ div {
 
 // 去掉字符串开始和末尾的空格
 " hello world ".trim();
+
+// 字符串拼接：hello
+"he" + "llo";
 ```
 
-### 数字
+##### 模板字符串
 
 ```js
-123;
-
-3.14;
-
-// JavaScript不区分整数和小数，可以一起使用而无需转换
-10+3.14;
+let name = "handle";
+// 模板字符串：用反引号包裹字符串，变量名用${}包裹
+let stringTemplate = `hello ${name}`;
+console.log(stringTemplate);
 ```
 
-### 布尔
+#### 布尔
 
 ```js
-var isGood = false;
+let isGood = false;
 isGood = true;
 ```
 
-### 运算符
-
-- 加减乘除：`+ - * /`
+#### 数组
 
 ```js
-// 字符串拼接：hello
-"he" + "llo";
+let array = ["a", "b"];
 
-// 赋值运算符：=
-var i = 3;
+// 数组的元素的类型可以不是相同类型
+let array2 = ["a", 1, array, false];
+
+// 访问数组元素
+array[0];
+array[array.length -1];
+
+// 修改数组元素的值
+array[0]="A";
+
+// 数组长度
+array.length;
+
+// 拼接数组
+let array = ["a", "b"];
+let array2 = ["c", "d"];
+// [ "a", "b", "c", "d" ]
+array.concat(array2);
+
+// 删除数组最后一个元素并返回
+array.pop();
+
+// 在数组末尾添加一个元素并返回数组长度
+array.push("c");
+
+// 将数组元素倒序
+array.reverse();
 ```
 
-### 变量
+#### 对象
 
 ```js
-var x = 100;
-x + 10;
-var y = x + 10;
-x = 200;
+// 定义对象
+let pet = {
+    name: "dog",
+    age: 2,
+    // 对象还可以定义方法
+    toString: function() {
+        return this.name + " " + this.age;
+    }
+};
+
+// 访问对象属性
+pet.name;
+pet["name"];
+
+// 修改对象属性
+pet.name = "cat";
+pet["name"] = "cat";
+```
+
+#### json
+
+```js
+// 定义一个json格式的字符串
+let json = '{"name": "zhangsan","age": 18,"isMale": true,"pets": ["dog", "cat"],"son": {"name": "xiaoming"}}'
+
+// json->object
+let object = JSON.parse(json)
+
+// object->json
+let json2 = JSON.stringify(object)
+```
+
+#### 检测数据类型
+
+```js
+let name = "handle";
+// 写法一
+console.log(typeof name);
+// 写法二
+console.log(typeof(name));
+```
+
+#### 类型转换
+
+使用表单、prompt获取的数据默认是字符串类型的，如果获取到的是是数字，就不能直接进行算术运算，需要先转换数据类型
+
+##### 隐式转换
+
+有两个操作数时，`+`两边只要有一个是字符串，都会把另一个转成字符串，即任何数据类型和字符串相加结果都是字符串
+
+除了`+`以外的算术运算符，都会把数据转成数字类型
+
+```js
+// 特殊情况：作为正数符号解析，最终转成数字类型
+console.log(+"1");
+```
+
+##### 显式转换
+
+```js
+let s = '1';
+// 转换为数字类型1
+console.log(Number(s));
+
+// 转换为数字类型2
+let n = +s;
+
+// 只保留整数
+// 1
+parseInt(1.2)
+parseInt("1.2")
+parseInt("1.2b")
+
+// 可保留小数
+// 1.2
+parseInt(1.2)
+parseInt("1.2")
+parseInt("1.2b")
 ```
 
 ### 方法
@@ -4665,75 +4964,6 @@ if(3 > 1) {
 } else {
     
 }
-```
-
-### 数组
-
-```js
-var array = ["a", "b"];
-
-// 数组的元素的类型可以不是相同类型
-var array2 = ["a", 1, array, false];
-
-// 访问数组元素
-array[0];
-array[array.length -1];
-
-// 修改数组元素的值
-array[0]="A";
-
-// 数组长度
-array.length;
-
-// 拼接数组
-var array = ["a", "b"];
-var array2 = ["c", "d"];
-// [ "a", "b", "c", "d" ]
-array.concat(array2);
-
-// 删除数组最后一个元素并返回
-array.pop();
-
-// 在数组末尾添加一个元素并返回数组长度
-array.push("c");
-
-// 将数组元素倒序
-array.reverse();
-```
-
-### 对象
-
-```js
-// 定义对象
-var pet = {
-    name: "dog",
-    age: 2,
-    // 对象还可以定义方法
-    toString: function() {
-        return this.name + " " + this.age;
-    }
-};
-
-// 访问对象属性
-pet.name;
-pet["name"];
-
-// 修改对象属性
-pet.name = "cat";
-pet["name"] = "cat";
-```
-
-### json
-
-```js
-// 定义一个json格式的字符串
-var json = '{"name": "zhangsan","age": 18,"isMale": true,"pets": ["dog", "cat"],"son": {"name": "xiaoming"}}'
-
-// json->object
-var object = JSON.parse(json)
-
-// object->json
-var json2 = JSON.stringify(object)
 ```
 
 ## JSP
