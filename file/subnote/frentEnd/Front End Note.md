@@ -5416,7 +5416,133 @@ const element = document.getElementsByClassName("box");
 
 ###### DOM表单元素属性
 
+表单元素属性大体上跟普通元素属性的写法差不多
+
+```html
+<body>
+    <input type="text" value="文本内容" />
+    <input type="checkbox" value="文本内容" />
+    <script>
+        const element = document.querySelector("input");
+        // 获取表单控件的值
+        console.log(element.value);
+        // 设置表单控件的值
+        element.value = "文本内容2"
+        // 将输入框改成密码输入框
+        element.type = "password";
+
+        // 对于disabled、checked、selected这l类属性，如果设置该属性，属性值就是true
+        element.checked = true;
+        // 有隐式转换，不提倡这么写
+        element.checked = "true";
+    </script>
+</body>
+```
+
 ###### DOM元素自定义属性
+
+标准属性：标签自带的属性，如id和name等
+
+自定义属性： 以`data-自定义属性名`方式设置，通过`dataset.自定义属性名`获取
+
+```html
+<body>
+    <div data-version="1"></div>
+    <script>
+        const element = document.querySelector("div");
+        // 获取自定义属性
+        console.log(element.dataset.version);
+    </script>
+</body>
+```
+
+##### 定时器-间歇函数
+
+```js
+// 开启定时器，每隔一段时间调用这个函数
+// 函数可以填函数名（不要加括号），或匿名函数
+// 间隔时间单位是毫秒
+setInterval(function () {}, 间隔时间);
+setInterval(函数名, 间隔时间);
+
+// 也可以这么写，但是不推荐
+setInterval("函数名()", 间隔时间);
+
+// 定时器函数返回一个数字类型的具有唯一性的定时器id
+let timerId = setInterval(函数名, 间隔时间);
+
+// 可以通过定时器id关闭定时器
+clearInterval(timerId);
+```
+
+##### 事件监听
+
+让程序检测是否有事件发生（如用户点击事件）
+
+一旦有事件发生，就立即调用一个函数做出响应（称为绑定/注册事件）
+
+- 事件监听有三要素
+    - 事件源：哪个DOM元素触发了事件
+    - 事件类型：如鼠标单击
+    - 事件调用的函数：要做什么事
+
+- 事件类型
+    - 鼠标事件
+        - click，鼠标点击
+        - mouseenter，鼠标经过
+        - mouseleave，鼠标离开
+    - 焦点事件：获得光标
+        - focus，获得焦点
+        - blur，失去焦点
+    - 键盘事件
+        - Keydown，键盘按键按下
+        - Keyup，键盘按键抬起
+    - 文本事件：表单输入触发
+        - input，用户输入
+
+```js
+// 添加事件监听
+元素对象.addEventListener("事件类型", 要执行的函数);
+```
+
+```html
+<body>
+    <button>发送</button>
+    <script>
+        const element = document.querySelector("button");
+        element.addEventListener("click", function () {
+            // do something
+        });
+        element.addEventListener("click", function () {
+            // do something
+        });
+        // 点击事件发生会先后执行这两个函数
+    </script>
+</body>
+```
+
+###### 旧版本的写法（了解）
+
+```js
+元素对象.on事件 = function() {};
+```
+
+```html
+<body>
+    <button>发送</button>
+    <script>
+        const element = document.querySelector("button");
+        element.onclick = function () {
+            // do something
+        };
+        // 会覆盖上面的点击事件
+        element.onclick = function () {
+            // do something
+        };
+        // 点击事件发生只执行后写的函数，先写的被覆盖了
+    </script>
+</body>
+```
 
 #### BOM
 
