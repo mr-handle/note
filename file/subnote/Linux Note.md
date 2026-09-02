@@ -4825,7 +4825,7 @@ sudo qemu-img rebase -u -F qcow2 -b domain.snapname1 domain.snapname2
 ###### 恢复外部快照（恢复后在virt-manager的快照列表可以看到）
 
 - 如果有快照名.xml文件
-    - 将快照名.xml文件<domain>...</domain>块的内容替换为新虚拟机的
+    - 将快照名.xml文件`<domain>...</domain>`块的内容替换为新虚拟机的
     - 直接复制新虚拟机的xml（virt-manager的虚拟机详情-概览的xml就是）
 
 - 如果没有备份快照名.xml文件，也可以手动生成

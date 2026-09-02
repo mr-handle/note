@@ -911,6 +911,41 @@ neu build --embed-resources
 
 此外还可以使用hschneider/neutralino-build-scripts这个社区项目打包安装脚本，具体请参考Neutralinojs官网教程
 
+## 扩展
+
+### 扩展作为子进程
+
+- 在`neutralinojs.config.json`文件中定义扩展
+
+```json
+"extensions": [
+    {
+        // id：标识扩展的唯一键
+        "id": "js.neutralino.sampleextension",
+        // 跨平台的启动扩展的命令
+        "command": "node ${NL_PATH}/extensions/binary/main.js",
+        // Linux系统的启动扩展的命令
+        "commandLinux": "${NL_PATH}/extensions/binary/linux/ext_bin",
+        // macOS系统的启动扩展的命令
+        "commandDarwin": "${NL_PATH}/extensions/binary/mac/ext_bin",
+        // Windows系统的启动扩展的命令
+        "commandWindows": "${NL_PATH}/extensions/binary/win/ext_bin.exe"
+    },
+    {
+        "id": "js.neutralino.binaryextension",
+        "command": "node ${NL_PATH}/extensions/binary/main.js",
+    },
+    {
+        "id": "js.neutralino.javaExtension",
+        "command": "java -jar ${NL_PATH}/extension/neutralinojsExtension.jar"
+    }
+],
+// 启用扩展
+"enableExtensions": true
+```
+
+### 扩展作为主进程
+
 ## vscodium
 
 官网：<https://github.com/VSCodium/vscodium>

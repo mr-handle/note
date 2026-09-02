@@ -1498,7 +1498,7 @@ windows中，默认字体是微软雅黑
 ```css
 body {
     /* 最后的sans-serif是范指，告诉浏览器当前面的字体都不可用的时候，就查用户系统可用的sans-serif字体 */
-    font-family: "优先字体1","其次字体2","再而字体3", ..., "字体n", sans-serif；
+    font-family: "优先字体1","其次字体2","再而字体3", ..., "字体n", sans-serif;
 }
 ```
 
@@ -4699,6 +4699,10 @@ name = prompt("hint");
 
 ### 常量
 
+声明变量优先使用const，其次用let，不要用var
+
+数组和对象建议用const声明
+
 ```js
 // 常量不允许重新赋值，声明的时候必须赋值
 const PI = 3.14;
@@ -4706,7 +4710,7 @@ const PI = 3.14;
 
 ### 数据类型
 
-- 基本数据类型
+- 基本数据类型，放到栈空间
     - number，数字类型
         - 有一个特殊值`NaN`，即非数字，是不正确或未定义的数学操作所得到的结果
         - 任何对`NaN`的操作都会返回`NaN`
@@ -4718,6 +4722,8 @@ const PI = 3.14;
         - 只声明变量，不赋值的情况下，变量的默认值就是undefined
     - null，空类型，null表示赋值了，但是内容为空
         - 官方解释：把null作为尚未创建的对象，即如果对象还没创建好，可以先给变量赋值为null
+- 引用数据类型，放到堆空间
+    - 通过new关键字创建的对象
 
 ```js
 let name;
@@ -4751,8 +4757,14 @@ JavaScript是弱数据类型，变量到底属于哪种数据类型只有赋值�
 
 ##### 运算符
 
-- 赋值运算符：=
-- 加减乘除、取模：`+ - * / %`
+- 算术运算符：`+ - * / %`
+- 赋值运算符：`=、+=、-=、*=、/= %=`
+- 自增运算符：`++、--`
+- 比较运算符：`>、<、>=、<=、==、===、!=、!==`
+    - `==`：左右两边值相等
+    - `===`：左右两边类型和值都相等，最推荐使用
+    - `!==`：左右两边类型和值不全等
+- 逻辑运算符：`&&、||、!`
 
 ```js
 // 赋值运算符：=
@@ -4760,6 +4772,24 @@ let i = 3;
 
 // JavaScript不区分整数和小数，可以一起使用而无需转换
 10+3.14;
+```
+
+###### 逻辑中断
+
+也就是短路
+
+```js
+// false，第一个是false，输出第一个假值，后面的看都不看了
+console.log(false && 2);
+
+// 都是真，返回最后一个真值
+console.log(true && 2);
+
+// true，第一个是true，输出第一个真值，后面的看都不看了
+console.log(true || 0);
+
+// 都是假，输出最后一个假值
+console.log(false || 0);
 ```
 
 #### 字符串
@@ -4814,6 +4844,10 @@ console.log(stringTemplate);
 ```js
 let isGood = false;
 isGood = true;
+
+// 其它类型转换为布尔类型
+// ""、0、undefined、null、false、NaN转为布尔类型后都是false，其余都是true
+let b = Boolean("handle")
 ```
 
 #### 数组
@@ -4823,6 +4857,9 @@ let array = ["a", "b"];
 
 // 数组的元素的类型可以不是相同类型
 let array2 = ["a", 1, array, false];
+
+// 使用构造方法定义一个数组
+let array3 = new Array("a", "b");
 
 // 访问数组元素
 array[0];
@@ -4834,30 +4871,58 @@ array[0]="A";
 // 数组长度
 array.length;
 
+// 在数组末尾添加一个或多个元素并返回数组新长度
+array.push("c", "d");
+
+// 在数组开头添加一个或多个元素并返回数组新长度
+array.unshift("c", "d");
+
+// 删除数组最后一个元素并返回删除的元素
+array.pop();
+
+// 删除数组第一个元素并返回删除的元素
+array.shift();
+
+// 删除数组指定位置的元素并返回删除的元素
+array.splice(起始位置索引，删除几个元素);
+
+// 起始位置到数组末尾的元素都删除并返回删除的元素
+array.splice(起始位置索引);
+
+// 将数组元素倒序
+array.reverse();
+
 // 拼接数组
 let array = ["a", "b"];
 let array2 = ["c", "d"];
 // [ "a", "b", "c", "d" ]
+// 返回一个新的数组，array数组不变
 array.concat(array2);
-
-// 删除数组最后一个元素并返回
-array.pop();
-
-// 在数组末尾添加一个元素并返回数组长度
-array.push("c");
-
-// 将数组元素倒序
-array.reverse();
 ```
 
-#### 对象
+#### 对象（object）
+
+object可以理解为一种无序的数据集合
+
+数组是有序的数据集合
 
 ```js
-// 定义对象
+// 定义对象1
+let objectName1 = {
+    属性名1: 属性值1,
+    属性名2: 属性值2,
+    方法名1: 函数1,
+    方法名2: 函数2
+};
+
+// 定义对象2
+let objectName2 = new Object();
+
 let pet = {
+    // 定义属性
     name: "dog",
     age: 2,
-    // 对象还可以定义方法
+    // 定义方法
     toString: function() {
         return this.name + " " + this.age;
     }
@@ -4870,6 +4935,39 @@ pet["name"];
 // 修改对象属性
 pet.name = "cat";
 pet["name"] = "cat";
+
+// 增加新属性：对象名.新属性名=属性值
+pet.weight=0.5
+
+// 删除属性：delete 对象名.属性名
+delete pet.weight
+
+// 方法调用：对象名.方法名(实参列表)
+pet.toString()
+```
+
+##### 内置对象
+
+###### Math
+
+- 提供的方法有
+    - random，生成`[0-1)`之间的随机数
+    - ceil，向上取整
+    - floor，向下取整
+    - max
+    - min
+    - pow，幂运算
+    - abs，绝对值
+    - round，返回四舍五入后最接近的整数，有点说法，用的时候要注意
+
+```js
+console.log(Math.PI);
+
+// 生成[0, n]之间的随机数
+Math.floor(Math.random() * (n + 1));
+
+// 生成[n, m]之间的随机数
+Math.floor(Math.random() * (m - n + 1)) + n;
 ```
 
 #### json
@@ -4908,6 +5006,19 @@ console.log(typeof(name));
 ```js
 // 特殊情况：作为正数符号解析，最终转成数字类型
 console.log(+"1");
+
+// ""和null经过数字转换后为0
+console.log(-"");
+console.log(-null);
+
+// undefined经过数字转换后为NaN
+console.log(-undefined);
+
+// true
+console.log(null == undefined);
+
+// false
+console.log(null === undefined) 
 ```
 
 ##### 显式转换
@@ -4933,7 +5044,104 @@ parseInt("1.2")
 parseInt("1.2b")
 ```
 
+### 条件
+
+#### if语句
+
+- 表达式：表达式是可以被求值的代码，可以写在赋值语句的右侧
+
+语句：语句是一段可以执行的代码，语句不一定有值，如alert()，不能被用于赋值
+
+```js
+if(n > 1) {
+
+} else if(n < 1) {
+
+} else {
+    
+}
+```
+
+#### 三元运算符
+
+```js
+let max = a > b ? a : b;
+```
+
+#### switch语句
+
+switch做的是全等判断
+
+```js
+switch(key) {
+    case value1:
+        code1;
+        break;
+    case value2:
+        code2;
+        break;
+    default:
+        coden;
+        break;
+}
+```
+
+#### while循环
+
+```js
+while(condition) {
+    // do something
+}
+```
+
+#### 退出循环
+
+```js
+while(condition) {
+    if(condition2) {
+        // 退出循环体
+        break;
+    }
+    if(condition3) {
+        // 结束本次循环，继续下次循环
+        continue;
+    }
+    // another todo
+}
+```
+
+#### for循环
+
+```js
+// 写法1
+for(let i = 0; i < 10; i++) {
+    // do something
+}
+
+// 写法2
+// 不推荐遍历数组
+let array = ["a", "b", "c"];
+for (let i in array) {
+    // i是字符串类型的数组的下标
+    // array[i]会发生隐式类型转换
+    console.log(array[i]);
+}
+
+// 推荐遍历对象
+let pet = {};
+for (let field in pet) {
+    // field是对象的属性名
+    console.log(pet[field]);
+}
+```
+
 ### 方法
+
+两个相同的方法，后写的会覆盖先写的
+
+- 实参个数和形参个数可以不一致
+    - 实参少于形参，没传实参的形参会自动设置undefined
+    - 实参多于形参，多余的实参会被忽略
 
 ```js
 // 定义无参方法
@@ -4950,21 +5158,267 @@ function sum(x, y) {
 print();
 
 // 使用有参方法
-sum(1, 2);
+let n = sum(1, 2);
 ```
 
-### 条件表达式
+#### 参数默认值
+
+参数默认值是undefined
 
 ```js
-// if表达式
-if(3 > 1) {
+// 设置参数默认值1
+function sum(x=0, y=0) {
+    return x + y;
+}
 
-} else if(3 < 1) {
-
-} else {
-    
+// 设置参数默认值2
+function sum(x, y) {
+    x = x || 0;
+    y = y || 0;
+    return x + y;
 }
 ```
+
+#### 方法返回值
+
+方法可以没有返回值
+
+当方法没有return语句时，默认返回值是undefined
+
+当方法return没有指定一个值时，默认返回值是undefined
+
+```js
+function fun() {
+    // 默认返回值是undefined
+    return;
+}
+
+function fun() {
+    // 可以通过返回一个数组来返回多个值
+    return [value1, value2];
+}
+```
+
+#### 作用域
+
+作用域分全局作用域和局部作用域
+
+相应地，变量分为全局变量和局部变量
+
+如果方法内部，变量没有用关键字声明，直接赋值，会变成全局变量
+
+```js
+function fun() {
+    // 为了规范不要这么声明变量，必须加let或const关键字
+    n = 1;
+}
+
+// 要先执行方法
+fun()
+
+// 然后发现能输出局部变量n
+console.log(n);
+```
+
+#### 匿名函数
+
+```js
+// 具名函数
+function fun() {}
+
+// 匿名函数
+function() {}
+```
+
+- 使用方式
+    - 函数表达式：将匿名函数复制给一个变量，并通过变量名称进行调用，作用域遵循变量的作用域规则，必须先声明后调用
+    - 立即执行匿名函数，避免全局变量之间的污染
+
+```js
+// 函数表达式方式
+let fun = function() {}
+
+console.log(fn());
+
+// 立即执行方式1，多个立即执行的匿名函数之间注意加分号
+(function(){})();
+
+// 立即执行方式2，多个立即执行的匿名函数之间注意加分号
+(function(){}());
+```
+
+### Web API
+
+作用：使用js操作html和浏览器
+
+分类：DOM（文档对象模型）、BOM（浏览器对象模型）
+
+#### DOM
+
+DOM是浏览器提供的一套专门用来操作网页内容的API
+
+可以用来开发网页内容特效和实现用户交互功能
+
+DOM树：将html文档以树状结构直观地表现出来，标签与标签的关系一目了然
+
+- DOM对象：浏览器根据html标签生成的js对象
+    - 所有的标签属性都可以在这个对象上找到
+    - 修改这个对象的属性会自动映射到标签身上
+
+- document对象
+    - 是DOM提供的一个对象
+    - 它提供的属性和方法都是用来访问和操作网页内容的
+    - 网页所有内容都在document里面
+
+##### 获取DOM元素
+
+- 方式
+    - 根据css选择器来获取DOM元素
+    - 其它方式（了解）
+
+```js
+// 获取匹配的第一个元素，如果没有匹配到，返回null
+const element = document.querySelector("css选择器");
+
+const element = document.querySelector("div");
+// 类选择器要写点号
+const element = document.querySelector(".myClass");
+// id选择器要写井号
+const element = document.querySelector("#elementId");
+const element = document.querySelector("ul li:first-child");
+
+// 获取匹配的多个元素
+// 得到的是一个伪数组，没有push和pop等数组方法
+const elements = document.querySelectorAll("css选择器");
+
+const elements = document.querySelector("ul li");
+
+// 根据元素id获取一个元素，不用写井号
+const element = document.getElementById("elementId");
+
+// 根据标签名称获取一类元素
+const element = document.getElementsByTagName("div");
+
+// 根据类名获取一类元素
+const element = document.getElementsByClassName("box");
+```
+
+##### 操作DOM元素内容
+
+- 通过元素innerText属性：只识别文本，不解析标签
+
+```html
+<body>
+    <div class="box">文本内容</div>
+    <script>
+        // 类选择器要写点号
+        const element = document.querySelector(".box");
+        // 获取元素文本内容
+        console.log(element.innerText)
+        // 修改元素文本内容
+        element.innerText = "新文本内容";
+        // 不会解析标签
+        element.innerText = "<strong>新文本内容</strong>";
+    </script>
+</body>
+```
+
+- 通过元素innerHTML属性：识别文本，解析标签
+
+```html
+<body>
+    <div class="box">文本内容</div>
+    <script>
+        // 类选择器要写点号
+        const element = document.querySelector(".box");
+        // 获取元素文本内容
+        console.log(element.innerHTML)
+        // 修改元素文本内容
+        element.innerHTML = "新文本内容";
+        // 会解析标签，多标签建议使用模板字符串
+        element.innerHTML = "<strong>新文本内容</strong>";
+    </script>
+</body>
+```
+
+- 如果纠结innerText还是innerHTML，就用innerHTML
+
+##### 操作DOM元素属性
+
+###### DOM元素常用属性
+
+```html
+<body>
+    <img src="" title="" />
+    <script>
+        // 获取img元素
+        const element = document.querySelector("img");
+        // 操作img元素常用属性
+        element.src = "/path/to/image";
+        element.title = "我的自拍";
+    </script>
+</body>
+```
+
+###### DOM元素样式属性
+
+- 通过style属性修改样式
+    - 适用于修改的样式比较少的场景
+
+```html
+<body>
+    <div class="box">文本内容</div>
+    <script>
+        // 类选择器要写点号
+        const element = document.querySelector(".box");
+        element.style.width = "200px";
+        element.style.height = "200px";
+        // css中带减号的属性名用小驼峰
+        element.style.backgroundColor = "white";
+        element.style.paddingLeft = "8px";
+        element.style.border = "1px solid red";
+    </script>
+</body>
+```
+
+- 通过类名修改样式
+    - 适用于修改的样式比较多的场景
+    - 会直接顶掉旧的类名
+
+```html
+<body>
+    <div>文本内容</div>
+    <script>
+        const element = document.querySelector("div");
+        // 设置css类名，不用加点号
+        element.className = "box";
+    </script>
+</body>
+```
+
+- 通过classList修改样式
+    - 解决了className会直接顶掉旧的类名的问题
+
+```html
+<body>
+    <div>文本内容</div>
+    <script>
+        const element = document.querySelector("div");
+        // 追加css类名，不用加点号
+        element.classList.add("box");
+        // 删除css类名，不用加点号
+        element.classList.remove("box");
+        // 切换css类名，有就删掉，没有就加上，不用加点号
+        element.classList.toggle("box");
+    </script>
+</body>
+```
+
+###### DOM表单元素属性
+
+###### DOM元素自定义属性
+
+#### BOM
 
 ## JSP
 
