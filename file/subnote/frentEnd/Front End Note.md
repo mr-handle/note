@@ -5495,8 +5495,8 @@ clearInterval(timerId);
         - focus，获得焦点
         - blur，失去焦点
     - 键盘事件
-        - Keydown，键盘按键按下
-        - Keyup，键盘按键抬起
+        - keydown，键盘按键按下
+        - keyup，键盘按键抬起
     - 文本事件：表单输入触发
         - input，用户输入
 
@@ -5543,6 +5543,218 @@ clearInterval(timerId);
     </script>
 </body>
 ```
+
+##### 事件对象（event）及其属性
+
+- 常用的事件对象属性
+    - type，事件类型
+    - clientX/clientY，光标相对于浏览器视口左上角的位置
+    - offsetX/offsetY，光标相对于当前DOM元素左上角的位置
+    - key，按下的键盘键，现在推荐使用key了，不再推荐使用keyCode
+
+```js
+// 获取事件对象
+元素对象.addEventListener("事件类型", function(event) {});
+```
+
+##### 环境对象（this）及其回调函数
+
+环境对象：指的是函数内部特殊的变量this，它代表着当前函数运行时所处的环境
+
+谁调用函数，this就是谁
+
+直接调用函数，其实相当于window.函数，this指向window对象
+
+```html
+<body>
+    <button>发送</button>
+    <script>
+        function fun() {}
+
+        // 其实调用fun的是window对象，即window.fun();
+        // 因此这里fun的环境对象this指的是window对象
+        fun();
+
+        const element = document.querySelector("button");
+        element.addEventListener("click", function () {
+            // 这里的环境对象this指的是element对象
+        });
+    </script>
+</body>
+```
+
+回调函数：将函数A作为参数传递给函数B时，函数A就是回调函数
+
+```js
+function a() {};
+
+// 这里a就是回调函数
+setInterval(a, 1000);
+
+// 这里的匿名函数也是回调函数
+element.addEventListener("click", function () {});
+```
+
+##### 事件流
+
+- 事件流指的是事件完整执行过程中的流动路径
+    - 捕获阶段，从父到子：document->html元素->body元素->div元素
+    - 冒泡阶段，从子到父：div元素->body元素->html元素->document
+
+事件捕获：从DOM的跟元素开始去执行对应的事件
+
+- 事件冒泡：当一个元素的事件被触发时，同样的事件将会在该元素的所有祖先元素中依次被触发
+    - 简单理解就是当一个元素触发事件后，会依次向上调用所有父级元素的同名事件
+
+实际工作主要使用事件冒泡
+
+```js
+// 第三个参数填true表示是捕获阶段触发（很少使用）
+元素对象.addEventListener("事件类型", function(event) {}, 是否使用捕获机制);
+
+// 平时使用的两个参数的写法就是冒泡阶段触发
+元素对象.addEventListener("事件类型", function(event) {});
+```
+
+###### 阻止冒泡
+
+若想把事件限制在当前元素内，就需要阻止事件冒泡
+
+```js
+// 此方法可以阻断事件流动传播，在捕获阶段和冒泡阶段都有效
+事件对象.stopPropagation();
+```
+
+###### 事件解绑
+
+对于on方式绑定的事件，直接使用null覆盖就可以实现事件的解绑
+
+```js
+// 绑定事件
+button.onclick = function() {};
+// 解绑事件
+button.onclick = null;
+```
+
+对于addEventListener方式绑定的事件，注意匿名函数无法解绑
+
+```js
+元素对象.removeEventListener(事件类型, 事件处理函数, [获取捕获或者冒泡阶段]);
+
+function fun() {}
+
+// 绑定事件
+button.addEventListener("click", fun);
+
+// 解绑事件
+button.removeEventListener("click", fun);
+```
+
+##### 事件委托
+
+给父元素注册事件，当触发子元素的事件时，会冒泡到父元素，从而触发父元素的事件
+
+```html
+<body>
+    <ul>
+        <li>1</li>
+        <li>2</li>
+        <p>3</p>
+    </ul>
+    <script>
+        const element = document.querySelector("ul");
+        element.addEventListener("click", function (event) {
+            // 获取触发事件的元素对象
+            console.log(event.target);
+            if(event.target.tagName === 'LI') {
+                // do something
+            }
+        });
+    </script>
+</body>
+```
+
+##### 阻止元素默认行为
+
+```js
+const element = document.querySelector("form");
+element.addEventListener("click", function (event) {
+    // 阻止表单默认提交行为
+    event.preventDefault();
+});
+```
+
+##### 页面事件
+
+###### 页面加载事件
+
+外部资源（如图片、外联css和外联js等），加载完毕时触发的事件
+
+```js
+// load：监听页面所有资源加载完毕
+window.addEventListener("load", function(){});
+
+// 还可以针对某个资源绑定load事件
+img.addEventListener("load", function(){});
+```
+
+当初始的html文档被完全加载和解析完成后，DOMContentLoaded事件被触发，而无需等待样式表、图像等完全加载
+
+```js
+// DOMContentLoaded：监听页面DOM加载完毕
+document.addEventListener("DOMContentLoaded", function(){});
+```
+
+###### 页面/元素滚动事件
+
+滚动条在滚动的时候，持续触发的事件
+
+注意：scrollLeft和scrollTop属性是可读写并且可修改的，它们的值是数字类型，没有单位
+
+```js
+// scroll：监听页面滚动
+// 可以给给window或document添加滚动事件
+window.addEventListener("scroll", function(){
+    // 获取html元素
+    const html = document.documentElement;
+    // 获取页面向上滚动的距离（像素）
+    console.log(html.scrollTop);
+
+    // html.scrollTo(x, y)这种写法了解即可
+    html.scrollTo(0, 0);
+});
+
+// 监听某个元素的内部滚动直接给某个元素对象加即可
+element.addEventListener("scroll", function(){
+    // 获取元素内容滚动了多少距离
+    console.log(element.scrollLeft);
+    console.log(element.scrollTop);
+});
+```
+
+###### 页面尺寸事件
+
+```js
+// resize：监听浏览器窗口尺寸改变
+window.addEventListener("resize", function(){
+    const html = document.documentElement;
+    // 获取元素的可见部分（content+padding）宽高，不包含border，margin，滚动条宽高
+    // 屏幕宽度
+    console.log(html.clientWidth);
+    // 屏幕高度
+    console.log(html.clientHeight);
+});
+```
+
+###### 元素尺寸和位置
+
+offsetWidth和offsetHeight用来获取元素宽高：content+padding+border+滚动条
+
+注意：获取的是可视宽高，如果盒子是隐藏的，结果为0
+
+- offsetLeft和offsetTop
+    - 获取元素距离自己最近的带有定位属性的祖先元素（应该就是包含块）的左、上距离，如果没有一视口左上角为准
+    - 它们是只读属性
 
 #### BOM
 
