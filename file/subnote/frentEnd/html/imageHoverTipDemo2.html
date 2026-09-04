@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            img {
+                /* 取消行内块幽灵空白问题 */
+                vertical-align: middle;
+            }
+
+            img:hover {
+                box-shadow: 0px 0px 15px gray;
+            }
+
+            .image {
+                /* 根据需要设置父元素是独占一行还是由图片撑开 */
+                display: inline-block;
+                margin-right: 15px;
+                position: relative;
+            }
+
+            .image::after {
+                /* content的值直接读取标签的自定义属性data-tip的属性值来作为提示文字 */
+                content: attr(data-tip);
+                /* 不设置宽度了，提示文字在一行显示完，不换行 */
+                white-space: nowrap;
+                height: 25px;
+                line-height: 25px;
+                text-align: center;
+                font-size: 14px;
+                color: #fff;
+                background: rgba(0, 0, 0, 0.8);
+                padding: 5px 10px;
+                border-radius: 8px;
+                /* 默认隐藏且不占位 */
+                display: none;
+
+                /* 相对父元素绝对定位 */
+                position: absolute;
+                left: 30%;
+                top: 30px;
+            }
+
+            .image:hover::after {
+                display: inline;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="image" data-tip="展开侧边栏">
+            <img src="image/show_sidebar.svg">
+        </div>
+    </body>
+</html>

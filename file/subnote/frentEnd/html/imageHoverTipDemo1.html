@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            img:hover {
+                box-shadow: 0px 0px 15px gray;
+            }
+
+            .tooltip {
+                width: 70px;
+                height: 25px;
+                line-height: 25px;
+                text-align: center;
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 8px;
+                font-size: 14px;
+
+                position: absolute;
+                left: 30%;
+                top: 30px;
+                display: none;
+            }
+
+            .sideBarImgDiv {
+                display: inline-block;
+                margin-right: 15px;
+                position: relative;
+            }
+
+            .sideBarImgDiv:hover .tooltip {
+                display: inline;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="sideBarImgDiv">
+            <span class="tooltip">展开侧边栏</span>
+            <img src="image/show_sidebar.svg" alt="展开侧边栏">
+        </div>
+    </body>
+</html>

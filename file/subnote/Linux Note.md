@@ -3811,6 +3811,8 @@ sudo trust anchor --store 上面复制的SteamTools.Certificate.cer的具体路�
 
 ##### 安装输入法fcitx5
 
+简体/繁体切换快捷键："Ctrl+`"
+
 ###### 1.安装输入法框架
 
 ```sh

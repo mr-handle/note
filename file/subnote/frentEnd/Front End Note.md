@@ -1342,7 +1342,9 @@ div:lang(en_US) {}
 
 #### 伪元素选择器
 
-用来选中元素中的一些特殊位置
+伪元素，很像元素，是元素中的一些特殊位置
+
+可以用伪元素来选中元素中的一些特殊位置
 
 ```html
 <div>handle</div>
@@ -1361,13 +1363,15 @@ div::selection {}
 /* 选中的是input元素中的提示文字，例如可以用来改背景色 */
 input::placeholder {}
 
-/* 选中的是p元素最开始的位置，例如可以用来添加前缀 */
+/* 选中的是p元素最开始的位置，随后创建一个子元素"::before"，例如可以用来添加前缀 */
 p::before {
+    /* 必须用content属性指定子元素内容，否则没有没有效果 */
     content: "yourPrefix";
 }
 
-/* 选中的是p元素最后的位置，例如可以用来添加后缀 */
+/* 选中的是p元素最后的位置，随后创建一个子元素"::after"，例如可以用来添加后缀 */
 p::after {
+    /* 必须用content属性指定子元素内容，否则没有没有效果 */
     content: "yourSuffix";
 }
 ```
@@ -4900,6 +4904,32 @@ let array2 = ["c", "d"];
 array.concat(array2);
 ```
 
+##### 数组的方法
+
+- 方法
+    - map，可以用来遍历数组，处理数据，并且返回新的数组
+        - 用foreach遍历没有返回值，用map方法有返回值
+
+    - join，把数组中的所有元素转换为一个字符串
+
+```js
+const array = ["a", "b"];
+const newArray = array.map(function(element, index) {
+    // 元素
+    console.log(element);
+    // 索引
+    console.log(index);
+    return element + "suffix";
+})
+
+
+// 如果不指定参数，默认以英文逗号分隔
+console.log(array.join());
+
+// 可以指定一个分隔符
+console.log(array.join(""));
+```
+
 #### 对象（object）
 
 object可以理解为一种无序的数据集合
@@ -5245,6 +5275,9 @@ console.log(fn());
 
 // 立即执行方式2，多个立即执行的匿名函数之间注意加分号
 (function(){}());
+
+// 立即执行方式3，加各种稀奇古怪的前缀，如：!、~、+等
+!function(){}();
 ```
 
 ### Web API
@@ -5756,7 +5789,370 @@ offsetWidth和offsetHeight用来获取元素宽高：content+padding+border+滚�
     - 获取元素距离自己最近的带有定位属性的祖先元素（应该就是包含块）的左、上距离，如果没有一视口左上角为准
     - 它们是只读属性
 
+##### 日期对象
+
+```js
+// 获取当前时间
+const date = new Date();
+
+// 用指定时间创建对象
+const someDate = new Date("2025-9-4 08:30:00");
+
+// 2026
+date.getFullYear();
+
+// 月份，0-11，因此要+1
+// 8
+date.getMonth() + 1;
+
+// 日
+date.getDate();
+
+// 星期，0-6，星期天为0
+// 5
+date.getDay();
+
+// 小时，0-23
+// 10
+date.getHours();
+
+// 分钟，0-59
+// 6
+date.getMinutes();
+
+// 秒，0-59
+// 48
+date.getSeconds();
+
+// '9/4/2026, 10:30:34 AM'
+date.toLocaleString();
+// '9/4/2026'
+date.toLocaleDateString();
+// 10:30:34 AM'
+date.toLocaleTimeString();
+
+function getHumanDate() {
+    const date = new Date();
+    let hour = date.getHours();
+    hour = hour < 10 ? "0" + hour : hour;
+    let minute = date.getMinutes();
+    minute = minute < 10 ? "0" + minute: minute;
+    let second = date.getSeconds();
+    second = second < 10 ? "0" + second: second;
+    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${hour}:${minute}:${second}`;
+}
+```
+
+##### 时间戳
+
+三种方式获取时间戳
+
+```js
+const date = new Date();
+date.getTime();
+
++new Date();
+
+Date.now();
+```
+
+##### DOM节点
+
+DOM树里每一个内容都称之为节点
+
+- 节点类型有
+    - 元素节点，html是根节点
+    - 属性节点，如标签的属性
+    - 文本节点，如标签里面的文字
+    - 其它
+
+###### 查找节点
+
+- 查找父节点
+
+```js
+// 返回直接父节点，找不到返回null
+子元素.parentNode
+
+const element = document.querySelector(".son");
+// 父节点
+console.log(element.parentNode);
+// 爷爷节点
+console.log(element.parentNode.parentNode);
+```
+
+- 查找子节点
+
+```js
+// 获得所有子节点，包括文本节点（空格、换行）、注释节点等
+父元素.childNodes
+
+// 仅获得所有子元素节点，返回的是一个伪数组
+父元素.children
+
+const element = document.querySelector(".father");
+// 父节点
+console.log(element.children);
+```
+
+- 查找兄弟节点
+
+```js
+// 下一个兄弟节点
+element.nextElementSibling
+
+// 上一个兄弟节点
+element.previousElementSibling
+
+const element = document.querySelector(".box");
+
+console.log(element.nextElementSibling);
+console.log(element.previousElementSibling);
+```
+
+###### 新增节点
+
+```js
+// 创建一个新的元素节点
+const element = document.createElement("标签名");
+
+// 将节点插入到父元素的最后
+父元素.appendChild(element);
+
+// 将节点插入到父元素的某个子元素的前面
+父元素.insertBefore(要插入的元素，在哪个元素前面);
+
+const element = document.createElement("li");
+const father = document.createElement("ul");
+father.insertBefore(element, father.children[0]);
+```
+
+###### 克隆节点
+
+```js
+// 克隆一个元素节点
+// 参数如果为true，包括后代节点一起克隆，比如标签文本
+// 默认为false，只克隆标签
+const clone = element.cloneNode(false);
+```
+
+###### 删除节点
+
+```js
+const element = document.querySelector("ul");
+// 删除节点通过父元素删除
+element.removeChild(element.children[0]);
+```
+
+##### 移动端事件（了解）
+
+- 触屏touch事件
+    - touchstart，手指/触控笔触摸到一个DOM元素时触发
+    - touchmove，手指/触控笔在一个DOM元素上滑动时触发
+    - touchend，手指/触控从一个DOM元素上移开时触发
+
+```js
+const element = document.querySelector("div");
+div.addEventListener("touchstart", function() {});
+```
+
 #### BOM
+
+BOM：Browser Object Model，浏览器对象模型
+
+- window对象
+    - navigator
+    - location
+    - document（DOM）
+    - history
+    - screen
+
+window对象是一个全局对象，也可以说是js中的顶级对象
+
+像document、alert()、console.log()，他们都是window的，基本上BOM的属性和方法都是window的
+
+所有通过var定义在全局作用域中的变量、函数都会变成window对象的属性和方法
+
+window对象的属性和方法在使用的时候可以省略window
+
+```js
+// document.querySelector("div")
+window.document.querySelector("div");
+```
+
+##### 延时函数
+
+js内置的一个让代码延时执行且仅只执行一次的函数，叫setTimeout
+
+```js
+let oneTimeTask = setTimeout(回调函数, 等待的毫秒数);
+
+// 一般用不上清除
+clearTimeout(oneTimeTask);
+```
+
+##### js执行机制
+
+js的一大特点就是单线程
+
+意味着所有任务需要排队，前一个任务结束，才会执行后一个任务
+
+这就导致：如果js执行的时间过长，会造成页面的渲染不连贯，给人阻塞的感觉
+
+为了解决上面的问题，html5提出web worker标准，允许js创建多个线程，于是js中出现了同步和异步
+
+同步任务都在主线程上执行，形成一个执行栈
+
+- 异步任务是通过回调函数实现的，一般来讲有三种类型
+    - 普通事件，如：click、resize等
+    - 资源加载，如：load、error等
+    - 定时器，如：setInterval、setTimeout等
+
+异步任务会添加到任务队列中（也称为消息队列）
+
+- js执行机制
+    - 先执行执行栈中的同步任务
+    - 异步任务放入任务队列中
+    - 一旦执行栈中的所有同步任务执行完毕，系统就会按次序读取任务队列中的异步任务，于是被读取的异步任务结束等待状态，进入执行栈，开始执行
+
+由于主线程不断地重复：获得任务、执行任务、再获取任务、再执行，所以这种机制被称为事件循环(event loop)
+
+##### location对象
+
+location对象拆分并保存了url的各个组成部分
+
+- 属性
+    - href，读取时获得完整的url，对齐赋值时用于地址的跳转
+    - search，获取地址中携带的参数（?及其后面的内容）
+    - hash，获取url中的哈希值（#及其后面的内容）
+        - 经常用于不刷新页面，显示不同页面
+
+```js
+// 读取时获得完整的url
+console.log(location.href);
+
+// 跳转到目标地址
+location.href="#";
+
+// 获取url参数
+console.log(location.search);
+
+// 如：localhost:8080/#/my
+// 输出：#/my
+console.log(location.hash);
+```
+
+- 方法
+    - reload，刷新当前页面，传入true参数表示强制 刷新
+
+```js
+// 普通刷新，类似f5
+location.reload();
+
+// 强制刷新，类似ctrl+f5
+location.reload(true);
+```
+
+##### navigator对象
+
+navigator对象记录了浏览器自身的相关信息
+
+- 属性：userAgent，获取浏览器的版本和平台信息
+
+##### history对象
+
+history对象主要管理历史记录，该对象与浏览器地址栏的操作相对应，如前进、后退、历史记录等
+
+- 方法
+    - back，后退
+    - forward，前进
+    - go(参数)，前进/后退，如果参数填1，前进1个页面；如果参数填-1，后退1个页面
+
+history对象在实际开发中比较少用，但是会在一些OA办公系统中见到
+
+##### 本地存储
+
+浏览器打开开发者工具（F12），然后切到Application，然后在Storage可以查看存储的数据
+
+###### localStorage
+
+将数据永久存储在本地（用户电脑），除非手动删除，否则关闭页面也会存在
+
+一键值对（都是字符串）的形式存储和使用，同一浏览器可以多窗口（页面）共享
+
+```js
+// 存储数据
+localStorage.setItem(key, value);
+
+// 读取数据
+let value = localStorage.getItem(key);
+
+// 删除数据
+localStorage.removeItem(key);
+
+// 存储了多少键值对
+let length = localStorage.length;
+```
+
+###### sessionStorage
+
+生命周期为打开网页到关闭浏览器
+
+在同一个窗口（页面），数据可以共享
+
+用法跟localStorage基本相同
+
+使用相对较少
+
+###### 存储复杂数据类型
+
+方法：先将复杂数据类型转换成json字符串，再存储
+
+```js
+// 存
+let json = JSON.stringify(object);
+localStorage.setItem(key, json);
+
+// 取
+let json = localStorage.getItem(key);
+let object = JSON.parse(json);
+```
+
+##### 正则表达式
+
+除了正则表达式的字面量跟java有点区别，正则表达式规则可以参考java的正则表达式
+
+```js
+// 定义正则表达式语法，两个/是正则表达式字面量
+// 里面的字符串不需要加引号
+const reg = /正则表达式/;
+
+const reg = /java/;
+
+// 检测字符串是否匹配指定的正则表达式
+// 匹配返回true，否则返回false
+reg.test("pathon, java, rust");
+
+// 查找符合正则表达式的字符串
+// 匹配成功，则返回一个数组，否则返回null
+reg.exec("");
+```
+
+##### 元字符
+
+普通字符：仅能够描述字符本身的字符，如所有的字母和数字
+
+元字符：一些具有特殊含义的字符，极大提高了灵活性和强大的匹配功能，如：[a-z]表示26个小写字母
+
+- 元字符分类
+    - 边界符，表示位置，如表示开头的`^`和表示结尾的`$`
+    - 量词，表示重复次数
+    - 字符类，如\d表示0-9
+
+```js
+// 精确匹配java
+/^java$/.test("java");
+```
 
 ## JSP
 
@@ -7529,3 +7925,13 @@ location /api/ {
     proxy_pass http://后端网关ip:port/;
 }
 ```
+
+## 应用
+
+### 不通过img的title属性实现鼠标悬停到图片上提示文字
+
+- 方法一：设置一个span专门放提示文字
+    - 代码：[imageHoverTipDemo2](html/imageHoverTipDemo1.html)
+
+- 方法2：直接在父元素设置自定义属性，然后通过`::after`读取，推荐
+    - 代码：[imageHoverTipDemo2](html/imageHoverTipDemo2.html)
