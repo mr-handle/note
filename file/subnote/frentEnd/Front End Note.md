@@ -4914,6 +4914,8 @@ array.concat(array2);
         - 用foreach遍历没有返回值，用map方法有返回值
 
     - join，把数组中的所有元素转换为一个字符串
+    - forEach，遍历数组，无返回
+    - filter，筛选符合条件的元素，并返回新的数组
 
 ```js
 const array = ["a", "b"];
@@ -4923,7 +4925,7 @@ const newArray = array.map(function(element, index) {
     // 索引
     console.log(index);
     return element + "suffix";
-})
+});
 
 
 // 如果不指定参数，默认以英文逗号分隔
@@ -4931,6 +4933,23 @@ console.log(array.join());
 
 // 可以指定一个分隔符
 console.log(array.join(""));
+
+// element参数必写，index参数是可选的
+array.forEach(function(element, index) {
+    // 元素
+    console.log(element);
+    // 索引
+    console.log(index);
+});
+
+array.filter(function(element, index) {
+    // 元素
+    console.log(element);
+    // 索引
+    console.log(index);
+    // 筛选条件根据实际需求设置
+    return element === "handle";
+});
 ```
 
 #### 对象（object）
@@ -4940,7 +4959,7 @@ object可以理解为一种无序的数据集合
 数组是有序的数据集合
 
 ```js
-// 定义对象1
+// 通过字面量创建对象
 let objectName1 = {
     属性名1: 属性值1,
     属性名2: 属性值2,
@@ -4948,8 +4967,11 @@ let objectName1 = {
     方法名2: 函数2
 };
 
-// 定义对象2
+// 通过new Object()创建对象
 let objectName2 = new Object();
+
+// 通过构造函数创建对象
+
 
 let pet = {
     // 定义属性
@@ -4960,6 +4982,8 @@ let pet = {
         return this.name + " " + this.age;
     }
 };
+
+let pet = new Object({name: "dog"});
 
 // 访问对象属性
 pet.name;
@@ -4977,6 +5001,185 @@ delete pet.weight
 
 // 方法调用：对象名.方法名(实参列表)
 pet.toString()
+```
+
+##### 构造函数
+
+构造函数是一种特殊的函数，主要用来初始化对象
+
+- 构造函数在技术上是常规函数，不过有两个约定（不是强制）
+    - 构造函数命名以大写字母开头
+    - 构造函数只能由new操作符来执行
+
+使用new关键字调用函数的行为被称为实例化
+
+实例化构造函数时，如果没有参数可以省略括号
+
+构造函数返回值为新创建的对象，函数体不要写return，写了也无效
+
+```js
+// 创建构造函数
+function Pet(name, age) {
+    this.name = name;
+    this.age = age;
+    this.fun = function() {};
+}
+// 静态属性
+Pet.eyes = 2;
+// 静态方法
+Pet.sleep = function() {};
+
+// 通过构造函数创建对象
+const pet = new Pet("dog", 3);
+console.log(pet);
+
+console.log(Pet.eyes);
+```
+
+###### 构造函数实例化过程
+
+- 创建新对象
+- 构造函数this指向新对象
+- 执行构造函数代码，修改this（对象），添加新的属性
+- 返回新对象
+
+##### 实例成员和静态成员
+
+通过构造函数创建的对象称为实例对象
+
+实例成员：实例对象中的属性和方法称为实例成员（实例属性和实例方法）
+    - 实例对象彼此独立互不影响
+
+- 静态成员：构造函数的属性和方法称为静态成员（静态属性和静态方法）
+    - 静态成员只能通过构造函数来访问
+    - 静态方法中的this指向构造函数
+
+##### 内置构造函数
+
+- 包装类型：String、Number、Boolean等
+- 引用类型：Object、Array、RegExp、Date等
+
+###### 包装类型
+
+基本数据类型也有专门的构造函数，称为包装类型
+
+js中几乎所有的数据都可以基于构造函数创建
+
+```js
+// 实际上底层完成的是
+// const name = new String("handle"); 
+const name = "handle";
+```
+
+###### Object
+
+```js
+// 更推荐使用对象字面量方式，而不是Object构造函数
+const pet = new Object({name: "dot", age: 3});
+
+// 获取对象的所有属性名，并返回一个数组
+const fields = Object.keys(pet);
+// 获取对象的所有属性值，并返回一个数组
+const values = Object.values(pet);
+
+const petClone = {};
+// 对象拷贝
+Object.assign(petClone, pet);
+// 经常用于给对象添加属性
+Object.assign(pet, {gender: "male"});
+```
+
+###### Array
+
+- 常用的实例方法
+    - forEach
+    - filter
+    - map
+    - reduce，累计器，返回处理的结果，经常用于求和等
+    - find，查找元素，返回符合条件的第一个元素值，如果没有符合条件的则返回undefined
+    - every，检测数组所有元素是否都符合指定条件，是则返回true，否则返回false
+    - some，检测数组中的元素是否满足指定条件，如果有元素满足则返回true，否则返回false
+    - concat，合并两个数组，返回新数组
+    - sort，对原数组进行排序
+    - splice，删除或替换源数组元素
+    - reverse，数组逆序
+    - findIndex，查找元素的索引值
+
+- 静态方法
+    - from，将伪数组转换为真数组
+
+```js
+// 创建数组推荐用字面量方式，而不是Array构造函数
+const array = new Array("a", "b");
+
+// 如果有初始值，则初始值作为上一次值
+// 如果无初始值，上一次值为数组第一个元素的值
+// 每一次循环把返回值作为下一次循环的上一次值
+array.reduce(function(){}, 初始值);
+array.reduce(function(上一次值, 当前值){}, 初始值);
+
+const array = [1, 2, 3];
+
+// 无初始值
+const total = array.reduce(function(previous, current){
+    return previous + current;
+});
+
+// 有初始值
+const total = array.reduce(function(previous, current){
+    return previous + current;
+}, 10);
+
+
+const array = ["a", "b", "c"];
+array.find(element => element === "a");
+
+array.every(element => element === "a");
+
+const array = document.querySelectorAll("li");
+const array2 = Array.from(array);
+```
+
+###### String
+
+- 实例属性
+    - length，获取字符串长度
+    - split，将字符串拆分成数组
+    - substring，截取子字符串，右半开区间`[开始索引，结束索引)`
+    - startsWith，检测字符串是否以某字符开头
+    - endsWith，检测字符串是否以某字符结尾
+    - includes，检测字符串是否包含另一个字符串
+    - toUpperCase
+    - toLowerCase
+    - indexOf
+    - replace，将字符串的某些字符替换为新字符，支持正则
+    - match，查找字符串，支持正则
+
+```js
+const string = "a,b,c";
+string.split(",");
+
+// hand
+"handle".substring(0, 4);
+
+// true
+"handle".startsWith("ha");
+
+// 从索引1开始找，以a开头
+"handle".startsWith("a", 1);
+
+// true
+"handle".includes("dl");
+```
+
+###### Number
+
+```js
+const pi = 3.1415;
+// 四舍五入，不保留小数
+pi.toFixed();
+// 四舍五入，保留两位小数
+pi.toFixed(2);
 ```
 
 ##### 内置对象
@@ -5168,30 +5371,83 @@ for (let field in pet) {
 }
 ```
 
-### 方法
+### 函数
 
-两个相同的方法，后写的会覆盖先写的
+两个相同的函数，后写的会覆盖先写的
 
 - 实参个数和形参个数可以不一致
     - 实参少于形参，没传实参的形参会自动设置undefined
     - 实参多于形参，多余的实参会被忽略
 
 ```js
-// 定义无参方法
+// 定义无参函数
 function print() {
     return "hello world";
 }
 
-// 定义有参方法
+// 定义有参函数
 function sum(x, y) {
     return x + y;
 }
 
-// 使用无参方法
+// 使用无参函数
 print();
 
-// 使用有参方法
+// 使用有参函数
 let n = sum(1, 2);
+```
+
+#### 函数参数
+
+##### 动态参数
+
+arguments是函数内置的伪数组变量，它包含了调用函数时传入的所有实参
+
+```js
+function fun() {
+    console.log(arguments);
+}
+
+// 调用函数时的参数都被arguments接收
+fun(1, 2, 3);
+```
+
+##### 剩余参数
+
+剩余参数允许将一个不定数量的参数表示为一个真数组
+
+开发中推荐使用剩余参数，而不是arguments
+
+```js
+// ...跟java的有点类似
+function fun(a, b, ...args) {
+    console.log(args);
+}
+
+fun(1, 2, 3, 4);
+```
+
+##### 展开运算符
+
+展开运算符"..."将一个数组展开
+
+展开运算符主要是数组展开
+
+剩余参数在函数内部使用
+
+典型应用：求数组最大/小值、合并数组等
+
+```js
+function fun() {
+    const array = [1, 2, 3];
+    // ...array === 1, 2, 3
+    console.log(Math.max(...array));
+    console.log(Math.min(...array));
+
+    // 合并数组
+    const array2 = [4, 5, 6];
+    const array3 = [...array, ...array2];
+}
 ```
 
 #### 参数默认值
@@ -5212,13 +5468,13 @@ function sum(x, y) {
 }
 ```
 
-#### 方法返回值
+#### 函数返回值
 
-方法可以没有返回值
+函数可以没有返回值
 
-当方法没有return语句时，默认返回值是undefined
+当函数没有return语句时，默认返回值是undefined
 
-当方法return没有指定一个值时，默认返回值是undefined
+当函数return没有指定一个值时，默认返回值是undefined
 
 ```js
 function fun() {
@@ -5232,13 +5488,128 @@ function fun() {
 }
 ```
 
+#### 匿名函数
+
+```js
+// 具名函数
+function fun() {}
+
+// 匿名函数
+function() {}
+```
+
+- 使用方式
+    - 函数表达式：将匿名函数复制给一个变量，并通过变量名称进行调用，作用域遵循变量的作用域规则，必须先声明后调用
+    - 立即执行匿名函数，避免全局变量之间的污染
+
+```js
+// 函数表达式方式
+let fun = function() {}
+
+console.log(fn());
+
+// 立即执行方式1，多个立即执行的匿名函数之间注意加分号
+(function(){})();
+
+// 立即执行方式2，多个立即执行的匿名函数之间注意加分号
+(function(){}());
+
+// 立即执行方式3，加各种稀奇古怪的前缀，如：!、~、+等
+!function(){}();
+```
+
+#### 箭头函数
+
+引入箭头函数的目的是更简短的函数写法并且不绑定this
+
+箭头函数的写法比函数表达式更简洁
+
+适用于那些本来需要匿名函数的地方
+
+```js
+// 匿名函数写法
+const fun = function() {};
+
+// 箭头函数写法
+const fun = () => {};
+
+// 调用函数的写法不变
+fun();
+
+// 带参数
+const fun = (n) => {
+    console.log(n);
+};
+fun(1);
+
+// 只有一个参数可以去掉括号
+const fun = n => {
+    console.log(n);
+};
+
+// 只有一行代码的时候可以省略花括号
+const fun = n => console.log(n);
+
+// 只有一行代码的时候可以不写return
+const fun = n => {return n + n};
+const fun = n => n + n;
+
+// 箭头函数可以返回对象
+const fun = () => {
+    return {key: value};
+};
+
+const fun = () => return {key: value};
+
+// 这样写无法区分花括号是函数体的边界还是对象字面量表达式
+// const fun = () => {key: value};
+// 因此加括号来区分
+const fun = () => ({key: value});
+```
+
+##### 箭头函数参数
+
+普通函数有arguments动态参数，箭头函数没有
+
+但是箭头函数也有剩余参数
+
+```js
+const fun = (...args) => {};
+```
+
+##### 箭头函数this
+
+箭头函数不会创建自己的this，它只会从自己的作用域链的上一层沿用this
+
+在开发时，使用箭头函数前需要考虑函数中this的值
+
+事件回调函数使用箭头函数时，this指向全局对象window，因此DOM事件回调函数为了渐变，还是不太推荐使用箭头函数
+
+```js
+const fun = () => {
+    // this指向上一层作用域的window对象
+    console.log(this);
+};
+fun();
+
+
+const object = {
+    fun: () => {
+        // fun是箭头函数，没有this，因此不指向object
+        // this指向object上一层作用域的window对象
+        console.log(this);
+    }
+};
+object.fun();
+```
+
 #### 作用域
 
 作用域分全局作用域和局部作用域
 
 相应地，变量分为全局变量和局部变量
 
-如果方法内部，变量没有用关键字声明，直接赋值，会变成全局变量
+如果函数内部，变量没有用关键字声明，直接赋值，会变成全局变量
 
 ```js
 function fun() {
@@ -5246,7 +5617,7 @@ function fun() {
     n = 1;
 }
 
-// 要先执行方法
+// 要先执行函数
 fun()
 
 // 然后发现能输出局部变量n
@@ -5291,36 +5662,6 @@ var声明的变量不会产生块作用域
 相同作用域链中按从小到大的规则查找变量
 
 子作用域能访问父作用域，父作用域无法访问子作用域
-
-#### 匿名函数
-
-```js
-// 具名函数
-function fun() {}
-
-// 匿名函数
-function() {}
-```
-
-- 使用方式
-    - 函数表达式：将匿名函数复制给一个变量，并通过变量名称进行调用，作用域遵循变量的作用域规则，必须先声明后调用
-    - 立即执行匿名函数，避免全局变量之间的污染
-
-```js
-// 函数表达式方式
-let fun = function() {}
-
-console.log(fn());
-
-// 立即执行方式1，多个立即执行的匿名函数之间注意加分号
-(function(){})();
-
-// 立即执行方式2，多个立即执行的匿名函数之间注意加分号
-(function(){}());
-
-// 立即执行方式3，加各种稀奇古怪的前缀，如：!、~、+等
-!function(){}();
-```
 
 ### 垃圾回收机制
 
@@ -6326,6 +6667,236 @@ reg.exec("");
 
 // g，global，匹配所有满足正则表达式的结果，没有g，则只匹配一个
 /jJ/ig.test("J");
+```
+
+### 解构赋值
+
+#### 数组解构
+
+数组解构是将数组的单元值（即数组元素）快速批量赋值给一系列变量的简洁语法
+
+```js
+const array = [20, 60, 100];
+
+const min = array[0];
+const avg = array[1];
+const max = array[2];
+
+
+// 上面的写法可以用解构赋值
+// 左侧的[]用于批量声明变量
+// const [min, avg, max] = [20, 60, 100];
+const [min, avg, max] = array;
+
+// 直接使用批量声明的变量
+console.log(min);
+
+// 变量多数单元值少的情况
+// max是undefined
+const [min, avg, max] = [20, 60];
+
+// 变量多数单元值少的情况，可以设置默认值防止undefined
+const [min=20, avg=60, max=100] = [];
+
+// 变量值少，单元值多的情况
+// 200被忽略
+const [min, avg, max] = [20, 60, 100, 200];
+
+// 也可以按需导入赋值
+// max=200
+const [min, avg, ,max] = [20, 60, 100, 200];
+
+// 用剩余参数接收变量值少，单元值多的情况
+const [min, avg, max, ...args] = [20, 60, 100, 200];
+
+// 多维数组解构
+const [min, avg, [max]] = [20, 60, [100, 200]];
+```
+
+##### 数组解构应用
+
+```js
+// 不用临时变量交换两个变量的值
+let x = 1;
+let y = 2;
+[y, x] = [x, y];
+```
+
+#### 对象解构
+
+对象解构是将对象的属性和方法快速批量赋值给一系列变量的简洁语法
+
+左侧的{}用于批量声明变量
+
+由于对象属性是无序的，不能像数组解构那样，对象属性的值将被赋给与属性名相同的变量
+
+对象中找不到与变量名相同的属性时，变量值为undefined
+
+```js
+const object = {name: "dog", age: 3};
+// 等价于
+// name = object.name
+// age  = object.age
+const {name, age} = object;
+
+// 注意结构的变量名不要和外面的变量名冲突，否则报错
+const name = "cat";
+const {name, age} = object;
+
+// 对于上面的情况，可以改变量名
+// 语法为"旧变量名: 新变量名"
+const {name: petName, age} = object;
+
+// 数组对象解构
+const objects = [{name: "dog", age: 3}];
+const [{name, age}] = objects;
+
+// 多级对象解构
+const object = {
+    name: "dog", 
+    age: 3, 
+    master: {
+        id: 1
+    }
+};
+const {name, age, master: {id}} = object;
+
+// 对于后端返回json的有意思的写法
+const result = {
+    "code": 200,
+    "message": "调用成功",
+    "data": [
+        {
+            "id": 1,
+            "name": "dog"
+        }
+    ]
+};
+
+
+// 接收数组
+function handleResult(data) {}
+
+const {data} = result;
+handleResult(data);
+
+// 上面的代码还可以写成这样
+function handleResult({data}) {}
+// 改名写法
+function handleResult({data: myData}) {}
+handleResult(result);
+```
+
+### js必须加分号的场景
+
+- 两个相邻的立即执行函数
+
+```js
+(function fun() {})();
+(function fun() {})();
+```
+
+- 数组开头的，特别是前面有语句的
+
+```js
+let x = 1;
+// 这一句必须加分号
+let y = 2;
+// 也可以这么加
+// ;[y, x] = [x, y];
+[y, x] = [x, y];
+```
+
+### 原型
+
+构造函数的实例方法在每个对象实例化的时候都造一份，造成了内存浪费
+
+js规定，每个构造函数都有一个prototype属性，指向另一个对象，称为原型对象
+
+原型对象可以挂载函数，对象实例化不会多次创建原型上的函数，节省内存
+
+构造函数通过原型分配的函数是所有对象共享的
+
+构造函数和原型对象中的this都指向实例化的对象
+
+```js
+function Pet(name, age) {
+    this.name = name;
+    this.age = age;
+    // 所有实例都创建一份，不共享，浪费内存
+    this.fun = function() {};
+}
+
+// 改成用原型挂载函数
+function Pet(name, age) {
+    this.name = name;
+    this.age = age;
+}
+// 所有实例共享，节省内存
+Pet.prototype.fun = function() {
+    console.log(this.name + ": " + this.age)
+};
+
+// 调用
+const pet = new Pet("dog", 3);
+pet.fun();
+
+// 给数组扩展方法
+Array.prototype.max = function () {
+    return Math.max(...this);
+}
+Array.prototype.min = function () {
+    return Math.min(...this);
+}
+Array.prototype.sum = function () {
+    return this.reduce((previous, current) => previous + current, 0);
+}
+```
+
+#### constructor属性
+
+每个原型对象都有一个constructor属性（constructor构造函数），指向该原型对象的构造函数
+
+```js
+function Pet(name, age) {
+    this.name = name;
+    this.age = age;
+}
+Pet.prototype.fun = function() {};
+// true
+console.log(Pet.prototype.constructor === Pet);
+
+
+// 这样写会覆盖原型对象原来的内容
+// 需要重新设置contructor指向原来的构造函数
+Pet.prototype = {
+    contructor: Pet,
+    fun: function() {};
+}
+```
+
+#### 对象原型
+
+每个对象都会有一个`__proto__`属性（称为对象原型）指向构造函数的prototype属性（原型对象）
+
+之所以对象可以使用构造函数的原型对象的属性和方法，就是因为存在`__proto__`
+
+- 注意
+    - `__proto__`是js非标准属性，能读不能写
+    - 浏览器显示的`Prototype`和`__proto__`意义相同
+    - `__proto__`里面也有一个contructor属性，指向创造该实例对象的构造函数
+
+```js
+function Pet(name, age) {
+    this.name = name;
+    this.age = age;
+}
+Pet.prototype.fun = function() {};
+const pet = new Pet("dog", 3);
+// true
+console.log(pet.__proto__ === Pet.prototype);
+// true
+console.log(pet.__proto__.contructor === Pet);
 ```
 
 ## JSP
