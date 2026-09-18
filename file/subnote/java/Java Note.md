@@ -3998,13 +3998,21 @@ try {
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <!--java8之后用release标签代替source标签和target标签-->
+                    <!--不知道为什么通过重新定义maven.compiler.release不起作用，必须在这里设置<release>具体java版本</release>覆盖父项目的设置才行-->
                     <release>25</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <!-- 在控制台执行maven命令要加上-->
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
+                <version>${javafx-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <!-- Default configuration for running with: mvn clean javafx:run -->
@@ -4123,9 +4131,10 @@ try {
 # 然后在idea编辑运行设置，添加VM选项
 --module-path ${JAVAFX_PATH} --add-modules javafx.controls,javafx.fxml
 
-# 下面的VM选项有问题
-# java.lang.module.FindException: Module javafx.fxml not found，先用上面的方法指定模块路径吧
---module-path "/path/to/org/openjfx/javafx-controls/25.0.3;/path/to/org/openjfx/javafx-fxml/25.0.3" --add-modules javafx.controls,javafx.fxml
+
+# --module-path 指定的类路径必须包含--add-modules所指定模块的所有依赖，这简直不是人写的东西，绝对不要用这种方法
+--module-path "/home/handle/.m2/repository/org/openjfx/javafx-media/26.0.2:/home/handle/.m2/repository/org/openjfx/jdk-jsobject/26.0.2:/home/handle/.m2/repository/org/openjfx/javafx-base/26.0.2:/home/handle/.m2/repository/org/openjfx/javafx-graphics/26.0.2:/home/handle/.m2/repository/org/openjfx/javafx-controls/26.0.2:/home/handle/.m2/repository/org/openjfx/javafx-web/26.0.2"
+--add-modules javafx.controls,javafx.web
 ```
 
 但是这样做添加的javafx的maven依赖又多此一举了
@@ -4342,6 +4351,110 @@ public class ComboBoxDemo extends Application {
         // 选中后，按钮上显示什么，如果不设置，则会调用选项的toString方法
         COMBO_BOX.setButtonCell(factory.call(null));
     }
+}
+```
+
+#### 布局
+
+##### VBox and HBox
+
+这两个是最基础的了
+
+```fxml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.MyController"
+      stylesheets="@/path/to/my.fx.css"
+>
+    <HBox>
+        <Button fx:id="sendButton" onAction="#onSendButtonClick">发送</Button>
+    </HBox>
+</VBox>
+```
+
+```css
+VBox {
+    -fx-background-color: purple;
+    -fx-alignment: center;
+}
+
+HBox {
+    -fx-alignment: center;
+}
+```
+
+##### StackPane
+
+‌StackPane 是一个层叠布局容器，最后添加的子节点在最顶层，默认将所有子节点居中对齐
+
+- 应用场景
+    - 背景+文字的场景
+    - GridPane + StackPane 实现居中对齐
+
+- 这样就可以实现前面VBox 和 HBox的布局了
+
+```fxml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.StackPane?>
+<StackPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.example.MyController"
+           stylesheets="@/path/to/my.fx.css"
+>
+    <Button fx:id="sendButton" onAction="#onSendButtonClick">发送</Button>
+</StackPane>
+```
+
+```css
+StackPane {
+    -fx-background-color: purple;
+}
+```
+
+##### BorderPane
+
+BorderPane在顶部、底部、左侧、右侧和中间位置布置子节点
+
+BorderPane‌ 非常适合用来搭主窗口大框架
+
+```fxml
+<BorderPane>
+    <left></left>
+    <right></right>
+    <top></top>
+    <bottom></bottom>
+    <center></center>
+</BorderPane>
+```
+
+- 这样就可以实现前面VBox 和 HBox的布局了
+
+```fxml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<BorderPane xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.example.MyController"
+           stylesheets="@/path/to/my.fx.css"
+>
+    <center>
+        <Button fx:id="sendButton" onAction="#onSendButtonClick">发送</Button>
+    </center>
+</BorderPane>
+```
+
+```css
+BorderPane {
+    -fx-background-color: purple;
 }
 ```
 
@@ -4636,16 +4749,18 @@ java9开始，jdk默认不包含jre了，可以使用jlink生成包含指定模�
 - linux系统
 
 ```sh
-# 1.打开终端
-# 2.进入某个目录，生成的jre会在这个目录下
-cd 指定目录
-
-# 3.生成jre
-jlink --module-path jmods --add-modules java.xml --output jre
+# 打印app.jar依赖的模块，对于反射的依赖无能为力
+# 如果指定了类路径，则会将依赖jar的依赖模块也打印出来
+jdeps --print-module-deps --class-path "lib/*" app.jar
 
 # 生成jre，包含所有模块（实际上算是jdk的副本了）
 # 使用ALL-MODULE-PATH 时，必须显式提供 --module-path 参数
-jlink --module-path $JAVA_HOME/jmods --add-modules ALL-MODULE-PATH --output jre
+jlink --module-path $JAVA_HOME/jmods --add-modules ALL-MODULE-PATH --output /path/to/jre
+
+# 生成jre，包含指定模块
+# 指定多个模块路径linux用冒号分隔，windows用分号分隔
+# --module-path jmods，这个jmods是当前目录下的jmods文件夹
+jlink --module-path jmods --add-modules java.xml --output /path/to/jre
 ```
 
 - windows系统
@@ -4683,6 +4798,7 @@ java -XX:AOTCacheOutput=app.aot -Dspring.context.exit=onRefresh -jar app.jar
 # 直到java26才支持通用的非垃圾收集器特定格式的aot
 # 注意不要用jpackage，会使得aot无效
 # 运行的时候不要加--enable-native-access=ALL-UNNAMED，否则java26运行应用时，aot完全失效
+# --enable-native-access=javafx.fxml,javafx.controls这样写也不行
 java -XX:AOTCache=app.aot -jar app.jar
 ```
 
@@ -6725,6 +6841,13 @@ JIT编译器借助逃逸分析来判断同步块所使用的锁对象是否只�
 # java25开始，可以启用紧凑对象头，减少堆内存占用
 # java27开始，HotSpot JVM默认启用紧凑对象头
 -XX:+UseCompactObjectHeaders
+
+# ‌强制 JavaFX 使用软件渲染模式（Software Rendering）‌，而不是默认的硬件加速渲染（GPU 渲染）
+# 对于桌面应用建议设置为软件渲染模式，启动更快
+# -D‌：表示设置一个系统属性（System Property）
+# prism.order‌：JavaFX 图形引擎 ‌Prism‌ 的核心配置项，用于指定渲染管道（Pipeline）的尝试顺序
+# sw‌：代表 ‌Software‌（软件渲染）
+-Dprism.order=sw 
 ```
 
 #### 垃圾收集
@@ -13438,6 +13561,7 @@ mybatis.configuration.log-impl=org.apache.ibatis.logging.slf4j.Slf4jImpl
                     <!-- 子项目只需添加groupId、artifactId，executions对所有子项目生效 -->
                     <executions>
                         <execution>
+                            <id>repackage</id>
                             <goals>
                                 <goal>repackage</goal>
                             </goals>
@@ -17416,11 +17540,19 @@ public class UserVO {
 
 - 依赖
 
-```kotlin
+```xml
+<!-- jackson2 -->
 <dependency>
     <groupId>com.fasterxml.jackson.core</groupId>
     <artifactId>jackson-databind</artifactId>
-    <version>2.18.0</version>
+    <version>2.22.2</version>
+</dependency>
+
+<!-- jackson3，操作不再强制处理异常，非常推荐 -->
+<dependency>
+    <groupId>tools.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>3.2.2</version>
 </dependency>
 ```
 
