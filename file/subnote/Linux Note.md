@@ -3745,6 +3745,105 @@ sudo pacman -S git
             - 打开PKGBUILD文件，查看手动下载好文件的哈希码跟PKGBUILD文件里面的哈希码是否一致，如果不一致将其替换为前者的哈希码
         - 重新执行安装，程序会自动跳过已下载的文件，继续构建流程
 
+##### paru
+
+官网：<https://github.com/Morganamilo/paru>
+
+官方的发布版本笔者在自己电脑上安装有问题，因此选择了如下两种的一种方法安装
+
+paru据说比yay交互更友好，下载和安装更快
+
+- 如果安装了yay
+
+```sh
+yay -S paru
+```
+
+- 如果没安装yay
+
+```sh
+sudo pacman -S --needed base-devel git
+git clone https://aur.archlinux.org/paru.git
+cd paru
+makepkg -si
+```
+
+如果pacman和aur的软件都不够可以考虑安装flatpak和spark-store了
+
+##### flatpak
+
+flatpak可以简单地看作一个应用商店
+
+```sh
+# flatpak：安装完flatpak后需要重启系统，默认添加了Flathub仓库
+# discover：flatpak的前端，plasma的组成部分
+# flatpak-kcm：Flatpak Permissions Management KCM — KDE Configuration Module 
+yay -S flatpak discover flatpak-kcm
+
+# 设置国内镜像
+sudo flatpak remote-modify flathub --url=https://mirror.sjtu.edu.cn/flathub
+
+# 恢复默认
+sudo flatpak remote-modify flathub --url=https://dl.flathub.org/repo
+```
+
+常用命令
+
+```sh
+# 添加仓库
+flatpak remote-add 仓库名 仓库地址
+
+# 删除仓库
+flatpak remote-delete 仓库名
+
+# 列出所有的仓库
+flatpak remotes
+
+# 查询软件包
+flatpak search 包名
+
+# 安装软件包
+flatpak install 仓库名 包名
+
+# 从文件安装软件包
+flatpak install /path/to/file.flatpak
+
+# 列出所有已安装的软件包
+flatpak list
+
+# 运行软件
+flatpak run 包名
+
+# 查看可更新的软件包
+flatpak remote-ls --updates
+
+# 更新指定软件包
+flatpak update 包名
+
+# 更新所有软件包
+flatpak update
+
+# 卸载软件包
+# --delete-data：删除软件包数据，可选
+flatpak uninstall [--delete-data] 包名
+
+# 卸载孤儿软件包
+flatpak uninstall --unused
+
+# 查看软件包权限
+flatpak info --show-permissions name
+```
+
+##### spark-store
+
+国内的火星应用商店，目前才700多个软件
+
+这玩意是有UI的，因此不做命令行的笔记了，目前基本不用这个应用商店
+
+```sh
+yay -S spark-store
+```
+
 ##### 安装火狐浏览器
 
 motrix下载器无法接管火狐浏览器下载，可能是因为桌面放大的原因，设置好分辨率，保持原来的比例不要设置缩放
@@ -4298,78 +4397,6 @@ sudo pacman -S code
 
 # 社区版idea，会安装java，不建议这种方式安装
 sudo pacman -S intellij-idea-community-edition
-```
-
-##### flatpak
-
-flatpak可以简单地看作一个应用商店
-
-```sh
-# flatpak：安装完flatpak后需要重启系统，默认添加了Flathub仓库
-# discover：flatpak的前端，plasma的组成部分
-# flatpak-kcm：Flatpak Permissions Management KCM — KDE Configuration Module 
-yay -S flatpak discover flatpak-kcm
-
-# 设置国内镜像
-sudo flatpak remote-modify flathub --url=https://mirror.sjtu.edu.cn/flathub
-
-# 恢复默认
-sudo flatpak remote-modify flathub --url=https://dl.flathub.org/repo
-```
-
-常用命令
-
-```sh
-# 添加仓库
-flatpak remote-add 仓库名 仓库地址
-
-# 删除仓库
-flatpak remote-delete 仓库名
-
-# 列出所有的仓库
-flatpak remotes
-
-# 查询软件包
-flatpak search 包名
-
-# 安装软件包
-flatpak install 仓库名 包名
-
-# 从文件安装软件包
-flatpak install /path/to/file.flatpak
-
-# 列出所有已安装的软件包
-flatpak list
-
-# 运行软件
-flatpak run 包名
-
-# 查看可更新的软件包
-flatpak remote-ls --updates
-
-# 更新指定软件包
-flatpak update 包名
-
-# 更新所有软件包
-flatpak update
-
-# 卸载软件包
-# --delete-data：删除软件包数据，可选
-flatpak uninstall [--delete-data] 包名
-
-# 卸载孤儿软件包
-flatpak uninstall --unused
-
-# 查看软件包权限
-flatpak info --show-permissions name
-```
-
-##### apm
-
-国内的火星应用商店，目前才700多个软件
-
-```sh
-yay -S spark-store
 ```
 
 ##### 安装mpv视频播放器
