@@ -5013,6 +5013,7 @@ Buffer本质上是一个可读写数据的内存块，可以看成一个数组
 
 - 注意事项
     - put放入的是什么数据类型，get就要用相应类型取出，否则就可能抛异常
+    - rewind()，倒带，position设置为0，mark作废
 
 ```java
 ByteBuffer byteBuffer = ...;
@@ -5210,6 +5211,68 @@ public void testClient() {
     }
 }
 ```
+
+##### SelectionKey相关方法
+
+- selector()，获取与之关联的selector对象
+- channel()，获取与之关联的通道
+- attachment()，获取与之关联的共享数据
+- interestOps(int ops)，设置或改变监听事件
+- isAcceptable()
+- isReadable()
+- isWritable()
+
+##### ServerSocketChannel相关方法
+
+ServerSocketChannel负责监听新的客户端Socket连接
+
+- open()，获取一个ServerSocketChannel
+- bind(SocketAddress local)，设置服务器端口
+- configureBlocking(boolean block)，设置是否为阻塞模式，false表示非阻塞
+- accept()，接收一个连接，返回代表这个连接的通道
+- register(Selector selector, int ops)，注册一个选择器并设置监听事件
+
+##### SocketChannel相关方法
+
+SocketChannel，负责读写操作
+
+- open()，获取一个SocketChannel
+- configureBlocking(boolean block)，设置是否为阻塞模式，false表示非阻塞
+- connect(SocketAddress remote)，连接服务器
+- finishConnect()，如果上面的方法连接失败，就要通过该方法完成连接操作
+- read(ByteBuffer byteBuffer)，从通道读数据
+- write(ByteBuffer byteBuffer)，往通道写数据
+- register(Selector selector, int ops, Object att)，注册一个选择器并设置监听事件，最后一个参数可以设置共享数据
+
+#### 零拷贝
+
+零拷贝：从操作系统角度看，无CPU拷贝
+
+传统4次拷贝，4次空间切换
+
+常用的方式有mmap（内存映射）和sendFile
+
+- mmap（内存映射）
+    - 将文件映射到内存缓冲区，同时，用户空间可以共享内核空间的数据
+    - 这样，在进行网络传输时，就可以减少内核空间到用户空间的拷贝次数（减少为3次拷贝，4次空间切换）
+    - 适合小数据量读写
+
+- sendFile函数
+    - Linux2.1时，数据根本不经过用户态，直接从内核缓冲区进入到SocketBuffer
+        - 同时，由于和用户态完全无关，减少了一次上下文切换（减少为3次拷贝，3次空间切换）
+    - Linux2.4时，做了一些修改，避免了从内核缓冲区拷贝到SocketBuffer的操作，直接拷贝到协议栈，从而再一次减少了数据拷贝（减少为2次拷贝，3次空间切换）
+    - 适合大文件传输
+
+- 实现
+    - FileChannel的实例方法transferTo，linux系统一次就可以完成传输，windows系统一次只能发送8M，大文件需要分段传输（文件大小除以8M得到传输次数），每次transferTo指定相应的大小和位置
+
+### AIO
+
+AIO即Asynchronous I/O，异步非阻塞I/O，也即NIO 2.0
+
+AIO引入异步通道的概念，采用Proactor模式，简化了程序编写，有效的请求才启动线程
+
+它的特点是先由操作系统完成后才通知服务端程序启动线程去处理，一般适用于连接数较多且连接时间较长的应用
 
 ### JVM
 
