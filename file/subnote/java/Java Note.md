@@ -3178,21 +3178,21 @@ void main() {
 
 ### 模块
 
-在项目中创建一个模块描述文件（module-info.java），就可以将项目声明为一个模块
+在项目中创建一个模块描述文件（module-info.java），就可以将项目声明为一个模块，建议不要折腾模块，坑太多了
 
 - 在maven项目中，`module-info.java`要放在`src/main/java`目录下
 
 ```java
 // 声明一个模块
 module com.handle.hellofx {
-    // requires声明依赖的模块
+    // requires：这个模块依赖的其它模块
     requires javafx.controls;
     requires javafx.fxml;
 
     // opens 包 to 模块，允许模块访问包的特定成员
     opens com.handle.hellofx to javafx.fxml;
 
-    // 将包公开，允许其他模块在编译和运行时访问该包里的public类和接口
+    // 声明要导出的包，允许外部代码访问公有类和公有成员
     exports com.handle.hellofx;
 }
 ```
@@ -5133,6 +5133,81 @@ try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();) {
     }
 } catch (IOException e) {
     throw new RuntimeException(e);
+}
+```
+
+#### Selector
+
+```java
+@Test
+public void testServer() {
+    try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            Selector selector = Selector.open();) {
+        // 绑定监听端口
+        serverSocketChannel.socket().bind(new InetSocketAddress(8888));
+        // 设置为非阻塞
+        serverSocketChannel.configureBlocking(false);
+        // 把serverSocketChannel注册到selector
+        // 关心的事件为OP_ACCEPT
+        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        while (true) {
+            if (selector.select(1000) == 0) {
+                // System.out.println("服务器等待了1s，无连接");
+                continue;
+            }
+            // selector.select返回大于0，则获取selectionKeys
+            Set<SelectionKey> selectionKeys = selector.selectedKeys();
+            Iterator<SelectionKey> iterator = selectionKeys.iterator();
+            while (iterator.hasNext()) {
+                SelectionKey selectionKey = iterator.next();
+                if (selectionKey.isAcceptable()) {
+                    SocketChannel socketChannel = serverSocketChannel.accept();
+                    System.out.println("客户端连接：" + socketChannel.hashCode());
+                    // 设置为非阻塞
+                    socketChannel.configureBlocking(false);
+                    // 将socketChannel注册到selector，并关联一个buffer
+                    socketChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
+                }
+                if (selectionKey.isReadable()) {
+                    SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
+                    ByteBuffer byteBuffer = (ByteBuffer) selectionKey.attachment();
+                    int read = socketChannel.read(byteBuffer);
+                    // 这么写有bug的，只是用于演示无所谓了
+                    System.out.println("from SocketChannel " + new String(byteBuffer.array(), 0, read, StandardCharsets.UTF_8));
+                }
+                // 记得删除该selectionKey，防止重复操作
+                iterator.remove();
+            }
+        }
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+
+@Test
+public void testClient() {
+    try (SocketChannel socketChannel = SocketChannel.open();) {
+        // 设置为非阻塞
+        socketChannel.configureBlocking(false);
+        // 服务器ip和端口
+        InetSocketAddress inetSocketAddress = new InetSocketAddress("127.0.0.1", 8888);
+        if (!socketChannel.connect(inetSocketAddress)) {
+            // 连接需要时间，客户端不会阻塞，可以做别的事情
+            while (!socketChannel.finishConnect()) {
+                // todo
+            }
+        }
+
+        String message = "你好，世界！";
+        // ByteBuffer.wrap直接将一个字节数组包装到buffer，不用手动设置buffer长度
+        ByteBuffer byteBuffer = ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8));
+        // 发送一个字符串到服务器
+        socketChannel.write(byteBuffer);
+        // 这一行是用来阻塞的
+        System.in.read();
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
 }
 ```
 

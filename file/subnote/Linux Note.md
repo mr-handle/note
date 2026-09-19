@@ -4300,6 +4300,78 @@ sudo pacman -S code
 sudo pacman -S intellij-idea-community-edition
 ```
 
+##### flatpak
+
+flatpak可以简单地看作一个应用商店
+
+```sh
+# flatpak：安装完flatpak后需要重启系统，默认添加了Flathub仓库
+# discover：flatpak的前端，plasma的组成部分
+# flatpak-kcm：Flatpak Permissions Management KCM — KDE Configuration Module 
+yay -S flatpak discover flatpak-kcm
+
+# 设置国内镜像
+sudo flatpak remote-modify flathub --url=https://mirror.sjtu.edu.cn/flathub
+
+# 恢复默认
+sudo flatpak remote-modify flathub --url=https://dl.flathub.org/repo
+```
+
+常用命令
+
+```sh
+# 添加仓库
+flatpak remote-add 仓库名 仓库地址
+
+# 删除仓库
+flatpak remote-delete 仓库名
+
+# 列出所有的仓库
+flatpak remotes
+
+# 查询软件包
+flatpak search 包名
+
+# 安装软件包
+flatpak install 仓库名 包名
+
+# 从文件安装软件包
+flatpak install /path/to/file.flatpak
+
+# 列出所有已安装的软件包
+flatpak list
+
+# 运行软件
+flatpak run 包名
+
+# 查看可更新的软件包
+flatpak remote-ls --updates
+
+# 更新指定软件包
+flatpak update 包名
+
+# 更新所有软件包
+flatpak update
+
+# 卸载软件包
+# --delete-data：删除软件包数据，可选
+flatpak uninstall [--delete-data] 包名
+
+# 卸载孤儿软件包
+flatpak uninstall --unused
+
+# 查看软件包权限
+flatpak info --show-permissions name
+```
+
+##### apm
+
+国内的火星应用商店，目前才700多个软件
+
+```sh
+yay -S spark-store
+```
+
 ##### 安装mpv视频播放器
 
 官网：<https://mpv.io/>
