@@ -23636,6 +23636,39 @@ cat /data/powerjob/powerjob-server/logs/powerjob-server-application.log | grep "
 grep 'administrator' /data/powerjob/powerjob-server/logs/powerjob-server-application.log
 ```
 
+## 静态服务器
+
+Java 18 开始，可以使用 jwebserver 命令启动一个简易的静态 Web 服务器
+
+比如可以用来测试vue的构建结果
+
+既然是静态服务器当然只能访问静态文件啦，如果要测试路由之类的功能还是乖乖用nginx做静态服务器和配置反向代理以解决跨域问题吧
+
+```sh
+# -p 端口
+# -d 静态服务器的位置
+# -b 监听的地址
+# -o none|info|verbose 输出日志级别
+jwebserver -p 8080 -d /path/to/server -b 0.0.0.0 -o info
+```
+
+当然也可以自己写代码实现
+
+```java
+public static void main(String[] args) {
+    InetSocketAddress address = new InetSocketAddress(8080);
+    Path path;
+    try {
+        path = Path.of(Main.class.getClassLoader().getResource("static").toURI());
+    } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+    }
+    HttpServer httpServer = SimpleFileServer.createFileServer(address, path, SimpleFileServer.OutputLevel.INFO);
+    httpServer.start();
+    System.out.println("服务启动完成！");
+}
+```
+
 ## Nginx
 
 Nginx是一个HTTP web服务器，反向代理，内容缓存，负载均衡器，TCP/UDP代理服务器和邮件代理服务器

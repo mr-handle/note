@@ -8380,6 +8380,12 @@ export default defineConfig({
 
 ##### watchEffect写法
 
+watchEffect算是watch的升级版了
+
+watch需要显式指定监视对象
+
+watchEffect是使用到的变量才监视
+
 ```vue
 <template>
     <div>
@@ -8404,7 +8410,7 @@ export default defineConfig({
     }
 
     watchEffect(() => {
-        // 不用显示指定age和counter
+        // 不用显式指定age和counter
         if (age.value > 25 || counter.value > 5) {
             console.log(age.value, counter.value)
         }
