@@ -7837,6 +7837,11 @@ pnpm --version
 
 ## vue
 
+- vscode安装官方vue扩展后，设置
+    - ref语句自动补全value：`"vue.autoInsert.dotValue": true,`
+    - vue文件script标签缩进：`"vue.format.script.initialIndent": true,`
+    - vue文件style标签缩进：`"vue.format.style.initialIndent": true,`
+
 - 响应式特性：（变量）数据的变化可以更新到页面效果上
 
 - 单向绑定：数据变化->页面变化，前提数据是响应式
@@ -7905,7 +7910,7 @@ vue文件里面可以写三种标签
 
 ### vue语法
 
-#### vue文件中的script写法
+#### vue文件中的setup写法
 
 ##### 写法1
 
@@ -7950,7 +7955,7 @@ vue文件里面可以写三种标签
 </script>
 ```
 
-##### 写法4
+##### 写法4（vue3.3之前适用）
 
 通过安装插件支持通过name属性定义组件名
 
@@ -7983,6 +7988,17 @@ export default defineConfig({
 </script>
 ```
 
+##### 写法5（vue3.3开始，版本答案）
+
+```vue
+<script setup lang="ts">
+    defineOptions({
+    name: 'SomeVueName'
+    })
+</script>
+
+```
+
 #### 变量定义及使用的写法
 
 - 插值写法
@@ -8002,14 +8018,17 @@ export default defineConfig({
 
 ```vue
 <template>
+    <!-- 这里不需要.value -->
     <h2>姓名：{{ name }}</h2>
     <button @click="updateName">更新姓名</button>
 </template>
 <script lang="ts" setup>
     import { ref } from 'vue';
 
+    // 用ref包裹
     let name = ref('handle')
     function updateName() {
+        // 这里需要.value
         name.value = 'zhangsan'
     }
 </script>
@@ -8058,22 +8077,25 @@ export default defineConfig({
 <script lang="ts" setup>
     import { reactive } from 'vue';
 
-    //对象写法
+    //对象写法，用reactive包裹
     let user = reactive({ name: 'handle', age: 18 })
     function updateName() {
         user.name = 'zhangsan'
     }
-    // 数组写法
+    // 数组写法，用reactive包裹
     let users = reactive([user])
     function updateAge() {
         users[0].age += 1
     }
-    // 重新分配对象写法，对象地址不变
+    // reactive重新分配一个新对象，会失去响应式，要保留响应式，可以使用Object.assign
+    // 重新分配对象写法，对象地址不变，reactive只有这个写法
     Object.assign(user, { name: 'lisi', age: 20 })
 </script>
 ```
 
 #### toRef和toRefs写法
+
+对象解构赋值的时候，将其也变成响应式
 
 ```vue
 <template>
@@ -8136,6 +8158,10 @@ export default defineConfig({
 
 #### computed写法
 
+计算属性，只要依赖的值发生变化就会重新计算
+
+跟函数相比，它是有缓存的，只重新计算一次
+
 ```vue
 <template>
     <div>
@@ -8150,6 +8176,7 @@ export default defineConfig({
     let name = ref('handle')
 
     let upperName = computed({
+        // 获取upperName
         get() {
             return name.value.toUpperCase()
         },
@@ -8310,9 +8337,9 @@ export default defineConfig({
     // 监视属性是对象类型，直接写:（监视里面的属性变化）
     // 写成匿名函数形式（监视对象地址的变化）
     // 写成匿名函数形式，并且加deep:true（都监视）
-    watch(user.pet, (newValue, oldValue) => {
+    watch(() => user.pet, (newValue, oldValue) => {
         console.log(newValue, oldValue)
-    })
+    }, {deep: true})
 </script>
 ```
 
@@ -8544,15 +8571,35 @@ function 方法名() {
 
 - v-slot，插槽，简写为井号`#`
 
-##### v-module
+##### v-bind
 
-- 标签属性值和变量绑定，双向绑定
+标签属性值和变量绑定，单向绑定
 
 ```vue
 <template>
     <div>
-        <!-- 将输入框的值和变量name双向绑定，v-model:value简写为v-model -->
-        <input type="text" v-model="name" />
+        姓名：<input type="text" v-bind:value="name" />
+        <!-- "v-bind:属性名"可以简写为":属性名" -->
+        姓名：<input type="text" :value="name" />
+    </div>
+</template>
+<script lang="ts" setup>
+    import { ref } from 'vue';
+
+    let name = ref('handle')
+</script>
+```
+
+##### v-module
+
+标签属性值和变量绑定，双向绑定
+
+```vue
+<template>
+    <div>
+        姓名：<input type="text" v-model:value="name" />
+        <!-- "v-model:属性名"可以简写为"v-model" -->
+        姓名：<input type="text" v-model="name" />
     </div>
 </template>
 <script lang="ts" setup>

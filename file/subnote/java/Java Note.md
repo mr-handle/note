@@ -5274,6 +5274,19 @@ AIO引入异步通道的概念，采用Proactor模式，简化了程序编写，
 
 它的特点是先由操作系统完成后才通知服务端程序启动线程去处理，一般适用于连接数较多且连接时间较长的应用
 
+### Netty
+
+官网：<https://netty.io/>
+
+Netty是一个异步的事件驱动的网络应用框架
+
+它简化了NIO的开发过程
+
+- Reactor模式
+    - 单Reactor单线程
+    - 单Reactor多线程
+    - 主从Reactor多线程
+
 ### JVM
 
 ![JVM大致结构模型](/images/JVM大致结构模型.png)
