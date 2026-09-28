@@ -4697,6 +4697,63 @@ yay -S protonhax
 WINEPREFIX="/path/to/SteamLibrary/steamapps/compatdata/游戏id/pfx" "/path/to/SteamLibrary/steamapps/common/Proton - Experimental/files/bin/wine" uninstaller
 ```
 
+#### waydroid
+
+教程：<https://wiki.archlinux.org/title/Waydroid>
+
+- 安装
+
+```sh
+sudo pacman -S waydroid 
+
+# 这一步会自动下载waydroid-image
+# -s GAPPS: To init with GApps support
+sudo waydroid init [-s GAPPS]
+
+sudo systemctl start waydroid-container.service
+```
+
+- 网络设置：在运行waydroid session start前配置好
+
+```sh
+firewall-cmd --zone=trusted --add-port=67/udp
+
+firewall-cmd --zone=trusted --add-port=53/udp
+
+firewall-cmd --zone=trusted --add-forward
+
+firewall-cmd --zone=trusted --add-interface=waydroid0
+```
+
+- 常用命令
+
+```sh
+# 启动后别关闭终端
+waydroid session start
+
+waydroid show-full-ui
+
+waydroid app install /path/to/apk
+
+waydroid app list
+
+waydroid app launch com.package.name
+```
+
+- 兼容arm应用（非所有应用百分百兼容）
+
+```sh
+yay -S waydroid-script-git
+
+# intel安装libhoudini
+# amd安装libndk
+sudo waydroid-extras install libhoudini|libndk 
+
+sudo systemctl restart waydroid-container.service
+
+waydroid app install /path/to/armapk
+```
+
 #### 安装qemu和virt-manager
 
 教程：<https://wiki.archlinux.org/title/QEMU>

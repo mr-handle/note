@@ -8425,15 +8425,19 @@ watchEffect是使用到的变量才监视
 ```vue
 <template>
     <div>
-        <!-- 在html标签上，拿到的是dom元素 -->
+        <!-- 写在在html标签上，拿到的是dom元素 -->
         <p ref="ageRef">年龄：{{ age }}</p>
+        <!-- 写在在组件标签上，拿到的是组件实例对象 -->
+        <Pet ref="pet"/>
         <button type="button" @click="updateAge">更新年龄</button>
     </div>
 </template>
 <script lang="ts" setup>
-    import { ref } from 'vue';
+    import { ref, defineExpose } from 'vue';
 
     let ageRef = ref()
+
+    let pet = ref()
 
     let age = ref(18)
 
@@ -8468,7 +8472,7 @@ watchEffect是使用到的变量才监视
 </script>
 ```
 
-#### 自定义类型
+#### 自定义类型(TS的接口)
 
 - 1.定义
 
@@ -8531,6 +8535,7 @@ defineProps<>(['fatherData'])
 <!-- defineProps<{fatherData:typeName}>() -->
 
 <!-- 指定接收 + 类型限制 + 必要性 + 默认值 -->
+<!-- withDefaults在vue3.5已废弃，可以用解构方式 -->
 <!-- withDefaults(defineProps<{fatherData?:类型名}>(),{fatherData: () => [{id: 1,name: 'handle'}]}) -->
 
 let fatherData = defineProps({
@@ -8633,10 +8638,12 @@ function 方法名() {
 </script>
 ```
 
-#### 生命周期
+#### 组件生命周期
+
+- 创建、挂载、更新、销毁
 
 ```ts
-// 创建前、创建完毕都整合到setup里面去了
+// 创建前、创建完毕都整合到setup里面去了，不用关心
 
 // 挂载前、挂载完毕
 onBeforeMount(() => {})
