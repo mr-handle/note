@@ -17957,6 +17957,199 @@ public class UserVo {
 }
 ```
 
+## react
+
+官网：<https://projectreactor.io/>
+
+- 依赖
+
+```xml
+<dependency>
+    <groupId>io.projectreactor</groupId>
+    <artifactId>reactor-core</artifactId>
+    <version>3.8.7</version>
+</dependency>
+```
+
+- demo
+
+```java
+// 生产者
+// Mono用来封装单个数据的流
+Mono<Integer> mono = Mono.just(1);
+// 消费流
+mono.subscribe(System.out::println);
+
+// Flux用来封装多个数据的流
+Flux<Integer> flux = Flux.just(1, 2, 3);
+// 消费流
+flux.subscribe(System.out::println);
+
+// 只有一个代表流已完成的信号
+Flux<Object> empty = Flux.empty();
+empty.subscribe(System.out::println);
+```
+
+### doOnXXX事件
+
+![doOnXXX事件](image/doOnXXX事件.png)
+
+doOnNext：每个数据（流的数据）到达的时候触发
+
+doOnEach：每个元素（流的数据和信号）到达的时候触发
+
+信号：有正常/异常信号，具体看SignalType
+
+doOnXxx：发生这个事件的时候产生一个回调，只做通知，不能改变元素、信号
+
+onXxx：发生这个事件后执行一个动作，可以改变元素、信号
+
+```java
+Flux<Integer> flux = Flux.range(0, 3)
+        .delayElements(Duration.ofSeconds(1))
+        // 每个doOnXXX事件对它的上一调用链的流起作用
+        // 这里即对delayElements生成的流起作用
+        .doOnComplete(() -> System.out.println("流已完成"))
+        .doOnCancel(() -> System.out.println("流已取消"));
+```
+
+### subscribe
+
+只有订阅流了，相关的操作才会执行
+
+```java
+// 定义空订阅
+flux.subscribe();
+
+// 打印流数据
+flux.subscribe(System.out::println);
+
+// 此外还有别的subscribe方法
+```
+
+#### 自定义消费者
+
+```java
+flux.subscribe(new BaseSubscriber<>() {
+    // 以下这些是生命周期钩子，订阅关系绑定的时候触发
+    // 这些方法类似doOnXxx，但是在消费者端生效
+    @Override
+    protected void hookOnSubscribe(Subscription subscription) {
+        // 流被订阅的时候触发
+        System.out.println("绑定了 " + subscription);
+        
+        // request(n)表示找发布者要n次数据，总共得到n*bufferSize个数据
+        // 找发布者要一次数据
+        request(1);
+        // 找发布者要无限次数据
+        // requestUnbounded();
+    }
+
+    @Override
+    protected void hookOnNext(Integer value) {
+        // 数据到达的时候触发
+        System.out.println("数据到达 " + value);
+        request(1);
+
+
+        // 取消流
+        // cancel();
+    }
+
+    @Override
+    protected void hookOnComplete() {
+        // 流正常结束触发
+        System.out.println("流结束了");
+    }
+
+    @Override
+    protected void hookOnError(Throwable throwable) {
+        // 流异常的时候触发
+    }
+
+    @Override
+    protected void hookOnCancel() {
+        // 流被取消的时候触发
+    }
+
+    @Override
+    protected void hookFinally(SignalType type) {
+        // 最终回调
+    }
+});
+```
+
+#### 请求重塑-buffer
+
+request(n)表示找发布者要n次数据，总共得到n*bufferSize个数据
+
+```java
+Flux<Integer> flux = Flux.range(0, 9)
+                .buffer(2);
+```
+
+#### 请求重塑-limitRate
+
+```java
+Flux.range(1, 1000).log()
+    // 默认75%预取策略
+    // 第一次抓取100个数据，但是达到75%预取策略即取到75个数据后
+    // 如果这75%的元素已经处理了，继续抓取新的75%元素
+    .limitRate(100).subscribe();
+```
+
+#### 创建序列
+
+- 同步环境用generate
+
+```java
+Flux<Object> flux = Flux.generate(
+        // state初始值，可以是一个atomic变量值
+        () -> 0, (state, sink) -> {
+            // 生成0-10
+            if (state <= 10) {
+                // sink翻译是水槽，用通道理解更贴切，这里作为一个接收端
+                // 把元素传出去
+                sink.next(state);
+            } else {
+                sink.complete();
+            }
+            return state + 1;
+        });
+flux.log().subscribe();
+```
+
+- 异步/多线程用create
+
+```java
+Flux.create(sink -> {
+    // todo
+});
+```
+
+#### 自定义元素处理
+
+```java
+Flux.range(0, 10).handle((value, sink) -> {
+    System.out.println("拿到的值 " + value);
+    sink.next("自定义处理后 " + value);
+}).log().subscribe();
+```
+
+#### 取消操作
+
+```java
+Flux<Integer> flux = Flux.range(0, 10).delayElements(Duration.ofSeconds(1)).log();
+// subscribe方法返回是一个Disposable，可以执行取消操作
+Disposable disposable = flux.subscribe();
+try {
+    TimeUnit.SECONDS.sleep(3);
+    disposable.dispose();
+} catch (InterruptedException e) {
+    throw new RuntimeException(e);
+}
+```
+
 ## javacv
 
 javacv是一个opencv、ffmpeg的java api

@@ -3774,6 +3774,8 @@ makepkg -si
 
 flatpak可以简单地看作一个应用商店
 
+对于某些应用，还是会有兼容问题，更推荐用aur助手安装
+
 ```sh
 # flatpak：安装完flatpak后需要重启系统，默认添加了Flathub仓库
 # discover：flatpak的前端，plasma的组成部分
