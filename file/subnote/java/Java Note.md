@@ -18150,6 +18150,307 @@ try {
 }
 ```
 
+#### 线程调度
+
+```java
+Flux.range(0, 3)
+    // 指定发布者线程
+    // Schedulers.immediate()，当前线程，默认
+    // Schedulers.single()，固定的一个单线程
+    // Schedulers.boundedElastic()，有界，动态线程，弹性调度，线程池有10*cpu核心个线程，队列长度100k
+    // Schedulers.newBoundedElastic()，自己创建一个线程池
+    // Schedulers.fromExecutor()，从指定executor创建一个线程池
+    // Schedulers.parallel()，并发
+    // 只要没有手动指定线程池，发布者使用的线程和订阅者只用的线程一样
+    .publishOn(Schedulers.single())
+    .log()
+    // 指定订阅者线程
+    .subscribeOn(Schedulers.single())
+    .log()
+    .subscribe();
+```
+
+#### 常用api
+
+类似Stream，Mono/Flux也有一些同名的api，如filter、map、flatmap
+
+```java
+Flux.just("a b", "c d")
+    .flatMap(item -> {
+        String[] strings = item.split(" ");
+        return Flux.fromArray(strings);
+    })
+    .log()
+    .subscribe();
+
+// 连接操作1
+Flux.concat(Flux.just(1, 2), Flux.just(3, 4))
+    .log()
+    .subscribe();
+
+// 连接操作2
+Flux.just(1, 2)
+    .concatWith(Flux.just(3, 4))
+    .log()
+    .subscribe();
+
+// 这个例子不太合适，先放着吧
+Flux.just(1, 2)
+    .concatMap(item -> Flux.just(item * 2))
+    .log()
+    .subscribe();
+
+// 模拟从其它地方获取到Flux，Flux.empty()表示没有元素的空流，只有完成信号
+Flux<Integer> flux = Flux.empty();
+// 如果发布者flux元素为空，则指定默认值
+flux.defaultIfEmpty(3)
+    .log()
+    .subscribe();
+
+// 模拟从其它地方获取到Flux
+Flux<Integer> flux = Flux.empty();
+// 如果发布者flux元素为空，则指定默认值
+flux.switchIfEmpty(Flux.just(1, 2))
+    .log()
+    .subscribe();
+
+
+Flux<Integer> flux1 = Flux.just(1, 2)
+                            .delayElements(Duration.ofSeconds(1));
+Flux<Integer> flux2 = Flux.just(3, 4)
+                            .delayElements(Duration.ofMillis(100));
+// merge和concat不一样的地方是前者是安装元素到达的时间顺序合并，后者是按照flux顺序拼接
+Flux.merge(flux1, flux2)
+    .log()
+    .subscribe();
+
+try {
+    TimeUnit.SECONDS.sleep(4);
+} catch (InterruptedException e) {
+    throw new RuntimeException(e);
+}
+
+// mergeWith
+flux1.mergeWith(flux2)
+    .log()
+    .subscribe();
+
+// 按照哪个流先发元素的顺序合并，先发的流的所有元素发完后再合并后面的流
+Flux.mergeSequential(flux1, flux2)
+    .log()
+    .subscribe();
+
+// 压缩，最多支持8个流的压缩，超过八个可以拆分8个压缩一次
+// 多出来的元素会被忽略
+// zipWith例子就不写了
+Flux.zip(Flux.just(1, 2, 3), Flux.just("a", "b"))
+    .map(tuple -> tuple.getT1() + ":" + tuple.getT2())
+    .log()
+    .subscribe();
+```
+
+#### 错误处理
+
+```java
+Flux.just(1, 2, 0, 3)
+    .map(item -> 10 / item)
+    // 发生错误后返回一个兜底值
+    // 会吃掉异常，消费者无异常感知，不会走subscribe方法的异常处理，流会正常完成
+    // .onErrorReturn(0)
+    .onErrorReturn(ArithmeticException.class, 0)
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+    () -> System.out.println("流结束"));
+
+Flux.just(1, 2, 0, 3)
+    .map(item -> 10 / item)
+    // 发生错误后执行一个兜底方法
+    // 会吃掉异常，消费者无异常感知，不会走subscribe方法的异常处理，流会正常完成
+    // .onErrorResume(throwable -> Flux.just(5, 6))
+
+    // 会吃掉异常，消费者有异常感知，流会异常完成
+    .onErrorResume(throwable -> Flux.error(
+                    new RuntimeException("发生异常：" + throwable.getLocalizedMessage(), throwable)))
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+
+Flux.just(1, 2, 0, 3)
+    .map(item -> 10 / item)
+    // 会吃掉异常，消费者有异常感知，抛新异常，流会异常完成
+    .onErrorMap(throwable -> new RuntimeException("发生异常：" + throwable.getLocalizedMessage(), throwable))
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+
+Flux.just(1, 2, 0, 3)
+    .map(item -> 10 / item)
+    // 不会吃掉异常，消费者有异常感知，流会异常完成
+    .doOnError(throwable -> System.out.println("记录异常日志：" + throwable.getLocalizedMessage()))
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+
+Flux.just(1, 2, 0, 3)
+    .map(item -> 10 / item)
+    // 不管正常还是报错都执行
+    .doFinally(signalType -> System.out.println("流信号：" + signalType))
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+
+Flux.just(1, 2, 0, 3)
+    .map(item -> 10 / item)
+    // 忽略当前异常，仅作通知记录，流继续
+    .onErrorContinue((throwable, item) -> System.out.println(
+            "错误信息：" + throwable.getLocalizedMessage() + "当前项：" + item))
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+
+Flux.just(1, 2, 0, 3)
+    .map(item -> 10 / item)
+    // 错误结束信号替换为正常结束信号
+    .onErrorComplete()
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+
+Flux.interval(Duration.ofMillis(50))
+    .map(item -> 3 / (3 - item))
+    // 发生错误后停止
+    .onErrorStop()
+    .log()
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+
+try {
+    TimeUnit.SECONDS.sleep(1);
+} catch (InterruptedException e) {
+    throw new RuntimeException(e);
+}
+
+Flux.just(1)
+    .delayElements(Duration.ofSeconds(2))
+    .log()
+    .timeout(Duration.ofSeconds(1))
+    // 把流从头到尾重新请求一次的重试次数
+    .retry(2)
+    .subscribe(System.out::println, throwable -> System.out.println(throwable.getLocalizedMessage()),
+                () -> System.out.println("流结束"));
+```
+
+#### Sinks工具类
+
+```java
+// 发送Flux数据
+Sinks.many();
+// 发送Mono数据
+Sinks.one();
+// 单播：此sink管道只能绑定单个订阅者（消费者）
+Sinks.many()
+        .unicast();
+// 多播：此sink管道能绑定多个订阅者
+Sinks.many()
+        .multicast();
+// 重放：此sink管道是否给后来的订阅者发送之前的元素
+// 也就是它决定从头消费还是从订阅那一刻开始消费，默认是从订阅的那一刻开始消费的
+Sinks.many()
+        .replay();
+
+Sinks.many()
+    .multicast()
+    // 背压队列
+    .onBackpressureBuffer();
+
+
+Sinks.Many<Integer> sinks = Sinks.many()
+    .multicast()
+    // 背压队列
+    .onBackpressureBuffer(5);
+
+Thread.startVirtualThread(() -> {
+    for (int i = 0; i < 10; i++) {
+        sinks.tryEmitNext(i);
+        try {
+            TimeUnit.MILLISECONDS.sleep(200);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+});
+
+sinks.asFlux()
+        .subscribe(item -> System.out.println("订阅者1: " + item));
+// 如果unicast这里就会报错，不能订阅两次
+// 如果unicast这里就会报错，不能订阅两次
+Thread.startVirtualThread(() -> {
+    try {
+        TimeUnit.MILLISECONDS.sleep(500);
+    } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+    }
+    // 模拟后来订阅
+    // 这样就可以看到订阅者2默认就不是从头开始消费了
+    sinks.asFlux()
+            .subscribe(item -> System.out.println("订阅者2: " + item));
+});
+
+try {
+    TimeUnit.SECONDS.sleep(3);
+} catch (InterruptedException e) {
+    throw new RuntimeException(e);
+}
+
+Sinks.Many<Integer> sinks = Sinks.many()
+        .replay()
+        // 只重放2个历史数据
+        .limit(3);
+
+
+Flux<Integer> flux = Flux.range(1, 5)
+        .delayElements(Duration.ofSeconds(1))
+        .cache(3);
+```
+
+#### 阻塞式API
+
+```java
+Integer value = Flux.just(1, 2, 5)
+                    // .blockFirst()
+                    .blockLast();
+System.out.println(value);
+
+List<Integer> list = Flux.just(1, 2, 5)
+                            .collectList()
+                            .block();
+System.out.println(list);
+```
+
+#### 分批处理
+
+```java
+// 100数据，6个线程，每个线程处理10，直至结束
+Flux.range(1, 100)
+    .buffer(10)
+    .parallel(6)
+    .runOn(Schedulers.newParallel("subThread"))
+    .log()
+    .subscribe();
+```
+
+#### 上下文
+
+```java
+Flux.just(1, 2, 3)
+    .transformDeferredContextual((flux, context) -> {
+        System.out.println("flux: " + flux + "context: " + context);
+        return flux.map(item -> item + " " + context.get("suffix"));
+    })
+    .contextWrite(Context.of("suffix", "你干嘛"))
+    .subscribe(System.out::println);
+```
+
 ## javacv
 
 javacv是一个opencv、ffmpeg的java api
