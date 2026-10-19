@@ -197,6 +197,10 @@ llama-cli -m model.gguf -c 32768
 llama-server -m Ornith-1.5-35B-Q4_K_M.gguf -ngl all --n-cpu-moe 18 -ctv q8_0 -c 8192 --temp 0.2 --top-p 0.2 --host 0.0.0.0 --port 8888 --no-webui
 ```
 
+- llama.cpp相比于ollama更适合个人电脑本地部署模型
+    - 因为前者更简易，词元生成数度更快
+    - 复制模型文件时，每个模型只有单个模型文件，不像ollama复制模型文件时，某个模型可能有多个模型文件，还要额外查看模型对应的模型文件
+
 ## Ollama
 
 Ollama是一个类似docker的用于本地快速部署模型进行推理的工具，很多命令都跟docker相似

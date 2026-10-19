@@ -4401,7 +4401,7 @@ sudo pacman -S code
 sudo pacman -S intellij-idea-community-edition
 ```
 
-##### 安装mpv视频播放器
+##### mpv
 
 官网：<https://mpv.io/>
 
@@ -4910,6 +4910,8 @@ sudo cp -r /var/lib/libvirt/qemu/snapshot/虚拟机名称 /path/to/target
 ```
 
 ##### 从虚拟机文件创建新虚拟机并恢复快照
+
+目前archlinux系统才会有引导问题，可以不用管那些引导文件的步骤，执行步骤2实例的命令修复引导就行了
 
 ###### 新建虚拟机
 

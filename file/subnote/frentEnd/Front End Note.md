@@ -4728,6 +4728,8 @@ const PI = 3.14;
     - number，数字类型
         - 有一个特殊值`NaN`，即非数字，是不正确或未定义的数学操作所得到的结果
         - 任何对`NaN`的操作都会返回`NaN`
+    - bigint
+    - symbol
     - string，字符串类型
     - boolean，布尔类型，只有两个字面量
         - true
@@ -4737,6 +4739,7 @@ const PI = 3.14;
     - null，空类型，null表示赋值了，但是内容为空
         - 官方解释：把null作为尚未创建的对象，即如果对象还没创建好，可以先给变量赋值为null
 - 引用数据类型，放到堆空间
+    - Array、Function、Date、Error等
     - 通过new关键字创建的对象
 
 ```js
@@ -7283,6 +7286,637 @@ async function fun() {
     }
 };
 ```
+
+## TypeScript
+
+- 安装ts
+
+```sh
+npm install -g typescript
+```
+
+- 手动编译
+
+```sh
+tsc file.ts
+```
+
+- 自动编译
+
+```sh
+# 生成tsconfig.json文件
+tsc --init
+
+# 监视目录下所有ts文件的变化并自动编译
+# --noEmitOnError 编译出错时不生成js文件，也可以修改tsconfig.json中的noEmitOnError属性
+tsc --noEmitOnError --watch
+
+# 只监视某个ts文件并自动编译
+tsc --watch file.ts
+```
+
+- tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    // 自定义配置
+    // 编译出错时不生成js文件
+    "noEmitOnError": true,
+    // 不生成 .js.map 文件
+    "sourceMap": false,
+    // 不生成 .d.ts 文件，设置为false时，declarationMap也必须为false
+    "declaration": false,
+    // 不生成 .d.ts.map 文件
+    "declarationMap": false,
+  }
+}
+```
+
+对于使用vue、react等框架，官方提供的脚手架如webpack、vite会自动将ts编译成js，无需操心
+
+### 直接运行ts
+
+```sh
+# node对ts的支持没有deno完整，直接运行ts文件更推荐用deno
+node file.ts
+deno run file.ts
+```
+
+### 类型声明
+
+类型声明中的类型关键字建议用原始类型而不是包装类型
+
+```ts
+let str: string = "hello world";
+let n: number = 2;
+let b: boolean = true;
+
+console.log(str);
+console.log(n);
+console.log(b);
+
+// 参数和返回值都声明类型
+function sum(x: number, y: number): number {
+    return x + y;
+}
+
+const result = sum(1, 2);
+
+console.log(result);
+
+
+// : 后面可以写字面量类型，但用的不多
+let c: "handle";
+
+// 只能将字面量类型赋值给它
+c = "handle";
+
+console.log(c);
+```
+
+### ts数据类型
+
+- 除了所有js类型外，还有
+    - any
+    - unknown
+    - never
+    - void
+    - tuple
+    - enum
+
+- 两个用于自定义类型的方式
+    - type
+    - interface
+
+#### any
+
+一旦将变量类型声明为any，就意味着放弃了对该变量的类型检查
+
+建议实在没辙了再用这个类型
+
+```ts
+// 隐式定义为any
+// let a;
+// 显式定义为any，可以存放任意类型数据
+let a: any;
+
+a = "handle";
+a = true;
+a = 1;
+
+let x: string;
+
+// any类型的变量可以赋给任意类型的变量
+// 给谁就是对谁的破坏
+x = a;
+```
+
+#### unknown
+
+可以理解为一个类型安全的any，适用于不确定数据的具体类型的情况
+
+```ts
+let a: unknown;
+
+a = "handle";
+a = true;
+a = 1;
+
+let x: string;
+
+// 第一种赋值方式
+if (typeof a === "string") {
+    x = a;
+} else {
+    x = "handle";
+}
+
+// 第二种赋值方式，用断言
+x = a as string;
+
+// 断言第二种写法
+x = <string> a;
+
+console.log(x);
+```
+
+#### never
+
+任何值都不是，也就是不能有值，undefined、null、空字符串都不行
+
+never一般是ts主动推断出来的
+
+几乎不用never去直接限制变量，因为没有意义
+
+```ts
+// 限制函数不能有任何返回值，也就是函数不能结束或者不能正常结束
+// 场景：递归调用、死循环、抛异常
+function fun(): never {
+    throw new Error("方法执行异常！");
+}
+```
+
+#### void
+
+void通常用于函数返回值声明，表示函数不返回任何值，调用者不应该依赖其返回值进行任何操作
+
+```ts
+function fun(): void {
+    // 对于定义了void返回值的函数，可以不写return语句（默认也是返回undefined）
+    // 也可以有如下两种写法
+    // return;
+    // void返回值是认可返回undefined的
+    return undefined;
+}
+
+let result = fun();
+// 会报错，不能利用返回void的函数做任何操作
+if (result) {}
+```
+
+#### object
+
+```ts
+// a能存储的类型是非原始类型
+let a: object;
+// b能存储的类型是可以调用到Object的方法（如toString）的类型
+// 也就是说除了null和undefined都能存储
+let b: Object;
+```
+
+##### 声明对象类型
+
+```ts
+// 属性分隔符可以是逗号或分号或换行
+// ?表示该属性实例化的时候可以不写
+// [key: string]: any 索引签名
+// 这里的key也可以是任意值，但一般用key或index等
+// string用来限制key的类型
+// any用来限制key的值的类型
+// 表示实例化的时候可以添加任意字符串类型的属性和任意类型的属性值
+let pet: { name: string, age?: number, [key: string]: any };
+
+pet = { name: "dog", master: "张三" };
+```
+
+##### 声明函数类型
+
+```ts
+// ts中的=>在函数类型声明时，表示函数类型，描述其参数类型和返回类型
+// 函数类型声明还可以使用接口、自定义类型等
+// 形参可以任意命名
+let sum: (x: number, y: number) => number;
+
+// 形参可以任意命名
+sum = function (a: number, b: number): number {
+    return a + b;
+}
+
+// 上面的代码还可以简写为
+sum = function (a, b) { return a + b };
+
+// 这里的=>才是箭头函数
+sum = (a, b) => a + b;
+```
+
+##### 声明数组类型
+
+```ts
+// 写法1
+let array: string[];
+array = ["a", "b"];
+
+// 写法2
+let array2: Array<string>;
+array2 = ["a", "b"];
+```
+
+#### tuple
+
+tuple（元组）是一种特殊的数组类型，可以存储固定数量的元素，并且每个元素的类型是已知的且可以不同
+
+tuple用于精确描述一组值的类型，?表示可选元素
+
+tuple不是关键字
+
+```ts
+let array1: [string, number];
+array1 = ["a", 100];
+
+let array2: [string, number?];
+array2 = ["a"];
+
+// ...number[]，任意个number
+let array3: [string, ...number[]];
+array3 = ["a", 1, 2];
+```
+
+#### enum
+
+枚举可以定义一组命名常量，它能增强代码的可读性，也让代码更好维护
+
+```ts
+// 数字枚举
+// 其成员值会自动递增，且具备反向映射的特点
+enum SizeEnum {
+    S,
+    M,
+    L
+}
+
+function selectSize(data: SizeEnum) {
+    // 2
+    console.log(data);
+}
+
+selectSize(SizeEnum.L);
+
+// 反向映射
+console.log(SizeEnum.L);
+console.log(SizeEnum[2]);
+
+// 字符串枚举，丢失了反向映射
+enum SizeEnum {
+    S = "Small",
+    M = "Medium",
+    L = "Large"
+}
+
+console.log(SizeEnum.L);
+
+// 声明枚举时加上const，就变成了常量枚举，编译时会按需编译，并且内联（将枚举引用替换为实际值），减少js代码量
+const enum SizeEnum {
+    S,
+    M,
+    L
+}
+```
+
+#### type
+
+type可以为任意类型创建别名，让代码更简洁、可读性更强
+
+```ts
+type Int = number;
+
+let i: Int = 3;
+
+console.log(i);
+
+// 联合类型，可以表示一个值可以是几种不同类型之一
+type Long = number | bigint;
+type Gender = "male" | "female";
+
+let gender: Gender;
+gender = "male";
+
+// 交叉类型
+type Area = {
+    width: number;
+    height: number;
+}
+
+type Point = {
+    x: number;
+    y: number;
+}
+
+type Plane = Area & Point;
+
+const plane: Plane = {
+    width: 1,
+    height: 2,
+    x: 3,
+    y: 4
+}
+
+// 在定义函数时，限制其返回值为void，那么其返回值就必须为void
+function fun(): void { }
+
+// 但是，使用类型声明限制函数返回值为void时，ts不会严格要求函数返回为void
+type Void = () => void;
+
+const fun1: Void = function () {
+    return "handle";
+}
+
+const fun2: Void = () => "handle";
+
+// 这是为了兼容类似下面的箭头函数写法
+const src = [1, 2, 3];
+const dst = [0];
+
+// (item) => {dst.push(item)}简写为(item) => dst.push(item)后，会将dst.push(item)的结果返回
+src.forEach((item) => dst.push(item));
+
+console.log(dst);
+```
+
+#### 类
+
+```ts
+// 基础的类定义写法
+class Pet {
+    // 属性修饰符：public（默认）、protected、private、readonly
+    public readonly name: string;
+    public age: number;
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+    // 方法默认也是public
+    public toString() {
+        console.log(`name: ${this.name}, age: ${this.age}`);
+    }
+}
+
+const pet = new Pet("dog", 3);
+// 访问属性
+console.log(pet.name);
+// 调用方法
+pet.toString();
+
+// 基础的继承写法
+class Dog extends Pet {
+    hasHouse: boolean;
+    // 如果没有属性可以不用写构造器
+    constructor(hasHouse: boolean, name: string, age: number) {
+        super(name, age);
+        this.hasHouse = hasHouse;
+    }
+    // 覆写
+    override toString() {
+        console.log(`name: ${this.name}, age: ${this.age}, hasHouse: ${this.hasHouse}`);
+    }
+    sleep() {
+        console.log(`${this.name} is sleeping`);
+    }
+}
+
+const dog = new Dog(true, "dog", 3);
+dog.toString();
+dog.sleep();
+
+
+class Pet {
+    // 简写属性声明和初始化的代码
+    constructor(name: string, age: number) { }
+}
+```
+
+#### 抽象类
+
+```ts
+// 抽象类
+abstract class Package {
+    constructor(public weight: number) { }
+    // 抽象方法
+    abstract calculate(): number;
+
+    printPackage() {
+        console.log(`weight: ${this.weight}, price: ${this.calculate()}`);
+    }
+}
+
+class StandardPackage extends Package {
+    // unitPrice记得加上修饰符
+    constructor(weight: number, public unitPrice: number) {
+        super(weight);
+    }
+    calculate(): number {
+        return this.weight * this.unitPrice;
+    }
+}
+
+const p = new StandardPackage(10, 5);
+p.printPackage();
+```
+
+#### interface
+
+接口是一种定义结构的方式，主要作用是为类、对象、函数等规定一种契约，以此确保代码的一致性和类型安全
+
+接口只能定义格式，不能包含任何实现（如具体方法）
+
+```ts
+// 定义类结构
+interface PersonInterface {
+    name: string;
+    age: number;
+    speak(n: number): void;
+}
+
+class Person implements PersonInterface {
+    constructor(public name: string, public age: number) { }
+    speak(n: number): void {
+        console.log(`name: ${this.name}, age: ${this.age}, n: ${n}`);
+    }
+}
+
+const person = new Person("handle", 18);
+person.speak(666);
+
+// 定义对象结构
+interface UserInterface {
+    name: string;
+    // 只读属性
+    readonly gender: string;
+    // 可选属性
+    age?: number;
+    run: (n: number) => void
+}
+
+// 和 const n: number = 1; 结构类似
+// 只不过定义的是一个对象
+const user: UserInterface = {
+    name: "handle",
+    gender: "male",
+    // age: 18,
+    run(n) {
+        console.log(`n: ${n}`);
+    }
+}
+
+// 定义函数结构
+interface CountInterface {
+    (x: number, y: number): number;
+}
+
+const count: CountInterface = (x, y) => x + y;
+
+console.log(count(1, 2));
+
+// 接口之间的继承
+interface PersonInterface {
+    name: string;
+    age: number;
+}
+
+interface StudentInterface extends PersonInterface {
+    grade: string;
+}
+
+const student: StudentInterface = {
+    name: "handle",
+    age: 18,
+    grade: "大一"
+}
+
+// 接口可重复定义（自动合并）
+interface PersonInterface {
+    name: string;
+    age: number;
+}
+
+interface PersonInterface {
+    grade: string;
+}
+
+const person: PersonInterface = {
+    name: "handle",
+    age: 18,
+    grade: "大一"
+}
+```
+
+##### interface和type的对比
+
+相同点：二者都可以用于定义对象结构，在许多场景中可以互换
+
+- 不同点：
+    - interface：更专注于定义对象和类的结构，支持继承、合并
+    - type：可以定义类型别名、联合类型、交叉类型，但不支持继承、合并（但是可以用交叉类型来实现）
+
+```ts
+interface PersonInterface {
+    name: string;
+    age: number;
+    speak(): void;
+}
+
+type PersonType = {
+    name: string;
+    age: number;
+    speak(): void;
+}
+
+const person1: PersonInterface = {
+    name: "handle",
+    age: 18,
+    speak() {
+        console.log(`PersonInterface,  name: ${this.name}, age: ${this.age}`);
+    }
+}
+person1.speak();
+
+const person2: PersonType = {
+    name: "handle",
+    age: 18,
+    speak() {
+        console.log(`PersonType, name: ${this.name}, age: ${this.age}`);
+    }
+}
+person2.speak();
+```
+
+##### interface和抽象类的对比
+
+相同点：都用于定义一个类的格式
+
+- 不同点：
+    - 接口：只能描述结构，不能有任何实现代码，一个类可以实现多个接口
+    - 可以包含抽象方法和具体方法，一个类只能继承一个抽象类
+
+#### 泛型
+
+```ts
+// 泛型函数
+function print<T>(data: T) {
+    console.log(data);
+}
+
+print<string>("handle");
+print<number>(666);
+
+// 多个泛型类型
+function print<T, U>(data1: T, data2: U) {
+    console.log(data1);
+    console.log(data2);
+}
+
+print<string, number>("handle", 666);
+
+// 泛型接口
+interface PersonInterface<T> {
+    name: string;
+    age: number;
+    extraInfo: T;
+}
+
+const person: PersonInterface<string> = {
+    name: "handle",
+    age: 18,
+    extraInfo: "some info"
+}
+
+// 泛型类
+class Person<T> {
+    constructor(name: string,
+        age: number,
+        extraInfo: T) { }
+}
+
+const person = new Person<string>("handle", 18, "some info");
+
+console.log(person);
+```
+
+#### 类型声明文件
+
+类型声明文件是ts中的一种特殊文件，通常以.d.ts作为扩展名
+
+它的主要作用是为现有的js代码提供类型信息，使得ts能够在使用这些js库或模块时进行类型检查和提示
 
 ## JSP
 
