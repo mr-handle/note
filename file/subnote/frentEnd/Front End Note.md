@@ -7671,6 +7671,24 @@ class Pet {
     }
 }
 
+// 属性访问器的写法
+class Person {
+    private _name: string;
+    constructor(name: string) {
+        this._name = name;
+    }
+    get name() {
+        return this._name;
+    }
+    set name(name: string) {
+        this._name = name;
+    }
+}
+
+const person = new Person("handle");
+
+console.log(person.name);
+
 const pet = new Pet("dog", 3);
 // 访问属性
 console.log(pet.name);
@@ -7917,6 +7935,358 @@ console.log(person);
 类型声明文件是ts中的一种特殊文件，通常以.d.ts作为扩展名
 
 它的主要作用是为现有的js代码提供类型信息，使得ts能够在使用这些js库或模块时进行类型检查和提示
+
+### 装饰器
+
+装饰器本质是一种特殊的函数，它可以对类、属性、方法、参数进行扩展，同时能让代码更简洁
+
+有点类似java的注解
+
+#### 类装饰器
+
+```ts
+// Demo函数会在Person类定义时执行
+// target：被装饰的类，这里是Person
+function Demo(target: Function) {
+    console.log(target);
+}
+
+@Demo
+class Person {
+    name: string
+    age: number
+    // 这里不能用简写
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+
+
+// 函数会在装饰的类定义时执行
+// target：被装饰的类，这里是Person
+function toString(target: Function) {
+    target.prototype.toString = function () {
+        return JSON.stringify(this);
+    }
+}
+
+@toString
+class Person {
+    name: string;
+    age: number;
+    // 这里不能用简写
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+
+const person = new Person("handle", 18);
+console.log(person.toString());
+
+// 函数会在装饰的类定义时执行
+// target：被装饰的类，这里是Person
+function Demo(target: Function) {
+    return class {
+        fun() { }
+    }
+}
+
+@Demo
+class Person {
+    fun() {
+
+    }
+}
+// 如果装饰器有返回值并且返回一个新的类
+// 这个新类将替换被装饰的类
+// 这里打印的是新类
+console.log(Person);
+
+// 仅声明构造类型
+// new 表示该类型可以用new操作符调用
+// ...args 表示构造器接受任意数量的参数
+// any[] 表示构造器接受任意类型的参数
+// {} 表示返回类型是对象（非null、非undefined的对象）
+type Constructor = new (...args: any[]) => {};
+
+// 要求target是一个类
+function fun(target: Constructor) { }
+
+class Person { }
+
+fun(Person);
+
+// 声明构造类型 + 指定静态属性
+// new 表示该类型可以用new操作符调用
+// ...args 表示构造器接受任意数量的参数
+// any[] 表示构造器接受任意类型的参数
+// {} 表示返回类型是对象（非null、非undefined的对象）
+type Constructor = {
+    new(...args: any[]): {};
+    // 指定静态属性
+    name: string;
+}
+
+// 要求target是一个类
+function fun(target: Constructor) { }
+
+class Person {
+    static name: string;
+}
+
+fun(Person);
+```
+
+##### 替换被装饰的类
+
+```ts
+type Constructor = new (...args: any[]) => {};
+
+// 接口和类竟然能合并！！！
+interface Person {
+    getCreateTime(): number;
+}
+
+function LogTime<T extends Constructor>(target: T) {
+    // 返回一个新类替换原来的类
+    return class extends target {
+        createTime: number;
+
+        constructor(...args: any[]) {
+            // 这里记得加上...
+            super(...args);
+            this.createTime = new Date().getTime();
+        }
+
+        getCreateTime() {
+            return this.createTime;
+        }
+    }
+}
+
+@LogTime
+class Person {
+    name: string;
+    age: number;
+    // 这里不能用简写
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+
+const person = new Person("handle", 18);
+
+console.log(person);
+console.log(person.getCreateTime());
+```
+
+#### 装饰器工厂
+
+装饰器工厂是一个返回装饰器函数的函数，可以为装饰器添加参数，也可以灵活地控制装饰器的行为
+
+```ts
+type Constructor = new (...args: any[]) => {};
+
+// 接口和类竟然能合并！！！
+interface Person {
+    printLog(): void;
+}
+
+// 装饰器工厂
+function LogFactory(maxLength: number) {
+    // 返回一个装饰器
+    return function (target: Constructor) {
+        target.prototype.printLog = function () {
+            console.log(`maxLength: ${maxLength}, name: ${this.name}, age: ${this.age}`);
+        }
+    }
+}
+
+// 传给装饰器工厂的参数
+@LogFactory(3)
+class Person {
+    name: string;
+    age: number;
+    // 这里不能用简写
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+
+const person = new Person("handle", 18);
+
+console.log(person.printLog());
+```
+
+#### 装饰器组合
+
+- 装饰器可以组合使用，顺序为
+    - 先从上到下执行所有的装饰器工厂，依次获取到装饰器
+    - 然后再从下到上执行所有的装饰器
+
+```ts
+type Constructor = new (...args: any[]) => {};
+
+function Decorator1(target: Constructor) {
+    console.log("Decorator1");
+}
+function DecoratorFactory2() {
+    console.log("DecoratorFactory2");
+    return function (target: Constructor) {
+        console.log("Decorator2");
+    }
+}
+function DecoratorFactory3() {
+    console.log("DecoratorFactory3");
+    return function (target: Constructor) {
+        console.log("Decorator3");
+    }
+}
+function Decorator4(target: Constructor) {
+    console.log("Decorator4");
+}
+
+@Decorator1
+@DecoratorFactory2()
+@DecoratorFactory3()
+@Decorator4
+class Person { }
+```
+
+#### 属性装饰器
+
+```ts
+// target 对于静态属性来说，它是类；对于实例属性来说，它是类的原型对象
+// propertyKey 属性名
+function Demo(value: any, context: any) {
+    console.log(value, context);
+}
+
+class Person {
+    @Demo
+    name: string;
+
+    @Demo
+    age: number;
+
+    @Demo
+    static school: string;
+
+    // 这里不能用简写
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+##### 属性遮蔽
+
+```ts
+class Person {
+    name: string;
+    age: number;
+    // 这里不能用简写
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+}
+
+// 先Object.defineProperty后创建Person对象会导致属性遮蔽
+let value = 100;
+Object.defineProperty(Person.prototype, "age", {
+    get() { return value; },
+    set(newValue) { value = newValue; }
+});
+
+const person = new Person("handle", 18);
+
+console.log(person);
+```
+
+##### 方法装饰器
+
+```ts
+// target 对于静态属性来说，它是类；对于实例属性来说，它是类的原型对象
+// propertyKey 属性名
+function Demo(value: Function, context: ClassMethodDecoratorContext) {
+    console.log(`value: ${value}`);
+    console.log(`context: ${context}`);
+}
+
+class Person {
+    constructor(name: string, age: number) { }
+
+    @Demo
+    print() {
+        console.log(`timestamp: ${Person.getTime()}`);
+    }
+
+    @Demo
+    static getTime() {
+        return new Date().getTime();
+    }
+}
+
+const person = new Person("handle", 18);
+
+person.print();
+```
+
+#### 访问器装饰器
+
+```ts
+function Length(min: number, max: number) {
+    return function (value: Function, context: ClassGetterDecoratorContext | ClassSetterDecoratorContext) {
+        const name = context.name;
+        // "getter" 或 "setter"
+        const kind = context.kind;
+        if (kind === 'getter') {
+            return function (this: any) {
+                return value.call(this);
+            }
+        } else {
+            // setter
+            return function (this: any, newValue: string) {
+                // 1. 执行校验逻辑
+                if (typeof newValue !== "string") {
+                    throw new Error(`${name} 必须是字符串`);
+                }
+                if (newValue.length < min || newValue.length > max) {
+                    throw new Error(`${name} 的长度必须在 ${min} 到 ${max} 之间，当前长度为 ${newValue.length}`);
+                }
+                value.call(this, newValue);
+            }
+        }
+    }
+}
+
+class Person {
+    private _name: string;
+    constructor(name: string) {
+        this._name = name;
+    }
+    get name() {
+        return this._name;
+    }
+
+    @Length(1, 8)
+    set name(name: string) {
+        this._name = name;
+    }
+}
+
+const person = new Person("handle");
+
+person.name = "jack";
+
+console.log(person.name);
+```
 
 ## JSP
 
