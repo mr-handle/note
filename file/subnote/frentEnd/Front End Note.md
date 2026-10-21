@@ -9555,53 +9555,6 @@ export type IUsers = IUser[]
 </script>
 ```
 
-##### defineProps
-
-- 父组件数据传给子组件，使用属性绑定
-
-```vue
-<!-- 父组件 -->
-<Son :fatherData="" :otherData=""/>
-
-<!-- 子组件 -->
-<!-- 指定接收 -->
-defineProps<>(['fatherData'])
-
-<!-- 指定接收 + 类型限制 -->
-<!-- defineProps<{fatherData:typeName}>() -->
-
-<!-- 指定接收 + 类型限制 + 必要性 + 默认值 -->
-<!-- withDefaults在vue3.5已废弃，可以用解构方式 -->
-<!-- withDefaults(defineProps<{fatherData?:类型名}>(),{fatherData: () => [{id: 1,name: 'handle'}]}) -->
-
-let fatherData = defineProps({
-    fatherName,
-    // 也可以自定义接受父组件的属性
-    fatherAge: {
-        type: Number,
-        required: true
-        default: 25
-    }
-})
-```
-
-##### defineEmits
-
-- 子组件数据传给父组件
-
-```ts
-// 子组件定义发生的事件
-let emits = defineEmits(['方法名']);
-function 方法名() {
-    emits("方法名"，参数);
-}
-
-// 父组件感知和接收事件值
-<Son fatherData @方法名="父组件方法名"/>
-```
-
-- 兄弟组件传值：子1传给父，父传给子2
-
 #### vue的html语法
 
 - 格式：v-xxx
@@ -10339,6 +10292,166 @@ export const useCountStore = defineStore("count", () => {
 ```
 
 ##### 组件通信
+
+#### defineProps
+
+可以实现父组件和子组件之间双向通信
+
+##### 父传子
+
+- 父组件数据传给子组件1
+
+```vue
+<script setup lang="ts">
+    import { ref } from 'vue';
+    import Son from './Son.vue';
+
+    let car = ref("宝马");
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <!-- 传递给子组件的变量，冒号后的名称可以自定义，但是要和子组件的defineProps的参数名：defineProps(["che"])一样 -->
+        <!-- 等号后的值是父组件的变量名，即上面定义的let car = ref("宝马") -->
+        <Son :che="car" />
+    </div>
+</template>
+
+<!-- 以上是父组件内容，下面是子组件内容 -->
+
+<script setup lang="ts">
+    // 接收数据
+    defineProps(["che"]);
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件</h2>
+        <!-- 这里的变量名要跟上面defineProps(["che"])的一样 -->
+        <h4>父组件给的车：{{ che }}</h4>
+    </div>
+</template>
+```
+
+- 父组件数据传给子组件2，使用属性绑定
+
+```vue
+<!-- 父组件 -->
+<Son :fatherData="" :otherData=""/>
+
+<!-- 子组件 -->
+<!-- 指定接收 -->
+defineProps<>(['fatherData'])
+
+<!-- 指定接收 + 类型限制 -->
+<!-- defineProps<{fatherData:typeName}>() -->
+
+<!-- 指定接收 + 类型限制 + 必要性 + 默认值 -->
+<!-- withDefaults在vue3.5已废弃，可以用解构方式 -->
+<!-- withDefaults(defineProps<{fatherData?:类型名}>(),{fatherData: () => [{id: 1,name: 'handle'}]}) -->
+
+let fatherData = defineProps({
+    fatherName,
+    // 也可以自定义接受父组件的属性
+    fatherAge: {
+        type: Number,
+        required: true
+        default: 25
+    }
+})
+```
+
+##### 子传父
+
+父组件先给子组件传一个方法
+
+然后子组件调用父组件的方法实现子传父
+
+- 父组件中
+
+```vue
+<script setup lang="ts">
+    import { ref } from 'vue';
+    import Son from './Son.vue';
+
+    let cellphone = ref("");
+
+    // 声明一个方法用来传给子组件
+    function getData(value: string) {
+        cellphone.value = value;
+    }
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <!-- v-show 根据变量cellphone值条件显示，设置为false时永不显示 -->
+        <h4 v-show="cellphone">子组件给的手机：{{ cellphone }}</h4>
+        <!-- 传递给子组件的方法名，可以自定义，但是要和子组件的defineProps的参数名一样 -->
+        <!-- 等号后的值是父组件中声明的方法名 -->
+        <Son :sendData="getData" />
+    </div>
+</template>
+```
+
+- 子组件中
+
+```ts
+<script setup lang="ts">
+    const mobile = "苹果";
+    const props = defineProps(["sendData"]);
+
+    function fun() {
+        props.sendData(mobile);
+    }
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件</h2>
+        <button @click="sendData(mobile)">把手机给父组件写法1</button>
+        <button @click="fun">把手机给父组件写法2</button>
+    </div>
+</template>
+```
+
+#### defineEmits（自定义事件）
+
+子组件数据传给父组件
+
+- 子组件中
+
+```vue
+<!-- 简洁写法 -->
+<!-- <button @click="emits("事件名"，参数)" >send</button> -->
+
+<!-- 普通写法 -->
+<button @click="方法名" >send</button>
+```
+
+```ts
+// 声明事件，在子组件定义发生的事件
+let emits = defineEmits(['事件名']);
+
+function 方法名() {
+    // 调用emits触发事件
+    emits("事件名"，参数);
+}
+```
+
+- 父组件中
+
+```vue
+// 父组件感知和接收事件值
+<Son @事件名="父组件方法名"/>
+```
+
+```ts
+function 父组件方法名(value:any) {}
+```
+
+- 兄弟组件传值：子1传给父，父传给子2
 
 #### Axios
 
