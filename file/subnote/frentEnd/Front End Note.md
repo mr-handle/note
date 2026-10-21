@@ -2182,6 +2182,7 @@ div {
 
 - 如何让子元素在父元素中水平居中
     - 若子元素为块元素，给子元素加上`margin: 0 auto`
+        - 往往还要给子元素设置一个宽度，否则默认子元素是占满一行的，就没有所谓的居中效果了
     - 若子元素为行内元素或行内块元素，给父元素加上`text-align: center`
 
 - 如何让子元素在父元素中垂直居中
@@ -6634,6 +6635,9 @@ history对象在实际开发中比较少用，但是会在一些OA办公系统�
 // 存储数据
 localStorage.setItem(key, value);
 
+// 只能存字符串，存储对象要先转成字符串
+localStorage.setItem(key, JSON.stringify(myObject));
+
 // 读取数据
 let value = localStorage.getItem(key);
 
@@ -8808,7 +8812,7 @@ npm的绝大部分命令都可以改成pnpm执行
 
 pn是pnpm的别名
 
-pnxpnpx的别名
+pnx是pnpx的别名
 
 - 安装
 
@@ -8828,10 +8832,22 @@ pnpm --version
 |npm命令|pnpm等价命令|
 |:-|:-|
 |npm command|pnpm equivalent|
-|npm install|pnpm install|
+|npm install|`pnpm install`或`pnpm i`|
 |npm i `<pkg>`|pnpm add `<pkg>`|
 |npm run `<cmd>`|pnpm `<cmd>`|
 |npx `<pkg>`|pnx `<pkg>`|
+
+```sh
+# 通常后面不指定包名，新建项目或者克隆项目的时候才会执行这个命令
+pnpm install
+
+# 添加指定的包，将其安装到 node_modules
+# 并‌自动修改‌ package.json（将包名写入 dependencies 或 devDependencies），同时更新 pnpm-lock.yaml
+pnpm add [-D] 包名
+
+# 从 package.json 和 node_modules 中移除包
+pnpm remove 包名
+```
 
 #### 全局配置
 
@@ -8839,12 +8855,28 @@ pnpm --version
     - 如果设置了`$XDG_CONFIG_HOME`环境变量，在`$XDG_CONFIG_HOME/pnpm/config.yaml`
     - 默认在`~/.config/pnpm/config.yaml`
 
+#### 设置pnpm镜像源
+
+pnpm兼容npm配置的镜像源，配置命令也相似
+
+```sh
+# 设置pnpm国内镜像源
+pnpm config set registry https://registry.npmmirror.com
+
+# 查看pnpm正在使用的镜像源
+pnpm config get registry
+```
+
 ## vue
 
 - vscode安装官方vue扩展后，设置
     - ref语句自动补全value：`"vue.autoInsert.dotValue": true,`
     - vue文件script标签缩进：`"vue.format.script.initialIndent": true,`
     - vue文件style标签缩进：`"vue.format.style.initialIndent": true,`
+
+- vue文件（即组件）分为路由组件和一般组件
+    - 一般组件放到components目录下
+    - 路由组件放到pages/views目录下
 
 - 响应式特性：（变量）数据的变化可以更新到页面效果上
 
@@ -9680,6 +9712,10 @@ const {xxxDAta, xxxFunction} = useXxx()
 
 ### Vue-Router
 
+路由：就是键值对，保存路径的关系
+
+路由器：用来管理路由的
+
 - 依赖
 
 ```sh
@@ -9738,13 +9774,102 @@ app.mount('#app')
 
 ```vue
 <!-- 定义跳转 -->
-<RouterLink to="/home">Home</RouterLink>
+<!-- active-class激活时应用的样式 -->
+<RouterLink to="/home" active-class="myClass">Home</RouterLink>
 <!-- 子级路由路径要写全，不能单单写/detail -->
-<RouterLink to="/home/detail">Home</RouterLink>
+<RouterLink to="/home/detail" active-class="myClass">Detail</RouterLink>
 <!-- 可以通过路由的path或name属性进行映射 -->
-<RouterLink :to="{name: 'aboutRoute'}">About</RouterLink>
+<RouterLink :to="{name: 'aboutRoute'}" active-class="myClass">About</RouterLink>
 
 <!-- 显示跳转的vue内容 -->
+<RouterView />
+```
+
+通过点击导航，视觉上消失了的路由组件，默认是被卸载掉的，等再次展示的时候会重新挂载
+
+#### 路由工作模式
+
+- history模式
+    - 优点：URL更加美观，不带#，更接近传统网站的URL
+    - 缺点：后期项目上线，需要服务器端配合处理路径问题，否则刷新会404
+
+```ts
+const router = createRouter({
+    // ...
+    history: createWebHistory(),
+    // ...
+});
+
+// 如果使用nginx，需要配置如下内容
+// 当没有匹配资源的时候都匹配到index.html，解决刷新404
+try_files $uri $uri/ /index.html;
+```
+
+- hash模式
+    - 优点：兼容性更好，不需要服务器端处理路径
+    - 缺点：URL带有#不美观，且在SEO优化方面相对较差
+
+```ts
+const router = createRouter({
+    // ...
+    history: createWebHashHistory(),
+    // ...
+});
+```
+
+#### to的写法
+
+```vue
+<RouterLink to="/home">Home</RouterLink>
+
+<RouterLink :to="{path: '/home'}">Home</RouterLink>
+
+<!-- 如果定义了路由名称 -->
+<RouterLink :to="{name: 'mainPage'}">Home</RouterLink>
+```
+
+#### 命名路由
+
+```ts
+routes: [
+    {
+        // 路由名称
+        name: 'mainPage',
+        // 路径
+        path: '/home',
+        // 组件名
+        component: HomeView,
+    },
+]
+```
+
+#### 嵌套路由
+
+```ts
+routes: [
+    {
+        // 路由名称
+        name: 'mainPage',
+        // 路径
+        path: '/home',
+        // 组件名
+        component: HomeView,
+        children: [
+            {
+                // "/home/detail" 子级路由不用写撇斜杠
+                path: 'detail',
+                component: HomeDetailView
+            }
+        ]
+    },
+]
+```
+
+```vue
+<!-- 子级路由路径要写全，不能单单写/detail -->
+<RouterLink to="/home/detail">Detail</RouterLink>
+
+<!-- 不要写漏了 -->
 <RouterView />
 ```
 
@@ -9752,10 +9877,28 @@ app.mount('#app')
 
 ##### query参数
 
+```ts
+import { toRefs } from "vue";
+import { useRoute } from "vue-router"
+
+// 拿到路由
+const route = useRoute();
+
+// 拿到query参数1
+const id = route.query.具体query参数;
+
+// 或者直接解构拿到query
+let {query} = toRefs(route)
+
+// 拿到query参数2
+const id = query.具体query参数;
+```
+
 ```vue
 <script type="ts">
     // 通过route的query获取传参
     let route = useRoute()
+    // 解构拿到query
     let {query} = toRefs(route)
 </script>
 <template>
@@ -9767,8 +9910,8 @@ app.mount('#app')
     path: '',
     <!-- 传参 -->
     query: {
-        id: 变量名称1,
-        name: 变量名称2,
+        id: 值,
+        name: 值,
     }
     <!-- 子组件，获取query里面属性值 -->
     <p>{{query.id}}</p>
@@ -9779,6 +9922,10 @@ app.mount('#app')
 
 ##### params参数
 
+使用`:to`的对象写法时，必须使用name，不能用path
+
+需要提前在路由规则中占位
+
 ```ts
 // 路由写法
 const router = createRouter({
@@ -9786,13 +9933,20 @@ const router = createRouter({
     routes: [
         {
             // params: id和name作为占位符
-            path: '/home/:id/:name',
+            // 问号表示可选参数
+            path: '/home/:id/:name?',
             name: 'homeRoute',
             component: HomeView
         }
     ]
 })
 
+// 通过route的params获取传参
+let route = useRoute()
+let {params} = toRefs(route)
+```
+
+```vue
 <!-- 跳转写法，如果加上问号，表示后面的参数不是必须 -->
 <RouterLink to="/home?/123/handle">Home</RouterLink>
 <!-- 从变量值中填充id和name作为params的写法1 -->
@@ -9802,22 +9956,18 @@ const router = createRouter({
     <!-- 必须传路由名称 -->
     name: 'homeRoute',
     <!-- 传参，和RouterLink定义的参数名要一致 -->
-    query: {
-        id: 变量名称1,
-        name: 变量名称2,
+    params: {
+        id: 值,
+        name: 值,
     }
 }">Home</RouterLink>
-
-// 通过route的query获取传参
-let route = useRoute()
-let {params} = toRefs(route)
 
 <!-- 获取params里面属性值 -->
 <p>{{params.id}}</p>
 <p>{{params.name}}</p>
 ```
 
-##### props配置
+##### 路由的props配置
 
 ```ts
 // 路由写法1
@@ -9835,7 +9985,7 @@ const router = createRouter({
     ]
 })
 
-// 路由写法2
+// 路由写法2，函数写法
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
@@ -9853,7 +10003,7 @@ const router = createRouter({
         }
     ]
 })
-// 路由写法3
+// 路由写法3，对象写法
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
@@ -9876,6 +10026,12 @@ const router = createRouter({
 defineProps(['id', 'name'])
 ```
 
+```vue
+<!-- 然后可以直接写id、name -->
+<p>{{id}}</p>
+<p>{{name}}</p>
+```
+
 ##### replace属性
 
 ```ts
@@ -9885,7 +10041,7 @@ defineProps(['id', 'name'])
 
 ##### 编程式路由导航
 
-- 由于在ts中不能用RouterLink
+- 由于在ts中不能用RouterLink标签
 
 - 编程式路由导航也即脱离RouterLink实现路由跳转
 
@@ -9909,6 +10065,14 @@ function foo(entityName: typeName) {
         }
     })
 }
+```
+
+```vue
+<ul>
+    <li v-for="detail in detailList" :key="detail.id">
+        <button @click="foo(detail)">明细</button>
+    </li>
+</ul>
 ```
 
 ##### 重定向
@@ -9937,12 +10101,244 @@ npm install pinia
 - main.ts
 
 ```ts
+// 引入pinia
 import { createPinia } from 'pinia'
 
 const app = createApp(App)
-app.use(createPinia())
+// 创建pinia
+const pinia = createPinia()
+// 安装pinia
+app.use(pinia)
 app.mount('#app')
 ```
+
+- 在src创建子目录store，然后创建xxx.ts，如创建count.ts
+
+```ts
+import { defineStore } from 'pinia';
+
+// 第一个参数可以参考ts文件名
+// 记得export
+export const useCountStore = defineStore("count", {
+    // 真正存储数据的地方
+    state() {
+        return {
+            // 存储sum变量，初始值为0
+            sum: 0
+        }
+    }
+});
+```
+
+- 获取store中的数据
+
+```ts
+import { useCountStore } from "@/store/count";
+
+const countStore = useCountStore();
+
+// 拿到state中的数据的两种方式
+let sum1 = countStore.sum;
+let sum2 = countStore.$state.sum;
+```
+
+- 修改store中的数据
+
+```ts
+import { useCountStore } from "@/store/count";
+
+const countStore = useCountStore();
+
+function add() {
+    // 第一种修改方式
+    countStore.sum += 1;
+
+    // 第二种修改方式，适用于一次修改很多数据的时候
+    countStore.$patch({
+        sum: 666,
+        // name: "handle",
+        // age: 18
+    });
+}
+```
+
+- 第三种修改方式
+
+```ts
+// count.ts
+import { defineStore } from 'pinia';
+
+// 第一个参数可以参考ts文件名
+// 记得export
+export const useCountStore = defineStore("count", {
+    // 里面放置的是一个个方法，用于响应组件中的动作
+    // 这种方式比较复杂，对于代码复用的场景比较合适
+    actions: {
+        increment(value: number) {
+            console.log(`invoke increment, value: ${value}`);
+            // 修改数据
+            if (this.sum < 3) {
+                this.sum += value;
+            }
+        }
+    },
+    // 真正存储数据的地方
+    state() {
+        return {
+            // 存储sum变量，初始值为0
+            sum: 0,
+            name: "Jack",
+            age: 23
+        }
+    }
+});
+```
+
+```ts
+import { useCountStore } from "@/store/count";
+
+const countStore = useCountStore();
+
+function add() {
+    // 第三种修改方式
+    countStore.increment(1);
+}
+```
+
+##### storeToRefs
+
+```ts
+import { storeToRefs } from "pinia";
+import { useCountStore } from "@/store/count";
+
+const countStore = useCountStore();
+
+// storeToRefs只会关注store中的数据，不会对方法进行ref包裹
+const { sum, name, age } = storeToRefs(countStore);
+```
+
+##### getters
+
+当state中的数据需要经过处理后再使用时，可以使用getters配置
+
+```ts
+import { defineStore } from 'pinia';
+
+// 第一个参数可以参考ts文件名
+// 记得export
+export const useCountStore = defineStore("count", {
+    // 里面放置的是一个个方法，用于响应组件中的动作
+    // 这种方式比较复杂，对于代码复用的场景比较合适
+    actions: {
+        increment(value: number) {
+            console.log(`invoke increment, value: ${value}`);
+            // 修改数据
+            if (this.sum < 3) {
+                this.sum += value;
+            }
+        }
+    },
+    // 真正存储数据的地方
+    state() {
+        return {
+            // 存储sum变量，初始值为0
+            sum: 0,
+            name: "Jack",
+            age: 23
+        }
+    },
+    getters: {
+        // 写法1
+        bigSum1(): number {
+            return this.sum * 10;
+        },
+        bigSum2(state) {
+            return state.sum * 10;
+        },
+        // 写法2
+        bigSum3: state => state.sum * 10
+    }
+});
+```
+
+```vue
+<script setup lang="ts">
+    import { storeToRefs } from "pinia";
+    import { useCountStore } from "@/store/count";
+
+    const countStore = useCountStore();
+
+    // storeToRefs只会关注store中的数据，不会对方法进行ref包裹
+    const { sum, name, age, bigSum1, bigSum2, bigSum3 } = storeToRefs(countStore);
+</script>
+
+<template>
+    <p>{{ bigSum1 }}</p>
+</template>
+```
+
+##### $subscribe
+
+通过store的$subscribe方法监听state及其变化
+
+```ts
+import { defineStore } from 'pinia';
+
+// 第一个参数可以参考ts文件名
+// 记得export
+export const useCountStore = defineStore("count", {
+    // 真正存储数据的地方
+    state() {
+        return {
+            // 第一次打开页面的时候localStorage是没有值的，因此给个[]
+            myList: JSON.parse(localStorage.getItem("myList") as string) || []
+        }
+    }
+});
+```
+
+```ts
+countStore.$subscribe((mutate, state) => {
+    console.log("countStore里面保存的数据发生了变化", mutate, state);
+    localStorage.setItem("name", state.name);
+    // 只能存字符串，存储对象要先转成字符串
+    // localStorage.setItem("key", JSON.stringify(myObject));
+});
+```
+
+##### store的组合式写法
+
+前面的例子是选项式写法，还可以用组合式写法实现
+
+```ts
+import { defineStore } from 'pinia';
+
+import { computed, ref, reactive } from "vue";
+
+export const useCountStore = defineStore("count", () => {
+    // state
+    const sum = ref(0);
+    const myList = reactive(JSON.parse(localStorage.getItem("myList") as string) || []);
+
+    // actions
+    function increment(value: number) {
+        console.log(`invoke increment, value: ${value}`);
+        // 修改数据
+        if (sum.value < 3) {
+            sum.value += value;
+        }
+    }
+
+    // getters
+    const bigSum = computed(() => {
+        return sum.value * 10;
+    });
+
+    return { sum, myList, increment, bigSum };
+});
+```
+
+##### 组件通信
 
 #### Axios
 
