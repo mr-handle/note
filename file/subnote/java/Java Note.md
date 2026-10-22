@@ -11078,7 +11078,7 @@ long total = new PageInfo<>(users).getTotal();
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-bom</artifactId>
-            <version>3.5.9</version>
+            <version>3.5.17</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -11088,7 +11088,7 @@ long total = new PageInfo<>(users).getTotal();
 <!-- spring-boot场景启动器 -->
 <dependency>
     <groupId>com.baomidou</groupId>
-    <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+    <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
 </dependency>
 <!-- 插件依赖，配置插件需要用到 -->
 <dependency>

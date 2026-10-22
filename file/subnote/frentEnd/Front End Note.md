@@ -9129,6 +9129,20 @@ export default defineConfig({
 </script>
 ```
 
+- 触碰响应式对象里面的ref属性，不用写.value，vue会自动读取value属性
+
+```ts
+const obj = reactive({
+    a:1,
+    b:2,
+    c:ref(3)
+})
+console.log(obj.a);
+console.log(obj.b);
+// 不要写obj.c.value
+console.log(obj.c);
+```
+
 #### toRef和toRefs写法
 
 对象解构赋值的时候，将其也变成响应式
@@ -10291,13 +10305,13 @@ export const useCountStore = defineStore("count", () => {
 });
 ```
 
-##### 组件通信
+#### 组件通信
 
-#### defineProps
+##### defineProps
 
 可以实现父组件和子组件之间双向通信
 
-##### 父传子
+###### 父传子
 
 - 父组件数据传给子组件1
 
@@ -10362,7 +10376,7 @@ let fatherData = defineProps({
 })
 ```
 
-##### 子传父
+###### 子传父
 
 父组件先给子组件传一个方法
 
@@ -10416,7 +10430,7 @@ let fatherData = defineProps({
 </template>
 ```
 
-#### defineEmits（自定义事件）
+##### defineEmits（自定义事件）
 
 子组件数据传给父组件
 
@@ -10452,6 +10466,647 @@ function 父组件方法名(value:any) {}
 ```
 
 - 兄弟组件传值：子1传给父，父传给子2
+
+##### mitt
+
+和pubsub、$bus一样，mitt也可以理解为一种发布订阅模型
+
+数据接收方：提前绑定好事件（提前订阅消息）
+
+数据发布方：在合适的时候触发事件（发布消息）
+
+- 安装mitt
+
+```sh
+npm i mitt
+```
+
+- 在src下创建tools或utils子目录，然后新建ts文件如emitter.ts
+
+```ts
+// 引入mitt
+import mitt from "mitt";
+
+// 调用mitt得到emitter，能绑定事件、触发事件
+const emitter = mitt();
+
+// 暴露emitter
+export default emitter;
+
+// 或者简写为
+// export default mitt()
+```
+
+- 使用emitter
+
+```ts
+import emitter from '@/utils/emitter';
+
+// emitter.all 拿到所有绑定事件
+
+// 绑定某个事件
+emitter.on("methodName", () => { });
+
+// 触发某个事件
+setInterval(() => {
+    emitter.emit("methodName");
+}, 1000);
+
+// 解绑某个事件
+setTimeout(() => {
+    emitter.off("methodName");
+
+    // 解绑所有事件
+    emitter.all.clear();
+}, 3000);
+```
+
+以下代码演示在兄弟组件间传输数据
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+    import Son2 from './Son2.vue';
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <Son />
+        <Son2 />
+    </div>
+</template>
+```
+
+- 子1组件
+
+```vue
+<script setup lang="ts">
+    import { ref } from 'vue';
+    import emitter from '@/utils/emitter';
+
+    const mobile = ref("苹果");
+
+
+</script>
+
+<template>
+    <div class="son">
+        <h2>子1组件</h2>
+        <p1>子1有手机：{{ mobile }}</p1>
+        <br />
+        <!-- 触发sendData事件 -->
+        <button @click="emitter.emit('sendData', mobile)">手机给子2</button>
+    </div>
+</template>
+```
+
+- 子2组件
+
+```vue
+<script setup lang="ts">
+    import { onUnmounted, ref } from 'vue';
+    import emitter from '@/utils/emitter';
+
+    const receiveData = ref("");
+
+    // 绑定sendData事件
+    emitter.on("sendData", (data) => {
+        if (typeof data === "string") {
+            receiveData.value = data;
+        }
+    });
+
+    // 在组件卸载时解绑事件
+    onUnmounted(() => {
+        emitter.off("sendData");
+    })
+
+</script>
+
+<template>
+    <div class="son">
+        <h2>子2组件</h2>
+        <p v-show="receiveData">收到子1数据: {{ receiveData }}</p>
+    </div>
+</template>
+```
+
+##### v-model
+
+- v-model用在html标签上实现双向绑定
+
+```vue
+<script setup lang="ts">
+    import { ref } from "vue";
+
+    const userName = ref("handle");
+</script>
+
+<template>
+    <input type="text" v-model="userName" />
+
+    <!-- v-model实际上是通过两个单向绑定机制实现的 -->
+    <!-- <HTMLInputElement>$event.target 断言是一个html输入元素，不会为null -->
+    <!-- $event.target 发生事件对象的本体，即html元素 -->
+    <!-- <input type="text" :value="userName" @input="userName = (<HTMLInputElement>$event.target).value" /> -->
+</template>
+```
+
+- v-model用在组件标签上实现双向绑定
+
+```vue
+<script setup lang="ts">
+    import { ref } from "vue";
+    import MyInput from "./MyInput.vue";
+
+    const userName = ref("handle");
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+
+        <!-- v-model用在组件标签上实现双向绑定 -->
+        <MyInput v-model="userName" />
+
+        <!-- 实际上是下面的两条单向绑定整合 -->
+        <!-- $event 自定义事件，它是事件触发时传递的数据，不能.target -->
+        <!-- update:modelValue 它是事件名，必须"update:自定义名称"写法 -->
+        <!-- <MyInput :modelValue="userName" @update:modelValue="userName = $event" /> -->
+    </div>
+</template>
+```
+
+- 自定义组件
+
+```vue
+<script setup lang="ts">
+    defineProps(["modelValue"]);
+    const emit = defineEmits(["update:modelValue"]);
+</script>
+
+<template>
+    <!-- $event 原生事件，它就是事件对象，可以.target -->
+    <input type="text" :value="modelValue"
+        @input="emit('update:modelValue', (<HTMLInputElement>$event.target).value)" />
+</template>
+```
+
+###### 自定义事件名替换默认的modelValue
+
+```vue
+<script setup lang="ts">
+    import { ref } from "vue";
+    import MyInput from "./MyInput.vue";
+
+    const userName = ref("handle");
+    const password = ref("123456");
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+
+        <!-- v-model用在组件标签上实现双向绑定 -->
+        <!-- 自定义事件名取代modelValue后，可以定义多个v-model -->
+        <MyInput v-model:myEventName="userName" v-model:myEventName2="password" />
+    </div>
+</template>
+```
+
+- 自定义组件
+
+```vue
+<script setup lang="ts">
+    defineProps(["myEventName", "myEventName2"]);
+    const emit = defineEmits(["update:myEventName", "update:myEventName2"]);
+</script>
+
+<template>
+    <!-- $event 原生事件，它就是事件对象，可以.target -->
+    <input type="text" :value="myEventName"
+        @input="emit('update:myEventName', (<HTMLInputElement>$event.target).value)" />
+    <br>
+    <input type="text" :value="myEventName2"
+        @input="emit('update:myEventName2', (<HTMLInputElement>$event.target).value)" />
+</template>
+```
+
+##### `$attrs`
+
+`$attrs`用于实现当前组件的父组件，向当前组件的子组件通信（祖->孙）
+
+###### v-bind和`$attrs`扩展知识
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import { ref } from "vue";
+    import Son from "./Son.vue";
+
+    const a = ref(1);
+    const b = ref(2);
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <!-- <Son :a="a" :b="b" :x="100" :y="200"  /> -->
+        <!-- x和y可以用v-bind的写法简写如下 -->
+        <Son :a="a" :b="b" v-bind="{x:100, y:200}"  /> 
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    // 传了但是没有写到defineProps里面去的变量，都会放在$attrs里面
+    defineProps(["a"]);
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件</h2>
+        <p>a: {{ a }}</p>
+        <p>attrs: {{ $attrs }}</p>
+        <Grandson></Grandson>
+    </div>
+</template>
+```
+
+###### 祖<->孙
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import { ref } from "vue";
+    import Son from "./Son.vue";
+
+    const a = ref(1);
+    const b = ref(2);
+
+    function updateA(value: number) {
+        a.value += value;
+    }
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <!-- <Son :a="a" :b="b" :x="100" :y="200"  /> -->
+        <!-- x和y可以用v-bind的写法简写如下 -->
+        <Son :a="a" :b="b" v-bind="{ x: 100, y: 200 }" :myFun="updateA" />
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    import Grandson from "./Grandson.vue";
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件</h2>
+        <Grandson v-bind="$attrs" />
+    </div>
+</template>
+```
+
+- 孙组件
+
+```vue
+<script setup lang="ts">
+    defineProps(["a", "b", "x", "y", "myFun"]);
+</script>
+
+<template>
+    <div class="grandson">
+        <h2>孙组件</h2>
+        <p>a: {{ a }}</p>
+        <p>a: {{ b }}</p>
+        <p>a: {{ x }}</p>
+        <p>a: {{ y }}</p>
+        <!-- 实现孙->祖 -->
+        <button @click="myFun(2)">更新Fathter的a变量</button>
+    </div>
+</template>
+```
+
+##### `$refs` 和 `$parent`
+
+`$refs` 用于父传子，值为对象，包含所有被ref属性标识的DOM元素或组件实例
+
+`$parent`用于子传父，值为对象，当前组件的父组件实例对象
+
+###### ref
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from "./Son.vue";
+    import { ref } from "vue";
+
+    let c1 = ref();
+
+    function changeSon1Data() {
+        c1.value.mobile = "小米";
+    }
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <button @click="changeSon1Data">修改子组件1的数据</button>
+        <Son ref="c1" />
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    import { ref } from "vue";
+
+    const mobile = ref("苹果");
+
+    // 宏函数，把数据交给外部，否则父组件看不到摸不着
+    defineExpose({ mobile });
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件1</h2>
+        <p>手机: {{ mobile }}</p>
+    </div>
+</template>
+```
+
+###### `$refs`
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from "./Son.vue";
+    import Son2 from "./Son2.vue";
+
+    import { ref } from "vue";
+
+    let c1 = ref();
+    // let c2 = ref();
+
+    function changeSon1Data() {
+        c1.value.mobile = "小米";
+    }
+
+    // 参数refs是一个对象，里面确实有string类型的key，至于存的啥千奇百怪，用any限制
+    // 想要简便也可以直接refs: any
+    function getAllSon(refs: { [key: string]: any }) {
+        for (let key in refs) {
+            refs[key].book += 3;
+        }
+    }
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <button @click="changeSon1Data">修改子组件1的数据</button>
+        <button @click="getAllSon($refs)">获取所有子组件对象，让书变多</button>
+        <Son ref="c1" />
+        <Son2 ref="c2" />
+    </div>
+</template>
+```
+
+- 子组件1
+
+```vue
+<script setup lang="ts">
+    import { ref } from "vue";
+
+    const mobile = ref("苹果");
+    const book = ref(5);
+
+    // 宏函数，把数据交给外部，否则父组件看不到摸不着
+    defineExpose({ mobile, book });
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件1</h2>
+        <p>手机: {{ mobile }}</p>
+        <p>书: {{ book }}</p>
+    </div>
+</template>
+```
+
+- 子组件2
+
+```vue
+<script setup lang="ts">
+    import { onUnmounted, ref } from 'vue';
+    const car = ref("宝马");
+    const book = ref(10);
+    defineExpose({ car, book });
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件2</h2>
+        <p>车: {{ car }}</p>
+        <p>书: {{ book }}</p>
+    </div>
+</template>
+```
+
+###### `$parent`
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from "./Son.vue";
+
+    import { ref } from "vue";
+
+    let house = ref(10);
+
+    defineExpose({ house });
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <p>房产: {{ house }}</p>
+        <Son />
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    function minusHouse(parent: any) {
+        parent.house -= 1;
+    }
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件1</h2>
+        <button @click="minusHouse($parent)">干掉父亲的一套房产</button>
+    </div>
+</template>
+```
+
+##### provide和inject
+
+`$attrs`在祖孙组件之间传数据需要中间人组件
+
+provide和inject无需中间人组件
+
+###### 爷传孙
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+    import { reactive, ref, provide } from 'vue';
+
+    const money = ref(100);
+    const car = reactive({
+        brand: "宝马",
+        price: 100
+    });
+
+    // 向孙子组件提供数据
+    // 这里money不要.value，否则传的是具体的值，而不是响应式对象
+    provide("rmb", money);
+    provide("che", car);
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <Son />
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    import Grandson from './Grandson.vue';
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件1</h2>
+        <Grandson />
+    </div>
+</template>
+```
+
+- 孙组件
+
+```vue
+<script setup lang="ts">
+    import { inject } from 'vue';
+
+    let money = inject("rmb");
+    let car = inject("che");
+    // 视频里面不写默认值会有类型推断的问题，笔者这里没有发生这种情况，在此说明一下
+    // let money = inject("rmb", "默认值");
+    // let car = inject("che", { brand: "默认车", price: "默认价格" });
+</script>
+
+<template>
+    <div class="grandson">
+        <h2>孙组件</h2>
+        <p>money: {{ money }}</p>
+        <p>car: {{ car }}</p>
+    </div>
+</template>
+```
+
+###### 孙传爷
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+    import { ref, provide } from 'vue';
+
+    const money = ref(100);
+
+    function updateMoney(value: number) {
+        money.value -= value;
+    }
+
+    // 向孙子组件提供数据
+    provide("moneyContext", { money, updateMoney });
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <Son />
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    import Grandson from './Grandson.vue';
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件1</h2>
+        <Grandson />
+    </div>
+</template>
+```
+
+- 孙组件
+
+```vue
+<script setup lang="ts">
+    import { inject } from 'vue';
+
+    // 解构不写默认值会有类型推断的问题
+    let { money, updateMoney } = inject("moneyContext", { money: 0, updateMoney: (value: number) => { } });
+
+</script>
+
+<template>
+    <div class="grandson">
+        <h2>孙组件</h2>
+        <p>money: {{ money }}</p>
+        <button @click="updateMoney(10)">花掉爷的钱</button>
+    </div>
+</template>
+```
+
 
 #### Axios
 
