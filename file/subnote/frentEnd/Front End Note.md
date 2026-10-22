@@ -11107,6 +11107,115 @@ provide和inject无需中间人组件
 </template>
 ```
 
+#### slot（插槽）
+
+##### 默认插槽
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <!-- 注意这里传的是常量不用title不用冒号前缀 -->
+        <Son title="分类名称1">
+            <!-- 具体内容，替换子组件中的slot -->
+            <h4>我是具体内容</h4>
+        </Son>
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    defineProps(["title"]);
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件1</h2>
+        <h2>分类名称：{{ title }}</h2>
+        <slot>默认内容</slot>
+    </div>
+</template>
+```
+
+##### 具名插槽
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <Son v-slot:s1>
+            <h4>我是具体内容1</h4>
+        </Son>
+        <!-- 简写 -->
+        <Son #s1>
+            <h4>我是具体内容2</h4>
+        </Son>
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<template>
+    <div class="son">
+        <slot name="s1">默认内容</slot>
+    </div>
+</template>
+```
+
+###### 多个具名插槽
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <Son>
+            <!-- 会根据子组件的插槽的定义顺序显示 -->
+            <template #s2>
+                <h4>我是具体内容2</h4>
+            </template> 
+            <template #s1>
+                <h4>我是具体内容1</h4>
+            </template>
+        </Son>
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<template>
+    <div class="son">
+        <slot name="s1">默认内容1</slot>
+        <slot name="s2">默认内容2</slot>
+    </div>
+</template>
+```
+
+##### 作用域插槽
 
 #### Axios
 
