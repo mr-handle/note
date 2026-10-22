@@ -11217,6 +11217,120 @@ provide和inject无需中间人组件
 
 ##### 作用域插槽
 
+数据在子组件，但是根据数据生成的结构由父组件决定的场景
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <Son>
+            <!-- sloatData是一个对象，包含所有插槽传过来的数据 -->
+            <template v-slot="sloatData">
+                <ul>
+                    <li v-for="item in sloatData.chongwu" :key="item.id">
+                        {{ item.name }}
+                    </li>
+                </ul>
+            </template>
+        </Son>
+        <Son>
+            <!-- 或者直接解构得到数据 -->
+            <template v-slot="{ chongwu }">
+                <ol>
+                    <li v-for="item in chongwu" :key="item.id">
+                        {{ item.name }}
+                    </li>
+                </ol>
+            </template>
+        </Son>
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    import { reactive } from 'vue';
+
+    const pets = reactive([
+        { id: 1, name: "dog" },
+        { id: 2, name: "cat" }
+    ]);
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件</h2>
+        <!-- 给插槽使用者（父组件）传数据 -->
+        <slot :chongwu="pets" x:="字符串1" y="字符串2"></slot>
+    </div>
+</template>
+```
+
+##### 具名写法
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <Son>
+            <!-- sloatData是一个对象，包含所有插槽传过来的数据 -->
+            <template v-slot:slotName1="sloatData">
+                <ul>
+                    <li v-for="item in sloatData.chongwu" :key="item.id">
+                        {{ item.name }}
+                    </li>
+                </ul>
+            </template>
+        </Son>
+        <Son>
+            <!-- 或者简写 -->
+            <template #slotName1="{ chongwu }">
+                <ol>
+                    <li v-for="item in chongwu" :key="item.id">
+                        {{ item.name }}
+                    </li>
+                </ol>
+            </template>
+        </Son>
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<script setup lang="ts">
+    import { reactive } from 'vue';
+
+    const pets = reactive([
+        { id: 1, name: "dog" },
+        { id: 2, name: "cat" }
+    ]);
+</script>
+
+<template>
+    <div class="son">
+        <h2>子组件</h2>
+        <!-- 给插槽使用者（父组件）传数据 -->
+        <slot name="slotName1" :chongwu="pets" x:="字符串1" y="字符串2"></slot>
+    </div>
+</template>
+```
+
 #### Axios
 
 - 依赖
