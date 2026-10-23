@@ -11107,9 +11107,9 @@ provide和inject无需中间人组件
 </template>
 ```
 
-#### slot（插槽）
+##### slot（插槽）
 
-##### 默认插槽
+###### 默认插槽
 
 - 父组件
 
@@ -11146,7 +11146,7 @@ provide和inject无需中间人组件
 </template>
 ```
 
-##### 具名插槽
+###### 具名插槽
 
 - 父组件
 
@@ -11179,7 +11179,7 @@ provide和inject无需中间人组件
 </template>
 ```
 
-###### 多个具名插槽
+###### 多个具名插槽写法
 
 - 父组件
 
@@ -11215,7 +11215,7 @@ provide和inject无需中间人组件
 </template>
 ```
 
-##### 作用域插槽
+###### 作用域插槽
 
 数据在子组件，但是根据数据生成的结构由父组件决定的场景
 
@@ -11274,7 +11274,7 @@ provide和inject无需中间人组件
 </template>
 ```
 
-##### 具名写法
+###### 具名写法
 
 - 父组件
 
@@ -11331,7 +11331,331 @@ provide和inject无需中间人组件
 </template>
 ```
 
+### shallowRef和shallowReactive
+
+创建一个响应式数据，但只对顶层属性进行响应式处理
+
+避免了对每一个内部属性做响应式所带来的性能成本
+
+- shallowRef例子
+
+```ts
+<script setup lang="ts">
+    import { shallowRef } from 'vue';
+
+    const sum = shallowRef(0);
+    const person = shallowRef({
+        name: "handle",
+        age: 18
+    });
+
+    function changeSum() {
+        sum.value += 1;
+    }
+    function changeName() {
+        // 第一层：person.value
+        // name不属于第一层，shallowRef不会管，因此不会改变
+        person.value.name = "jack";
+    }
+    function changePerson() {
+        person.value = {
+            name: "Tom",
+            age: 15
+        }
+    }
+</script>
+
+<template>
+    <p>sum: {{ sum }}</p>
+    <p>name: {{ person.name }}</p>
+    <p>person: {{ person }}</p>
+    <button @click="changeSum">changeSum</button><button @click="changeName">changeName</button><button
+        @click="changePerson">changePerson</button>
+</template>
+```
+
+- shallowReactive例子
+
+```ts
+<script setup lang="ts">
+    import { shallowReactive } from 'vue';
+
+    const car = shallowReactive({
+        brand: "宝马",
+        options: {
+            color: "red",
+            engine: "V8"
+        }
+    })
+
+    function changeBrand() {
+        car.brand = "特斯拉";
+    }
+    function changeColor() {
+        // color不是第一层的数据，shallowReactive改不了
+        car.options.color = "blue";
+    }
+    function changeCar() {
+        Object.assign(car, {
+            brand: "福特",
+            options: {
+                color: "green",
+                engine: "V9"
+            }
+        })
+    }
+</script>
+
+<template>
+    <p>car: {{ car }}</p>
+    <button @click="changeBrand">changeBrand</button>
+    <button @click="changeColor">changeColor</button>
+    <button @click="changeCar">changeCar</button>
+</template>
+```
+
+### readonly和shallowReadonly
+
+- readonly: 创建一个对象的所有层都只读的副本
+
+```vue
+<script setup lang="ts">
+    import { readonly, ref } from 'vue';
+
+    const sum1 = ref(0);
+    // readonly接收的是对象，不要.value
+    // 后面有任何修改sum2.value的操作直接报错
+    const sum2 = readonly(sum1);
+
+    function changeSum1() {
+        // sum2也会跟着改变
+        sum1.value += 5;
+    }
+</script>
+
+<template>
+    <div class="father">
+        <h2>sum1: {{ sum1 }}</h2>
+        <h2>sum2: {{ sum2 }}</h2>
+        <button @click="changeSum1">changeSum1</button>
+    </div>
+</template>
+```
+
+- shallowReadonly，与readonly类似，但是只作用于对象的顶层属性，深层属性还是可以修改
+
+```vue
+<script setup lang="ts">
+    import { reactive, shallowReadonly } from 'vue';
+
+    const car1 = reactive({
+        brand: "宝马",
+        options: {
+            color: "red",
+            price: 100
+        }
+    });
+
+    const car2 = shallowReadonly(car1);
+
+    function changeBrand() {
+        // 尝试修改顶层属性会报错
+        // car2.brand = "福特"；
+    }
+    function changeColor() {
+        // 非顶层属性可以修改
+        car2.options.color = "blue";
+    }
+</script>
+
+<template>
+    <div class="father">
+        <h2>car1: {{ car1 }}</h2>
+        <h2>car2: {{ car2 }}</h2>
+        <button @click="changeColor">changeSum1</button>
+    </div>
+</template>
+```
+
+### toRaw和markRaw
+
+- toRaw：获取一个响应式对象的原始对象，toRaw返回的对象不再是响应式的，不会触发视图更新
+
+再需要将响应式对象传递给非vue的库或外部系统时，toRaw可以确保它们收到的是普通对象
+
+```ts
+import { reactive, toRaw } from 'vue';
+
+const person = reactive({
+    name: "handle",
+    age: 18
+});
+
+const rawPerson = toRaw(person);
+```
+
+- markRaw:标记一个对象，使其永远不会变成响应式对象
+
+```ts
+import { markRaw, reactive } from 'vue';
+
+const person = markRaw({
+    name: "handle",
+    age: 18
+});
+
+// person2虽然被reactive包裹，但不是响应式的
+const person2 = reactive(person);
+```
+
+### customRef
+
+当ref不能满足业务需求时，可以用customRef自定义
+
+创建一个自定义的ref，并对其依赖项跟踪和更新触发进行逻辑控制
+
+一般封装到hooks中
+
+- 创建文件useMsgRef.ts
+
+```ts
+import { customRef } from 'vue';
+
+export default function (initValue: string, delayMillis: number) {
+    let timer: number;
+    const msg = customRef((track, trigger) => {
+        return {
+            // msg被读取时调用
+            get() {
+                // 告诉vue，数据msg很重要，要对其进行持续关注，一旦msg变化就去更新
+                track();
+                return initValue;
+            },
+            // msg被修改时调用
+            set(value: string) {
+                clearTimeout(timer);
+                // 定义数据改完后1秒再变
+                timer = setTimeout(() => {
+                    initValue = value;
+                    // 通知vue数据msg变化了
+                    trigger();
+                }, delayMillis);
+            }
+        }
+    });
+    return { msg };
+}
+```
+
+- 使用
+
+```vue
+<script setup lang="ts">
+    import useMsgRef from '@/useMsgRef';
+
+    let { msg } = useMsgRef("道爷成了", 1000);
+</script>
+
+<template>
+    <div class="father">
+        <h2>{{ msg }}</h2>
+        <input type="text" v-model="msg" />
+    </div>
+</template>
+```
+
+### Teleport
+
+Teleport是一种能够将组件html结构移动到指定位置的技术
+
+-场景：
+    - 父组件的样式有filter等破坏fix定位的属性，但是这种属性又不能删掉
+    - 子组件有fix定位
+    - 这种情况想要保持fix定位，就可以用Teleport
+
+- 父组件
+
+```vue
+<script setup lang="ts">
+    import Son from './Son.vue';
+</script>
+
+<template>
+    <div class="father">
+        <Son />
+    </div>
+</template>
+```
+
+- 子组件
+
+```vue
+<template>
+    <!-- 没有teleport的时候子组件的结构是在父组件里面的 -->
+    <!-- 定义了teleport后子组件的结构直接移动到了body里面 -->
+    <!-- 用开发工具看，父组件和子组件同级了 -->
+    <teleport to="body">
+        <div class="son">
+            <h2>子组件</h2>
+        </div>
+    </teleport>
+</template>
+```
+
+### Suspense
+
+等待异步组件时渲染一些额外内容，让应用有更好的用户体验
+
+目前还是实验性功能，等转正后api估计还有变化，先了解吧
+
+### 应用对象
+
+vue2的全局api到了vue3变成了应用对象了
+
+即vue2的Vue.xxx，到了vue3变成了app.xxx
+
+- app.component
+- app.config
+- app.directive
+- app.mount
+- app.unmount
+- app.use
+
+下面以全局组件component为例
+
+#### 全局组件
+
+- 创建MyGlobal.vue
+
+```ts
+const app = createApp(App);
+
+// 作为全局组件引入
+app.component("MG", MyGlobal);
+
+app.mount('#app');
+```
+
+```vue
+<script setup lang="ts">
+</script>
+
+<template>
+    <div class="father">
+        <h2>父组件</h2>
+        <!-- 可以在其它组件使用并且不用import了 -->
+        <MG />
+    </div>
+</template>
+```
+
 #### Axios
+
+HTTP 有⼀种机制，可以指定返回信息的格式
+
+在请求中指定 "Accept" 头，如果服务器⽀持这种格式，会以指定的格式返回
+
+这个过程称为内容协商，这是 HTTP 中未被充分利⽤的功能之⼀
 
 - 依赖
 
