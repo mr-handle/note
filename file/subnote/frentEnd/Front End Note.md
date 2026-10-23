@@ -8838,15 +8838,31 @@ pnpm --version
 |npx `<pkg>`|pnx `<pkg>`|
 
 ```sh
+# 为项目安装所有依赖
 # 通常后面不指定包名，新建项目或者克隆项目的时候才会执行这个命令
-pnpm install
+pnpm i|install
 
 # 添加指定的包，将其安装到 node_modules
 # 并‌自动修改‌ package.json（将包名写入 dependencies 或 devDependencies），同时更新 pnpm-lock.yaml
 pnpm add [-D] 包名
 
-# 从 package.json 和 node_modules 中移除包
-pnpm remove 包名
+# 更新所有包，遵循package.json中指定的版本范围
+pnpm up|update|upgrade
+# 更新所有包到各自的最新版本
+pnpm up|update|upgrade [--latest]
+
+# 从 node_modules 和 package.json 中移除包
+pnpm rm|un|remove|uninstall 包名
+
+# 删除非必须包
+# -r: 递归
+pnpm prune [-r]
+
+# 从所有工作空间的项目中安全删除 node_modules 的内容
+pnpm clean|purge
+
+# 清除安装的包
+pnpm ci|ic|clean-install|install-clean
 ```
 
 #### 全局配置
