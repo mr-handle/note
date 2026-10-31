@@ -3176,6 +3176,10 @@ java 11开始，可以用`java file.java`运行单一文件的 Java 源代码
 
 Java25开始，紧凑源文件和实例main方法转正
 
+紧凑源文件即可以省略类声明`public class ClassName{}`，直接声明main方法就可以了
+
+与静态main方法相比，实例main方法无法接收命令行入参，还是要按需使用
+
 ```java
 // 创建一个类文件，然后直接这么写
 public class NewMainThreadDemo {
