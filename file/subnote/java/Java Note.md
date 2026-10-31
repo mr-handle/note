@@ -3158,6 +3158,20 @@ public class ScopedValueDemo {
 }
 ```
 
+### 启动单文件源代码程序
+
+java 11开始，可以用`java file.java`运行单一文件的 Java 源代码
+
+源代码在内存中编译，然后由解释器执行，不会在磁盘上生成 .class 文件
+
+唯一的约束在于所有相关的类必须定义在同一个 Java 文件中
+
+配合紧凑源文件和实例main方法，更适合用java写脚本了
+
+推荐用vscode版本打开单文件编写，不过有个问题是代码提示时灵时不灵
+
+当输入关键字后代码提示无反应时，Ctrl+Shift+P，然后Restart Java Language Server就可以了
+
 ### 紧凑源文件和实例main方法
 
 Java25开始，紧凑源文件和实例main方法转正
