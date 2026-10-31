@@ -11865,6 +11865,77 @@ location /api/ {
 }
 ```
 
+## element-plus
+
+官网：<https://element-plus.org/zh-CN/>
+
+- 安装
+
+```sh
+pnpm add element-plus
+```
+
+- 虽然可以手动导入，但官方推荐配置按需自动导入插件
+
+```sh
+# unplugin-vue-components 自动导入组件
+# unplugin-auto-import 自动导入api
+# unplugin-element-plus 自动导入样式
+pnpm add -D unplugin-vue-components unplugin-auto-import unplugin-element-plus
+```
+
+- 配置vite.config.ts
+
+```ts
+import { defineConfig } from 'vite'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import ElementPlus from 'unplugin-element-plus/vite'
+
+export default defineConfig({
+  // ...
+  plugins: [
+    // ...
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+    }),
+    Components({
+      resolvers: [ElementPlusResolver()],
+    }),
+    ElementPlus({
+      // options
+      useSource: false
+    }),
+  ],
+})
+```
+
+```vue
+<script setup lang="ts">
+    import { ElButton } from 'element-plus'
+    import { ref } from 'vue';
+
+    let userName = ref("");
+    let password = ref("");
+</script>
+
+<template>
+    <div id="app">
+        <div>
+            <el-text class="el-text">用户名</el-text>
+            <el-input class="el-input" v-model="userName" placeholder="请输入内容" clearable />
+        </div>
+        <br />
+        <div>
+            <el-text class="el-text">密码&nbsp;&nbsp;&nbsp;&nbsp;</el-text>
+            <el-input type="password" class="el-input" v-model="password" placeholder="请输入内容" clearable />
+        </div>
+        <el-button type="primary" plain>send</el-button>
+    </div>
+</template>
+```
+
 ## 应用
 
 ### 不通过img的title属性实现鼠标悬停到图片上提示文字

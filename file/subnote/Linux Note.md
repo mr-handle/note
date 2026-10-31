@@ -2417,6 +2417,15 @@ if [[ $EUID -ne 0 ]]; then
     echo "Please run as root"
     exit 1
 fi
+
+# 假设在任意路径执行/path/to/file.sh
+# 获取file.sh所在目录的绝对路径
+# 方法1
+# SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+
+# 方法2
+SCRIPT_PATH=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT_PATH")
 ```
 
 ## 备份和恢复
