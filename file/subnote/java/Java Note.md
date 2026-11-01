@@ -3204,26 +3204,88 @@ void main(String[] args) {
 
 ### 模块
 
-在项目中创建一个模块描述文件（module-info.java），就可以将项目声明为一个模块，建议不要折腾模块，坑太多了
+一个模块包含多个包
 
-- 在maven项目中，`module-info.java`要放在`src/main/java`目录下
+标准模块以java为前缀，如：java.base
+
+非标准平台模块以jdk为前缀，如：jdk.jlink，它是JDK的一部分，但未在Java SE平台规范中指定
+
+JavaFX模块名称以javafx为前缀，如：javafx.base
+
+以目前的应用来看，除非一个项目和这个项目所依赖的库都是模块，打包生成最小的运行时镜像才是最可靠的，否则可能会遇到各种问题
+
+打包最小化运行时镜像思路：jdeps得到依赖的模块，然后将这些模块在jlink的时候指定，最终得到最小化运行时镜像
+
+idea的默认执行器在执行模块项目时，还是用类路径的方法加载，导致在spring-boot+mybatis使用这写反射架构的项目在执行时会报错
+
+但是用spring-boot:run命令执行是没有问题的，反正概括来说就是模块还不太好用
+
+#### 声明模块
+
+模块名称与包命名约定类似
 
 ```java
-// 声明一个模块
-module com.handle.hellofx {
-    // requires：这个模块依赖的其它模块
-    requires javafx.controls;
-    requires javafx.fxml;
-
-    // opens 包 to 模块，允许模块访问包的特定成员
-    opens com.handle.hellofx to javafx.fxml;
-
-    // 声明要导出的包，允许外部代码访问公有类和公有成员
-    exports com.handle.hellofx;
+// open修饰符是可选的，它声明一个开放的模块
+// 一个开放的模块允许其他模块反射访问该模块的所有包中类的‌所有成员‌
+// 不能在open模块中再使用open语句，因为所有包都是在open模块中隐式打开的
+[open] module 模块名称 {
+    // 模块语句
 }
 ```
 
-### 导入模块声明
+##### 模块语句
+
+- 模块语句有
+    - 导出语句（exports statement）
+    - 开放语句（opens statement）
+    - 需要语句（requires statement）
+    - 使用语句（uses statement）
+    - 提供语句（provides statement）
+
+- 导出和开放语句用于控制对模块代码的访问
+    - 导出语句允许在编译时和运行时访问指定包的公共API
+    - 开放语句允许在运行时使用反射访问指定包中的所有类型的公共和私有成员
+
+需要语句用于声明模块对另一个模块的依赖关系
+
+使用和提供语句分别用于表达服务消费和服务提供
+
+```java
+module myModule {
+    // 导出包，允许外部代码访问该包的公有类和公有成员
+    exports 包1;
+    exports 包2;
+    // exports ... to 将指定包定向导出给指定模块
+    exports 包 to 模块1,模块2...;
+
+    // 声明模块与另一个模块的依赖关系
+    requires 模块;
+    // transitive表示当前模块及依赖当前模块的其他模块都能自动访问该模块
+    requires transitive 模块;
+    // static表示在编译时的依赖是强制的，但在运行时是可选的
+    requires static 模块;
+    requires transitive static 模块;
+
+    // 开放包，允许其他模块反射访问该包中所有类的‌所有成员‌
+    opens 包1;
+    opens 包2;
+    opens 包 to 模块1,模块2...;
+
+    // 使用语句指定服务接口的名称，当前模块就会发现它，并使用 java.util.ServiceLoader类进行加载
+    uses java.sql.Driver;
+
+    // 提供语句指定服务接口的一个或多个服务实现类
+    provides 服务接口
+        with 服务实现类1,服务实现类2,...;
+}
+```
+
+在项目中创建一个模块描述文件（module-info.java），就可以将项目声明为一个模块，建议不要折腾模块，坑太多了
+
+- 模块声明存储在模块描述文件中，该文件存储在该模块的源文件层次结构的根目录下
+    - 例如在maven项目中，模块描述文件要放在`src/main/java`目录下
+
+#### 导入模块声明
 
 java25开始，无论是否模块化，都可以简洁地导入整个模块的所有导出包，而无需逐个声明包的导入
 
