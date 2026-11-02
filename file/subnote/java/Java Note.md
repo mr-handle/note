@@ -3204,7 +3204,7 @@ void main(String[] args) {
 
 ### 模块
 
-一个模块包含多个包
+包是类的集合，而模块是包（可能还有各种资源文件）的集合
 
 标准模块以java为前缀，如：java.base
 
@@ -3213,8 +3213,6 @@ void main(String[] args) {
 JavaFX模块名称以javafx为前缀，如：javafx.base
 
 以目前的应用来看，除非一个项目和这个项目所依赖的库都是模块，打包生成最小的运行时镜像才是最可靠的，否则可能会遇到各种问题
-
-打包最小化运行时镜像思路：jdeps得到依赖的模块，然后将这些模块在jlink的时候指定，最终得到最小化运行时镜像
 
 idea的默认执行器在执行模块项目时，还是用类路径的方法加载，导致在spring-boot+mybatis使用这写反射架构的项目在执行时会报错
 
@@ -4832,6 +4830,8 @@ java9开始，可以使用jlink打包项目，甚至可以生成最小自包含j
 
 java9开始，jdk默认不包含jre了，可以使用jlink生成包含指定模块的jre
 
+打包最小化运行时镜像思路：jdeps得到依赖的jdk模块，然后在jlink的时候指定这些模块，最终得到最小化运行时镜像
+
 #### 生成包含指定模块的jre
 
 - linux系统
@@ -4839,7 +4839,17 @@ java9开始，jdk默认不包含jre了，可以使用jlink生成包含指定模�
 ```sh
 # 打印app.jar依赖的模块，对于反射的依赖无能为力
 # 如果指定了类路径，则会将依赖jar的依赖模块也打印出来
-jdeps --print-module-deps --class-path "lib/*" app.jar
+# --multi-release 27，为了避免有些jar包是多版本发布的情况，指定release版本，也就是说你最终想要让程序运行在哪个版本的jre就设置为该版本
+# --print-module-deps慎用，有些jar包依赖的模块为not found，导致报错
+jdeps --multi-release 27 -s  app.jar lib/*.jar
+
+# comm 专门用于比较两个‌已排序‌文件的命令
+# -12 中的1: 不显示只在第一个文件（jdeps 结果）中出现的行
+# -12 中的2: 不显示只在第二个文件（JDK 模块列表）中出现的行
+# 结果：只显示两个文件中‌共同存在‌的行（即交集）
+comm -12 \
+  <(jdeps --multi-release 27 -s app.jar lib/*.jar | cut -d " " -f 3 | sort -u) \
+  <(java --list-modules | cut -d "@" -f 1 | sort -u)
 
 # 生成jre，包含所有模块（实际上算是jdk的副本了）
 # 使用ALL-MODULE-PATH 时，必须显式提供 --module-path 参数
