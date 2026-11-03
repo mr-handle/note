@@ -3283,6 +3283,89 @@ module myModule {
 - 模块声明存储在模块描述文件中，该文件存储在该模块的源文件层次结构的根目录下
     - 例如在maven项目中，模块描述文件要放在`src/main/java`目录下
 
+#### 模块路径
+
+与类路径相似，模块也有模块路径
+
+- 模块路径可以是
+    - (模块化)jar文件
+    - jmod文件
+    - 目录
+        - 目录下有模块描述符（module-info.class）和其它类文件
+        - 目录下有(模块化)jar文件或jmod文件
+
+模块路径在UNIX平台上以`:`分隔
+
+java、javac、jar等命令工具都支持用`-p`或`--module-path`指定模块路径
+
+```sh
+# .jmod不能放到java命令的模块路径中
+java -p app.jar:lib -m javafx.demo/com.handle.javafxDemo.Main
+
+# 使用--module-path时，有两种指定选项值的形式
+# 一，使用空格作为选项和选项值的分隔符
+java --module-path app.jar:lib -m javafx.demo/com.handle.javafxDemo.Main
+
+# 二，使用等号作为选项和选项值的分隔符（不得在等号周围包含任何空格）
+java --module-path=app.jar:lib -m javafx.demo/com.handle.javafxDemo.Main
+
+# .jmod可以放到jlink命令的模块路径中
+# 这样生成的java运行时包含了javafx.demo.jmod
+# 可以通过"./jre/bin/java --module javafx.demo"来运行
+jlink --module-path javafx.demo.jmod --add-modules java.base,java.xml,javafx.demo --output jre
+```
+
+#### 打包模块
+
+- 模块的artifact可以存储在
+    - 目录，该目录包含根目录下的`module-info.class`文件和各种包层次结构的其它类文件
+    - jar文件，在根目录下包含一个`module-info.class`文件
+    - jmod文件
+        - 和jar文件一样，它包含类文件（还可以包括本地代码库、命令、头文件、配置文件和合法的通知），如jdk模块文件
+        - 使用zip文件格式，可以用任意zip工具查看内容
+        - 仅在链接时才有用，即仅在产生运行时镜像时才有用，如`jlink --module-path javafx.demo.jmod`
+        - 除非想让模块与本地代码库这样的二进制文件绑定，否则无需生成jmod文件
+
+#### 自动模块
+
+java平台模块系统提供了两种机制来填补模块化项目引用非模块化库的割裂问题，就是自动化模块和不具名模块
+
+把任何jar文件置于作为模块路径的目录中，可以将其转换成模块
+
+模块路径上没有`module-info.class`文件的jar称为自动模块
+
+- 自动模块具有如下属性
+    - 隐式包含对其它所有模块的requires子句
+    - 其所有包都被导出，且是开放的
+    - 模块名
+        - 如果在jar文件清单META-INF/MANIFEST.MF中具有键为Automatic-Module-Name的项，那么它的值会变成模块名
+        - 否则，模块名从jar文件名获得：将文件名尾部的版本号删除，并将非字母数字的字符替换为句点
+            - 如：javafx-controls-27.0.1.jar（假设其是非模块jar），得到的自动模块名为：javafx.controls
+
+#### 不具名模块（未命名模块）
+
+任何不在模块路径中的类都是不具名模块的一部分
+
+- 不具名模块具有如下属性
+    - 可以访问所有其它模块
+    - 其所有包都被导出，且是开放的
+    - 任何明确模块都无法访问不具名模块
+        - 明确模块：既不是自动模块也不是不具名模块的模块
+
+#### 运行模块
+
+```sh
+# 让程序作为模块化应用来运行，需要指定模块路径，还要以"模块名/全限定类名"的形式指定主类
+# -m --module
+java -p app.jar:lib -m javafx.demo/com.handle.javafxDemo.Main
+
+# 如果模块描述符中显式声明了主类，则可以省略类名
+# 在模块描述符中显式声明主类的方法
+# 如："javac --module-main-class com.handle.javafxDemo.Main"
+# 如："jar --main-class com.handle.javafxDemo.Main"
+java -p app.jar:lib -m javafx.demo
+```
+
 #### 导入模块声明
 
 java25开始，无论是否模块化，都可以简洁地导入整个模块的所有导出包，而无需逐个声明包的导入
@@ -4851,14 +4934,22 @@ comm -12 \
   <(jdeps --multi-release 27 -s app.jar lib/*.jar | cut -d " " -f 3 | sort -u) \
   <(java --list-modules | cut -d "@" -f 1 | sort -u)
 
+# 下面的命令的意思：
+# 根据 --module-path 指定的模块路径
+# 解析并组装‌ --add-modules 中列出的模块及其‌所有传递依赖‌
+# 最终在 --output 指定的目录生成一个‌可执行的、精简的自定义 Java 运行时环境
+
 # 生成jre，包含所有模块（实际上算是jdk的副本了）
 # 使用ALL-MODULE-PATH 时，必须显式提供 --module-path 参数
-jlink --module-path $JAVA_HOME/jmods --add-modules ALL-MODULE-PATH --output /path/to/jre
+jlink --module-path $JAVA_HOME/jmods \
+    --add-modules ALL-MODULE-PATH \
+    --output /path/to/jre
 
 # 生成jre，包含指定模块
 # 指定多个模块路径linux用冒号分隔，windows用分号分隔
-# --module-path jmods，这个jmods是当前目录下的jmods文件夹
-jlink --module-path jmods --add-modules java.xml --output /path/to/jre
+jlink --module-path app.jar:lib:$JAVA_HOME/jmods \
+    --add-modules java.xml,hello.world \
+    --output /path/to/jre
 ```
 
 - windows系统
