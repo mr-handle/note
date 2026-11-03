@@ -2884,22 +2884,21 @@ sudo /path/to/软件包 uninstall
 
 这是针对没有官方编译版本的情况的无奈操作，平时自己别这么搞，完全费力不讨好
 
-以yay为例，步骤如下
+- 安装构建 Arch Linux 包的基础工具
 
 ```sh
 sudo pacman -Syu
 
 # 先安装base-devel 和 git
 sudo pacman -S --needed base-devel git
+```
 
-# 检查有没有安装go包（编译器）
-go version
+- 以从源码安装yay为例，步骤如下
 
-# yay的编译需要go环境，如果没有安装则安装
-sudo pacman -S go
-
+```sh
 # 以下用指令非root用户执行
-cd ~
+# 先进入某个目录下，这个目录会存放yay项目源码
+cd yourPath
 git clone https://aur.archlinux.org/yay.git
 cd yay
 
@@ -2916,6 +2915,15 @@ makepkg -si
 
 # 测试 yay 是否安装成功
 yay --version
+```
+
+- 或者直接安装构建版，不用自己编译节省时间
+
+```sh
+sudo pacman -S --needed git base-devel
+git clone https://aur.archlinux.org/yay-bin.git
+cd yay-bin
+makepkg -si
 ```
 
 ### 安装系统教程
