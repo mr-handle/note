@@ -8122,22 +8122,22 @@ Btrace、YourKit、JProbe、String Insight
 javac -g xxx.java
 ```
 
-#### 系统变量和环境变量
+#### 操作系统环境变量和JVM系统属性
 
 ```java
-// 获取（操作系统）环境变量
+// 获取操作系统环境变量
 System.getenv("JAVA_HOME");
 
 // 设置环境变量，这种方式设置的环境变量仅在当前命令行会话中有效。一旦关闭该会话或重新启动系统，环境变量将失效
 MY_VARIABLE=myValue java -jar myApp.jar
 
-// 获取（JVM）系统变量
+// 获取JVM系统属性
 System.getProperty("java.home");
 
-// 设置系统变量，这种方式设置的系统变量仅在当前Java进程的生命周期内有效。一旦Java程序停止并重新启动，系统变量将失效
+// 设置JVM系统属性，这种方式设置的JVM系统属性仅在当前Java进程的生命周期内有效。一旦Java程序停止并重新启动，系统变量将失效
 System.setProperty("myVariable", "myValue");
 
-// 设置系统变量，这种方式设置的系统变量仅在当前Java进程的生命周期内有效。一旦Java程序停止并重新启动，系统变量将失效
+// 设置JVM系统属性，这种方式设置的JVM系统属性仅在当前Java进程的生命周期内有效。一旦Java程序停止并重新启动，系统变量将失效
 java -DmyVariable=myValue -jar myApp.jar
 
 // 指定文件名和路径编码。处理非 ASCII 字符文件名时很重要
@@ -13997,6 +13997,8 @@ ChatModel 和 ChatClient 是两个核心的抽象，它们分别代表了底层�
 ```properties
 # 强制服务器端用UTF-8编码处理对话
 # 只对请求生效，对响应不生效的
+# 解决调用大模型返回中文乱码问题
+# 保证大模型返回响应的时候不会中文乱码
 server.servlet.encoding.enabled=true
 server.servlet.encoding.force=true
 server.servlet.encoding.charset=UTF-8

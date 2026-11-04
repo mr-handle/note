@@ -845,7 +845,9 @@ unzip -d /path/to/directory xxx.zip
 ```sh
 # scp 即 secure copy，安全复制
 # 用于通过SSH协议进行安全的文件传输，可以实现从本地到远程主机的上传和从远程主机到本地的下载
-# 例如：scp -r my_directory user@remote:/home/user ，将本地目录my_directory上传到远程服务器 /home/user 目录下。scp -r user@remote:/home/user/my_directory ，将远程服务器的 /home/user 目录下的my_directory目录下载到本地。需要注意的是，scp 命令需要在本地和远程系统之间建立 SSH 连接进行文件传输，因此需要确保远程服务器已经配置了 SSH 服务，并且具有正确的权限和认证方式。
+# 例如：scp -r my_directory user@remote:/home/user ，将本地目录my_directory上传到远程服务器 /home/user 目录下
+# scp -r user@remote:/home/user/my_directory ，将远程服务器的 /home/user 目录下的my_directory目录下载到本地
+# 需要注意的是，scp 命令需要在本地和远程系统之间建立 SSH 连接进行文件传输，因此需要确保远程服务器已经配置了 SSH 服务，并且具有正确的权限和认证方式
 scp [-r] 源文件/目录 目的文件/目录
 
 # 在本地和远程系统之间高效地进行文件复制，并且能够智能地处理增量复制，节省带宽和时间
@@ -1692,6 +1694,13 @@ journalctl -u 服务名
 # 实时追踪日志（推荐用于排查启动问题）
 journalctl -u 服务名 --no-pager --follow --pager-end
 ```
+
+## 终端快捷键
+
+|快捷键|描述|
+|:-|:-|
+|`ctrl+c`|正常退出，机制‌：发送 ‌EOF (End Of File)‌ 信号，表示输入流结束，推荐用于结束交互式会话，如：python、jshell|
+|`ctrl+d`|强制中断，机制‌：发送 ‌SIGINT (Interrupt)‌ 信号，中断当前正在运行的进程，推荐用于结束持续输出到终端、卡死的时候或取消当前操作，如：ping|
 
 ## vi/vim编辑器
 
