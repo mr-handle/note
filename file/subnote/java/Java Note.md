@@ -916,6 +916,24 @@ Assertions.assertEquals(2, Character.BYTES);
 
 #### String
 
+##### 文本块
+
+java15开始，可以使用String的文本块写法
+
+```java
+// \ : 表示行尾不引入换行符
+// \s：表示单个空格
+
+// 输出：
+// line 1: hello world
+// line 2
+String string = """
+            line 1: he\
+            llo\sworld
+            line 2\
+            """;
+```
+
 ##### intern方法
 
 - jdk1.7起，方法的功能是：尝试将这个字符串对象放入字符串常量池
@@ -1654,9 +1672,15 @@ public final class DateTimeUtil {
 java16开始，可以使用Record类型
 
 - record 声明的类
-    - 是一个final类，不能继承其它类，但是可以实现一个或多个接口
+    - 是一个final类
+    - 不能继承其它类，但是可以实现一个或多个接口
     - 所有字段是`private final`的
-    - 自带：包含所有字段的构造器、各个字段的访问器（`实例.字段名()`）、equals()，hashCode() 方法以及 toString() 方法
+    - 自带：
+        - 所有字段的构造器
+        - 各个字段的访问器（`实例.字段名()`）
+        - equals() 方法
+        - hashCode() 方法
+        - toString() 方法
 
 ```java
 public record Pet(
@@ -1749,24 +1773,6 @@ static String patternMatchingWithSwitch(Object object) {
         default             -> "Unknown Object of " + object;
     };
 }
-```
-
-### 文本块
-
-java15开始，可以使用String的文本块写法
-
-```java
-// \ : 表示行尾不引入换行符
-// \s：表示单个空格
-
-// 输出：
-// line 1: hello world
-// line 2
-String string = """
-            line 1: he\
-            llo\sworld
-            line 2
-            """;
 ```
 
 ### 进程API
@@ -3217,6 +3223,12 @@ JavaFX模块名称以javafx为前缀，如：javafx.base
 idea的默认执行器在执行模块项目时，还是用类路径的方法加载，导致在spring-boot+mybatis使用这写反射架构的项目在执行时会报错
 
 但是用spring-boot:run命令执行是没有问题的，反正概括来说就是模块还不太好用
+
+到了idea 2026.3版本，可以在Settings->Build,Execution,Deployment->Build Tools->Maven->Runner
+
+勾选 `Delegate IDE build/run actions to Maven` 解决默认执行器的上述启动问题（idea 早期版本不行，还是会报错）
+
+相比在命令行执行spring-boot:run，这种委托方式还可以进行调试，算是比较好的解决办法了
 
 #### 声明模块
 
@@ -8875,13 +8887,19 @@ site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段
 
 - Maven本质上是⼀个插件框架，它的核⼼并不执⾏任何具体的构建任务，所有这些任务都交给插件来完成
 
-- 可以将Maven插件理解为一组任务的集合
+- 每个插件会有⼀个或者多个⽬标
 
-- 每个插件会有⼀个或者多个⽬标，每个任务对应了⼀个插件⽬标（goal）
+- 可以将Maven插件理解为一组任务的集合，每个任务对应了⼀个插件⽬标（goal）
 
 - 用户可以通过命令行直接运行指定插件的目标，也可以将插件目标挂载到构建生命周期，随着生命周期运行
 
 ##### 调⽤Maven插件⽬标
+
+- 直接在命令⾏指定要执⾏的插件⽬标
+
+```sh
+mvn spring-boot:repackage
+```
 
 - 将插件⽬标与⽣命周期阶段（lifecycle phase）绑定
 
@@ -8899,10 +8917,30 @@ site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段
 </plugin>
 ```
 
-- 直接在命令⾏指定要执⾏的插件⽬标
+##### maven-compiler-plugin
 
-```sh
-mvn spring-boot:repackage
+为了确保构建的‌确定性‌和‌可重复性，从 Maven 3.5.0 开始，显式声明插件版本已成为最佳实践和强制规范
+
+```xml
+<dependency>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <!-- 显式声明插件版本 -->
+    <version>3.16.0</version>
+    <configuration>
+        <!-- 不知道为什么maven.compiler.release失效，必须在这里设置覆盖父项目的设置才行 -->
+        <release>27</release>
+        <!-- 跳过测试编译 -->
+        <skip>true</skip>
+        <annotationProcessorPaths>
+            <path>
+                <!-- 使用了lombok的话，在控制台执行maven命令要加上 -->
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+            </path>
+        </annotationProcessorPaths>
+    </configuration>
+</dependency>
 ```
 
 ##### 不打包，只生成包含所有的目录
@@ -14096,7 +14134,9 @@ public class ApplicationController {
 
     @Autowired
     public ApplicationController(OpenAiChatModel chatModel) {
-        this.chatClient = ChatClient.create(chatModel);
+        // this.chatClient = ChatClient.create(chatModel);
+        this.chatClient = ChatClient.builder(chatModel)
+                                    .build();
     }
 
     @GetMapping("/chatModelCall")
@@ -18430,7 +18470,7 @@ Flux<Integer> flux1 = Flux.just(1, 2)
                             .delayElements(Duration.ofSeconds(1));
 Flux<Integer> flux2 = Flux.just(3, 4)
                             .delayElements(Duration.ofMillis(100));
-// merge和concat不一样的地方是前者是安装元素到达的时间顺序合并，后者是按照flux顺序拼接
+// merge和concat不一样的地方是前者是按照元素到达的时间顺序合并，后者是按照flux顺序拼接
 Flux.merge(flux1, flux2)
     .log()
     .subscribe();

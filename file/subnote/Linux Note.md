@@ -2828,6 +2828,62 @@ sudo pacman -S pacman-contrib
 pactree -d1 pinta
 ```
 
+#### makepkg
+
+makepkg是一个自动构建软件包的脚本，由pacman包提供
+
+使用该脚本的要求是具有构建能力的Unix平台和PKGBUILD
+
+- 配置文件：`/etc/makepkg.conf`、`~/.makepkg.conf`，一般改动后者就行了
+
+```sh
+#-- Make Flags: change this for DistCC/SMP systems
+#MAKEFLAGS="-j2"
+# 尽可能并行编译，最大并行数量是cpu核数
+# MAKEFLAGS="--jobs=$(nproc)"
+# 尽可能并行编译，最大并行数量是cpu核数-2
+MAKEFLAGS="--jobs=$(( $(nproc) - 2 ))"
+
+#
+# Makepkg defaults:
+# OPTIONS=(!strip docs libtool staticlibs emptydirs !zipman !purge !debug !lto !autodeps)
+#  A negated option will do the opposite of the comments below.
+#
+#-- strip:      Strip symbols from binaries/libraries
+#-- docs:       Save doc directories specified by DOC_DIRS
+#-- libtool:    Leave libtool (.la) files in packages
+#-- staticlibs: Leave static library (.a) files in packages
+#-- emptydirs:  Leave empty directories in packages
+#-- zipman:     Compress manual (man and info) pages in MAN_DIRS with gzip
+#-- purge:      Remove files specified by PURGE_TARGETS
+#-- debug:      Add debugging flags as specified in DEBUG_* variables
+#-- lto:        Add compile flags for building with link time optimization
+#-- autodeps:   Automatically add depends/provides
+#
+# LTO‌ 是 ‌Link Time Optimization‌（链接时优化）的缩写
+# 传统编译过程中，编译器每次只处理一个源文件（编译单元），无法看到其他文件中的代码
+# 因此，它很难进行跨文件的优化（例如：判断某个函数是否在其他地方被调用，从而决定是否内联或删除）
+# LTO 将优化阶段推迟到了“链接”阶段
+# 链接器可以看到整个程序的所有代码
+# 它可以执行跨模块的内联（Inline）、删除未使用的死代码（Dead Code Elimination）、重新排列函数以提高缓存命中率等
+# 通常能生成‌运行速度更快‌、‌体积更小‌的可执行文件
+# 缺点：LTO 需要消耗大量的 CPU 时间和内存来进行全局分析。对于大型软件，开启 LTO 可能导致编译时间翻倍甚至更多
+# 链接阶段需要将所有中间代码加载到内存中，如果内存不足，可能导致编译失败（OOM）
+# 某些软件的构建脚本或代码可能不完全兼容 LTO，导致编译错误或运行时崩溃
+# LTO 优化后的代码结构与源代码差异较大，使得调试（Debugging）变得更加困难
+# 这里只改两样
+# 不生成debug包，不做链接时优化
+OPTIONS=(strip docs !libtool !staticlibs emptydirs zipman purge !debug !lto)
+
+#
+# 默认压缩格式
+# PKGEXT='.pkg.tar.zst'
+# 不压缩
+# PKGEXT='.pkg.tar'
+# 快速压缩
+PKGEXT='.pkg.tar.lz4'
+```
+
 ### .AppImage软件包
 
 下载.AppImage格式的软件包后，先赋予该软件包执行权限，第一次先通过终端启动

@@ -142,6 +142,10 @@ rm -rf ~/.local/share/tts/问题模型
 
 ## llama.cpp
 
+vllm和sglang专门用于服务器的高并发场景，前者只支持文生文，后者支持文生文、文生图、文生视频
+
+对于个人使用，还是llama.cpp和comfyui吧
+
 官网：<https://llama.app/>
 
 llama.cpp是本地部署ai模型的命令行工具
@@ -200,6 +204,9 @@ llama-server -m Ornith-1.5-35B-Q4_K_M.gguf -ngl all --n-cpu-moe 18 -ctv q8_0 -c 
 - llama.cpp相比于ollama更适合个人电脑本地部署模型
     - 因为前者更简易，词元生成数度更快
     - 复制模型文件时，每个模型只有单个模型文件，不像ollama复制模型文件时，某个模型可能有多个模型文件，还要额外查看模型对应的模型文件
+
+- 跟spring ai集成时，用OpenAI API就行了
+    - 假设llama.cpp启动的模型为Ornith-1.5-35B-Q4_K_M.gguf，则集成spring ai时，配置文件使用的模型名就是Ornith-1.5-35B-Q4_K_M或Ornith-1.5-35B-Q4_K_M.gguf
 
 ## Ollama
 
