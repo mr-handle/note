@@ -6999,6 +6999,47 @@ console.log(pet instanceof Object);
     - `__proto__`的意义在于为对象成员查找机制提供一个方向
     - 可以是用instanceof运算符用于检测构造函数的prototype属性是否出现在某个对象的原型链上
 
+#### 类
+
+class 从ES6开始正式被引入到 JavaScript 中
+
+```js
+// 定义
+class Person {
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    print() {
+        console.log(this);
+    }
+}
+
+// 使用
+const person = new Person("handle", 18);
+person.print();
+
+// 继承
+// class继承和原有的JavaScript原型继承没有任何区别，把它当语法糖理解就行了
+class Student extends Person {
+    constructor(name, age, school) {
+        // 调用父类的构造方法
+        super(name, age);
+        this.school = school;
+    }
+
+    greet() {
+        console.log("I'm a " + this.school + "'s student!");
+    }
+}
+
+// 使用
+const student = new Student("handle", 18, "Harvard University");
+student.greet();
+student.print();
+```
+
 ### 对象复制
 
 浅拷贝和深拷贝值针对引用类型
@@ -7157,6 +7198,20 @@ video.onloadeddata = () => {
 
 ### ajax
 
+ajax：Asynchronous JavaScript and XML，它不是js规范，用来执行异步网络请求，即要通过回调函数获得响应
+
+一个Form的提交，浏览器会刷新页面
+
+如果要让用户留在当前页面中，同时发出新的HTTP请求
+
+就必须用JavaScript发送这个新请求
+
+接收到数据后，再用JavaScript更新页面
+
+这样一来，用户就感觉自己仍然停留在当前页面，但是数据却可以不断地更新
+
+在现代浏览器上写AJAX主要依靠XMLHttpRequest对象
+
 ```js
 const button = document.querySelector("#sendButton");
 
@@ -7176,6 +7231,141 @@ button.addEventListener("click", function() {
         }
     }
 });
+```
+
+如果不考虑早期浏览器的兼容性问题，现代浏览器还提供了原生支持的Fetch API，以Promise方式提供
+
+```js
+const param = new URLSearchParams({
+            message: input.value
+        });
+fetch(`/api/chatModelCall2?${param}`)
+    .then(response => response.text())
+    .then(data => result.value = data);
+```
+
+### EventSource
+
+缺点：只支持GET请求
+
+```js
+// SSE
+const eventSource = new EventSource("/api/chatClientStream?message=" + input.value);
+eventSource.onmessage = function (event) {
+    const data = event.data;
+    result.value += data;
+}
+eventSource.onerror = function (error) {
+    console.log("eventSource exception: ", error);
+    eventSource.close();
+}
+```
+
+- 最优解：fetch + ReadableStream
+
+```vue
+<script setup lang="ts">
+    import { ref } from 'vue';
+
+    let input = ref("");
+    let result = ref("");
+
+    async function get() {
+        const userInput = input.value;
+        input.value = "";
+        result.value = "";
+
+        const param = new URLSearchParams({
+            message: userInput
+        });
+        const response = await fetch(`/api/chatClientStream?${param}`, {
+            method: "GET",
+            headers: {
+                "Accept": "text/event-stream"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // 获取reader
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        // 缓冲区，用于处理被截断的数据行
+        let buffer = '';
+
+        try {
+            while (reader) {
+                // 读取流中的数据块
+                const { done, value } = await reader.read();
+
+                // 流传输结束
+                if (done) {
+                    break;
+                }
+
+                // 解码当前块并追加到缓冲区
+                // { stream: true } 确保多字节字符（如中文）在跨块时不会乱码
+                const chunk = decoder.decode(value, { stream: true });
+                buffer += chunk;
+
+                // 按行分割处理 SSE 消息
+                // SSE 消息以 \n\n 结尾，但为了兼容性，通常先按 \n 分割
+                let lines = buffer.split('\n');
+
+                // 保留最后一行（可能是不完整的片段）放回缓冲区
+                buffer = lines.pop() ?? "";
+
+                for (const line of lines) {
+                    // 跳过空行
+                    if (line.trim() === '') {
+                        continue;
+                    }
+
+                    // 解析 SSE 字段
+                    if (line.startsWith('data:')) {
+                        const data = line.slice(5).trim();
+                        result.value += data;
+
+                        // 如果后端发送特定结束标志，可以提前中断
+                        if (data === '[DONE]') {
+                            reader.cancel();
+                            return;
+                        }
+                    } else if (line.startsWith('event:')) {
+                        // 处理自定义事件类型
+                        console.log('事件类型:', line.slice(6).trim());
+                    } else if (line.startsWith('id:')) {
+                        // 处理消息 ID，用于重连时发送 Last-Event-ID
+                        console.log('消息ID:', line.slice(3).trim());
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('读取流失败:', error);
+        } finally {
+            if (reader) {
+                // 释放锁，允许其他操作
+                reader.releaseLock();
+            }
+        }
+    }
+
+</script>
+
+<template>
+    <div class="page">
+        <div class="content">
+            <el-input type="textarea" v-model="input" placeholder="请输入文本" />
+            <br />
+            <br />
+            <el-button type="primary" plain @click="get">send</el-button>
+        </div>
+        <p>{{ result }}</p>
+    </div>
+</template>
 ```
 
 ### Promise

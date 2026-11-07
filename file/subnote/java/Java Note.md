@@ -8748,14 +8748,15 @@ public class ResponsibilityChainTest {
 </profiles>
 ```
 
-#### Idea配置Maven
+#### idea配置Maven
 
 - File->Settings->Build,Execution,Deployment->Build Tools->Maven
+    - 勾选 Print exception stack traces
     - Maven home path，指定Maven家目录
     - User settings file，勾上Override，选择Maven的settings.xml配置文件路径
     - Use settings from .mvn/maven.config，取消勾选
     - 点击Runner子选项，勾上Skip Tests
-    - Importing，Automatically download，都不要勾选，如果需要看源码可以逐个手动下载
+    - Importing->Automatically download，都不要勾选，如果需要看源码可以逐个手动下载
 
 #### scope
 
@@ -8850,7 +8851,7 @@ mvn clean install
 
 ##### clean生命周期
 
-共包含3个阶段：
+清理由先前构建创建的工件，共包含3个阶段：
 
 - pre-clean
 - clean
@@ -8861,14 +8862,21 @@ mvn clean install
 default生命周期是在没有任何关联插件的情况下定义的，是Maven的主要生命周期，用于构建应用程序，共包含23个阶段，下面列出常见的几个阶段：
 
 - validate，验证项目是否正确，并且所有必要的信息可用于完成构建过程
+- generate-sources，了解
+- process-sources，了解
+- generate-resources，了解
+- process-resources，了解
 - compile，编译项目的源代码
 - test，使用合适的单元测试框架（Junit 就是其中之一）运行测试
 - package，获取已编译的代码并将其打包成可分发的格式，例如 JAR、WAR 或 EAR 文件
+- integration-test，如有必要，将包处理并部署到可以运行集成测试的环境中，了解
 - verify，运行任何检查以验证打的包是否有效并符合质量标准
-- install，将package安装到maven的本地仓库
-- deploy，将package上传到远程仓库中
+- install，将包安装到maven的本地仓库，以便在本地其他项目中作为依赖项使用
+- deploy，在集成或发布环境中完成，将最终包复制到远程仓库，以便与其他开发人员和项目共享
 
 ##### site生命周期
+
+官网的说法：site生命周期是为这个项目生成站点文档
 
 site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段：
 
@@ -8880,8 +8888,8 @@ site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段
 #### 常用的maven变量
 
 - project.basedir，项目根目录
-- project.build.outputDirectory，classes目录
 - project.build.directory，target目录
+- project.build.outputDirectory，target/classes目录
 
 #### maven插件
 
@@ -14033,13 +14041,21 @@ ChatModel 和 ChatClient 是两个核心的抽象，它们分别代表了底层�
 - 配置
 
 ```properties
-# 强制服务器端用UTF-8编码处理对话
-# 只对请求生效，对响应不生效的
 # 解决调用大模型返回中文乱码问题
 # 保证大模型返回响应的时候不会中文乱码
-server.servlet.encoding.enabled=true
-server.servlet.encoding.force=true
-server.servlet.encoding.charset=UTF-8
+# 推荐配置文件的方式进行设置，否则就要在控制器类声明
+# @RequestMapping(produces = "text/html;charset=utf-8") public class MyController {}
+# 或声明 
+# @GetMapping(value = "/myRequest", produces = "text/html;charset=utf-8") public String myMethodName(){ return xxx}
+
+# 启用字符编码过滤器
+# 只有设置为 true，Spring Boot 才会注册并激活 CharacterEncodingFilter
+spring.servlet.encoding.enabled=true
+# 强制请求和响应都使用指定的字符集
+spring.servlet.encoding.force=true
+# 告诉 Spring Boot 内部的 CharacterEncodingFilter 过滤器
+# 在处理 HTTP 请求参数（如表单提交、URL 参数）和生成 HTTP 响应内容时，默认使用 UTF-8 进行解码和编码
+spring.servlet.encoding.charset=UTF-8
 
 # ollama的本地服务器地址
 spring.ai.ollama.base-url=http://localhost:11434
@@ -14214,6 +14230,48 @@ public class ApplicationController {
 spring的官方文档只说了ollama的chat 模型是openai api兼容的
 
 因此如果要使用ollama的embedding模型，目前最好还是使用ollama api吧
+
+### 提示词
+
+prompt > message > 字符串
+
+- message是一个MessageType枚举，包含四种角色
+    - SYSTEM，设定AI行为边界/角色/定位。指导AI的行为和响应方式，设置AI如何解释和回复输入的
+    - USER，用户原始提问输入。代表用户向AI提出的问题、命令或陈述
+    - ASSISTANT，AI返回的响应信息。用它确保上下文能够连贯交互（记忆对话，积累回答）
+    - TOOL，桥接外部服务，可以进行方法调用，如支付/数据查询等，类似调用第三方工具栏
+
+```java
+@GetMapping(value = "/chatClientStream")
+public Flux<String> chatClientStream(
+        @RequestParam(value = "message", defaultValue = "讲个笑话给我听") String message) {
+
+    // 使用system和user
+    return chatClient.prompt()
+                         .system("你是一个说书大师")
+                         .user(message)
+                         .stream()
+                         .content();
+    // 使用字符串
+    return chatClient.prompt()
+                         .user(message)
+                         .stream()
+                         .content();        
+    // 使用message
+    UserMessage userMessage = new UserMessage(message);
+    return chatClient.prompt()
+                        .messages(userMessage)
+                        .stream()
+                        .content();
+    // 使用prompt
+    SystemMessage systemMessage = new SystemMessage("你是一个说书大师");
+    UserMessage userMessage = new UserMessage(message);
+    Prompt prompt = new Prompt(systemMessage, userMessage);
+    return chatClient.prompt(prompt)
+                         .stream()
+                         .content();
+}
+```
 
 ### 方法作为工具来调用
 
