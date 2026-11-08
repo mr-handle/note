@@ -5793,6 +5793,47 @@ console.log(max(1, 3));
 </script>
 ```
 
+#### 别名写法
+
+##### 给命名空间起别名
+
+- 创建模块文件math.js(也可以是.mjs)
+
+```js
+// export 声明需要导出的函数
+export function max(x, y) {
+    return x > y ? x : y;
+}
+```
+
+- 在main.js中引入math模块，假设math.js和main.js同目录
+
+```js
+// 给命名空间起别名
+import * as math from "./math.js";
+
+console.log(math.max(1, 3));
+```
+
+##### 给函数起别名
+
+- 创建模块文件math.js(也可以是.mjs)
+
+```js
+// export 声明需要导出的函数
+export function max(x, y) {
+    return x > y ? x : y;
+}
+```
+
+- 在main.js中引入math模块，假设math.js和main.js同目录
+
+```js
+import { max as Max } from "./math.js";
+
+console.log(Max(1, 3));
+```
+
 ### 垃圾回收机制
 
 js中内存的分配和回收都是自动完成的，内存在不使用的时候会被垃圾收集器自动回收
