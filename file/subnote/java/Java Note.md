@@ -14267,9 +14267,64 @@ public Flux<String> chatClientStream(
     SystemMessage systemMessage = new SystemMessage("你是一个说书大师");
     UserMessage userMessage = new UserMessage(message);
     Prompt prompt = new Prompt(systemMessage, userMessage);
+    // promt也可以这么创建
+    // Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
+
     return chatClient.prompt(prompt)
                          .stream()
                          .content();
+}
+```
+
+#### 提示词模板
+
+```java
+String stringTemplate = """
+            讲一个关于{topic}的故事，
+            并以{outputFormat}格式输出，
+            数字在{wordCount}左右                                                           
+        """;
+PromptTemplate promptTemplate = new PromptTemplate(stringTemplate);
+Prompt prompt = promptTemplate.create(Map.of("topic", message, "outputFormat", "html", "wordCount", 300));
+return chatClient.prompt(prompt)
+        .stream()
+        .content();
+```
+
+- 从资源文件加载提示词模板
+
+```java
+@Value("classpath:/prompts/message.st")
+private Resource stringTemplate;
+
+PromptTemplate promptTemplate = new PromptTemplate(stringTemplate);
+```
+
+### 结构化输出
+
+```java
+public record PersonRecord(String name, Integer age) {
+}
+
+@GetMapping("/chatClientStructuredOutput")
+public PersonRecord chatClientStructuredOutput(@RequestParam(value = "name") String name,
+        @RequestParam(value = "age") Integer age) {
+    String stringTemplate = """
+            我叫：{name}，今年{age}岁！
+            """;
+    // 写法1，param
+    return chatClient.prompt()
+        .user(promptUserSpec -> promptUserSpec.text(stringTemplate)
+                                            .param("name", name)
+                                            .param("age", age))
+        .call()
+        .entity(PersonRecord.class);
+    // 写法2，params
+    return chatClient.prompt()
+        .user(promptUserSpec -> promptUserSpec.text(stringTemplate)
+                                            .params(Map.of("name", name, "age", age)))
+        .call()
+        .entity(PersonRecord.class);
 }
 ```
 
