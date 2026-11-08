@@ -4651,7 +4651,7 @@ var x = 2;
 ```js
 // 所有变量/函数必须先声明后使用
 // 普通函数严格模式下指向undefined
-"use strict"
+"use strict";
 ```
 
 ### 输入语法
@@ -5678,6 +5678,120 @@ var声明的变量不会产生块作用域
 相同作用域链中按从小到大的规则查找变量
 
 子作用域能访问父作用域，父作用域无法访问子作用域
+
+### 模块
+
+ES 6开始支持模块
+
+模块的导出写法有默认导出和命名导出两种
+
+#### 命名导出
+
+- 创建模块文件math.js(也可以是.mjs)
+
+```js
+// 模块默认启用严格模式，无需再手动声明"use strict"
+// "use strict";
+
+// export 声明需要导出的函数
+export function max(x, y) {
+    return x > y ? x : y;
+}
+```
+
+- 在main.js中引入math模块，假设math.js和main.js同目录
+
+```js
+// math模块中可以导出很多函数，用解构写法引入math中导出的函数
+import { max } from "./math.js";
+
+// 使用函数
+console.log(max(1, 3));
+```
+
+#### 默认导出
+
+- 创建模块文件math.js(也可以是.mjs)
+
+```js
+// 模块默认启用严格模式，无需再手动声明"use strict"
+// "use strict";
+
+// export default 声明需要默认导出的函数
+export default function max(x, y) {
+    return x > y ? x : y;
+}
+```
+
+- 在main.js中引入math模块，假设math.js和main.js同目录
+
+```js
+// 这里的whatever表示可以是任意变量名
+import whatever from "./math.js";
+
+console.log(whatever(1, 3));
+```
+
+#### 命名导出+默认导出
+
+模块可以同时有一个默认导出+N个命名导出
+
+- 创建模块文件math.js(也可以是.mjs)
+
+```js
+// 模块默认启用严格模式，无需再手动声明"use strict"
+// "use strict";
+
+// export 声明需要默认导出的函数
+export default function max(x, y) {
+    return x > y ? x : y;
+}
+
+export function min(x, y) {
+    return x < y ? x : y;
+}
+```
+
+- 在main.js中引入math模块，假设math.js和main.js同目录
+
+```js
+import max, { min } from "./math.js";
+
+console.log(min(1, 3));
+console.log(max(1, 3));
+```
+
+#### html中导入模块
+
+```html
+<script type="module">
+    import max, { min } from "./math.js";
+
+    console.log(min(1, 3));
+    console.log(max(1, 3));
+</script>
+```
+
+- 当页面需要某个模块时
+
+```html
+<script type="module" src="./math.js"></script>
+```
+
+- 不能像下面这么写
+
+```html
+<!-- 每个 <script type="module"> 都是独立模块，互不共享！ -->
+<!-- 模块A：从 math.js 加载 -->
+<script type="module" src="./math.js"></script>
+<!-- 模块B：从 index.html 加载 -->
+<script type="module">
+    // 找不到 min
+    console.log(min(1, 3));
+    // 找不到 max
+    console.log(max(1, 3));
+</script>
+```
 
 ### 垃圾回收机制
 
