@@ -12,6 +12,24 @@ HF-Mirror：官网 <https://hf-mirror.com>，Hugging Face的镜像
 
 ModelScope：官网<https://www.modelscope.cn>，是国内版的Hugging Face
 
+```sh
+# 先设置Hugging Face镜像源在$HOME/.bashrc中追加
+export HF_ENDPOINT="https://hf-mirror.com"
+
+# Hugging Face 下载模型指定文件到指定的本地目录下
+# 记得去仓库点击模型文件查看模型相对地址
+# 假设连接是：https://huggingface.co/kandinskylab/Kandinsky-5.0-T2V-Lite-sft-5s/resolve/main/model/kandinsky5lite_t2v_sft_5s.safetensors
+# --local-dir 文件保存的目录
+hf download kandinskylab/Kandinsky-5.0-T2V-Lite-sft-5s \
+    model/kandinsky5lite_t2v_sft_5s.safetensors \
+    --local-dir /path/to/dir
+
+# --local_dir 文件保存的目录
+modelscope download --model Comfy-Org/HunyuanVideo_1.5_repackaged \
+    README.md \
+    --local_dir /path/to/dir
+```
+
 ## 国内AI使用心得
 
 deepseek信息落后
@@ -139,6 +157,14 @@ uv pip install transformers==4.36.2 --index-url https://mirrors.tuna.tsinghua.ed
 # 当某个模型用uv run tts --list_models 显示已下载但是又报错说找不到就将该模型文件夹删了
 rm -rf ~/.local/share/tts/问题模型
 ```
+
+## comfyui
+
+记得在实例设置中设置->`Startup Args`-> `Startup Arguments`设置为：`--enable-manager --reserve-vram 2 --lowvram --bf16-vae`
+
+否则在文生图时，第一次运行可以正常生成，什么都没改第二次运行就开始生成纯黑图片或者其它乱七八糟的图片了
+
+记得图片的宽高设置为8的倍数，不要太大，512x512或者640x360就可以了，640x360方便成比例放大
 
 ## llama.cpp
 

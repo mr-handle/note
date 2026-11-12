@@ -14328,6 +14328,165 @@ public PersonRecord chatClientStructuredOutput(@RequestParam(value = "name") Str
 }
 ```
 
+### 聊天记忆（Chat Memory）
+
+```java
+@GetMapping("/chatMemory")
+public String interactChatModel() {
+    // Create a memory instance
+    ChatMemory chatMemory = MessageWindowChatMemory.builder()
+                                                    .build();
+    String conversationId = "007";
+
+    // First interaction
+    UserMessage userMessage1 = new UserMessage("My name is James Bond");
+    chatMemory.add(conversationId, userMessage1);
+    ChatResponse chatResponse1 = chatModel.call(new Prompt(chatMemory.get(conversationId)));
+    chatMemory.add(conversationId, chatResponse1.getResult()
+                                                .getOutput());
+
+    // Second interaction
+    UserMessage userMessage2 = new UserMessage("What is my name?");
+    chatMemory.add(conversationId, userMessage2);
+    ChatResponse chatResponse2 = chatModel.call(new Prompt(chatMemory.get(conversationId)));
+    AssistantMessage assistantMessage = chatResponse2.getResult()
+                                                        .getOutput();
+    chatMemory.add(conversationId, assistantMessage);
+
+    // The response will contain "James Bond"
+    return assistantMessage.getText();
+}
+```
+
+#### MessageWindowChatMemory
+
+MessageWindowChatMemory维护一个滑动窗口的消息到指定的最大大小
+
+当消息的数量超过最大值时，旧的消息将被清除，同时始终保留SystemMessage实例
+
+默认窗口大小为20条消息
+
+#### MessageChatMemoryAdvisor
+
+该顾问使用提供的ChatMemory实现管理会话内存
+
+在每次交互时，它从内存中检索会话历史记录，并将其作为消息集合包含在提示词中
+
+- 依赖
+
+```sh
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-chat-memory-repository-redis</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-openai</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+```
+
+- 配置
+
+```properties
+# 解决调用大模型返回中文乱码问题
+# 保证大模型返回响应的时候不会中文乱码
+# 推荐配置文件的方式进行设置，否则就要在控制器类声明
+# @RequestMapping(produces = "text/html;charset=utf-8") public class MyController {}
+# 或声明
+# @GetMapping(value = "/myRequest", produces = "text/html;charset=utf-8") public String myMethodName(){ return xxx}
+
+# 启用字符编码过滤器
+# 只有设置为 true，Spring Boot 才会注册并激活 CharacterEncodingFilter
+spring.servlet.encoding.enabled=true
+# 强制请求和响应都使用指定的字符集
+spring.servlet.encoding.force=true
+# 告诉 Spring Boot 内部的 CharacterEncodingFilter 过滤器
+# 在处理 HTTP 请求参数（如表单提交、URL 参数）和生成 HTTP 响应内容时，默认使用 UTF-8 进行解码和编码
+spring.servlet.encoding.charset=UTF-8
+
+# llama.cpp或ollama的apiKey随便填一个就可以了
+# 对于其它模型供应商的apiKey，应该设置到vault或者环境变量中，然后通过占位符获取如${API_KEY}
+# 这里springai有个问题，官方文档里面说spring.ai.openai.chat.api-key是会覆盖spring.ai.openai.api-key的
+# 但是启动的时候，创建openAiSdkAudioSpeechModel bean时，还是会读spring.ai.openai.api-key，启动报错
+spring.ai.openai.api-key=llama.cpp
+# llama.cpp的本地服务器地址，要改成模型启动时的具体ip和端口，并且加/v1
+spring.ai.openai.chat.base-url=http://localhost:8888/v1
+# llama.cpp启动的模型的模型名就是文件名，可以去掉后缀
+spring.ai.openai.chat.model=Ornith-1.5-9B-Q4_K_M
+
+logging.level.org.springframework.ai.chat.client.advisor=DEBUG
+
+# 根据具体情况设置
+spring.ai.chat.memory.repository.redis.host=
+spring.ai.chat.memory.repository.redis.port=
+spring.ai.chat.memory.repository.redis.username=
+spring.ai.chat.memory.repository.redis.password=
+# Name of the Redis search index
+spring.ai.chat.memory.repository.redis.index-name=chat-memory-idx
+# Key prefix for chat memory entries
+spring.ai.chat.memory.repository.redis.key-prefix=chat-memory:
+# 默认不过期，例：24h, 30d
+#spring.ai.chat.memory.repository.redis.time-to-live=24h
+# Whether to initialize the Redis schema on startup
+spring.ai.chat.memory.repository.redis.initialize-schema=true
+# Maximum number of conversation IDs to return
+spring.ai.chat.memory.repository.redis.max-conversation-ids=1000
+# Maximum number of messages to return per conversation
+spring.ai.chat.memory.repository.redis.max-messages-per-conversation=1000
+```
+
+- 控制器
+
+```java
+@Autowired
+private RedisChatMemoryRepository chatMemoryRepository;
+
+private final ChatClient chatClient;
+
+public ApplicationController(RedisChatMemoryRepository chatMemoryRepository, ChatModel chatModel) {
+    ChatMemory chatMemory = MessageWindowChatMemory.builder()
+                                                    .chatMemoryRepository(chatMemoryRepository)
+                                                    .maxMessages(10)
+                                                    .build();
+
+    this.chatClient = ChatClient.builder(chatModel)
+                                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory)
+                                                                            .build())
+                                .build();
+}
+
+@GetMapping("/redisChatMemory")
+public Flux<String> redisChatMemory(
+        @RequestParam(name = "conversationId", defaultValue = "1001") String conversationId,
+        @RequestParam(name = "message") String message) {
+    return chatClient.prompt()
+                        .user(message)
+                        // 设置会话id
+                        .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, conversationId))
+                        .stream()
+                        .content();
+}
+```
+
+#### 查询历史记录
+
+```java
+// Cast to access advanced features
+AdvancedRedisChatMemoryRepository advancedRedisChatMemoryRepository =
+        (AdvancedRedisChatMemoryRepository) chatMemoryRepository;
+
+// Find messages by type across all conversations
+List<AdvancedRedisChatMemoryRepository.MessageWithConversation> results =
+        advancedRedisChatMemoryRepository.findByContent("Spring AI", 10);
+
+// 根据会话id查询
+List<Message> results = advancedRedisChatMemoryRepository.findByConversationId(conversationId);
+```
+
 ### 方法作为工具来调用
 
 工具调用分为两种：信息检索和采取行动
@@ -14798,6 +14957,14 @@ ToolExecutionExceptionProcessor toolExecutionExceptionProcessor() {
 ```
 
 如果定义了自己的ToolCallback实现，取保错误发生时抛出ToolExecutionException
+
+### 文本向量化
+
+Embedding（嵌入）的工作原理是将文本、图像和视频转换为称为向量的浮点数数组
+
+嵌入数组的长度称为向量的维度
+
+Embedding Model（嵌入模型）是嵌入过程中采用的模型
 
 ## Spring Security
 
@@ -23988,7 +24155,7 @@ Jedis是以性能和简便为目标进行设计的Redis的java客户端
     <groupId>redis.clients</groupId>
     <artifactId>jedis</artifactId>
     <!-- 8.0.0开始支持java25 -->
-    <version>8.0.0</jedis.version>
+    <version>8.0.2</version>
 </dependency>
 ```
 
