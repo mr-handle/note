@@ -14966,6 +14966,198 @@ Embedding（嵌入）的工作原理是将文本、图像和视频转换为称�
 
 Embedding Model（嵌入模型）是嵌入过程中采用的模型
 
+嵌入模型是一种机器学习模型，旨在在连续的低维向量空间中表示数据（例如文本、图像或其它形式的信息）
+
+这些嵌入可以捕获数据之间的语义或上下文相似性，使机器能够更有效地执行比较、聚类或分类等任务
+
+先将用户的查询发送到向量数据库，得到相似文档，然后将这些文档作为用户问题的上下文，与用户的查询一起发送到AI模型
+
+这种技术称为检索增强生成
+
+#### 嵌入模型
+
+使用嵌入模型完成文本向量化例子
+
+- 依赖
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+</parent>
+
+<artifactId>spring-ai-openai-embedding-demo</artifactId>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-bom</artifactId>
+            <version>2.0.2</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-model-openai</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+```
+
+- 配置
+
+```yaml
+spring:
+    servlet:
+        encoding:
+            enabled: true
+            force: true
+            charset: UTF-8
+    ai:
+        openai:
+            api-key: yourApiKey
+            base-url: http://yourIp:yourPort/v1
+            embedding:
+                model: yourEmbeddingModel
+```
+
+- 控制器
+
+```java
+@Autowired
+private EmbeddingModel embeddingModel;
+
+@GetMapping("/test")
+public Map<String, EmbeddingResponse> test(
+        @RequestParam(value = "message", defaultValue = "玲珑骰子安红豆") String message) {
+    // 文本向量化的两种写法
+    // EmbeddingResponse embeddingResponse = embeddingModel.call(new EmbeddingRequest(List.of(message), null));
+    // EmbeddingResponse embeddingResponse = embeddingModel.call(new EmbeddingRequest(List.of(message),
+    //                                                                                EmbeddingOptions.builder()
+    //                                                                                                .model("embeddinggemma-2-Q8_0")
+    //                                                                                                .build()));
+    EmbeddingResponse embeddingResponse = embeddingModel.embedForResponse(List.of(message));
+    // 向量数组
+    float[] outputs = embeddingResponse.getResult()
+                                        .getOutput();
+    System.out.println(Arrays.toString(outputs));
+    return Map.of("embeddingResponse", embeddingResponse);
+}
+```
+
+#### 向量数据库
+
+使用向量数据库例子
+
+- 依赖
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+</parent>
+
+<artifactId>spring-ai-redis-vector-store</artifactId>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-bom</artifactId>
+            <version>2.0.2</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-vector-store-redis</artifactId>
+        <exclusions>
+            <exclusion>
+                <groupId>io.lettuce</groupId>
+                <artifactId>lettuce-core</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-model-openai</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+```
+
+- 配置
+
+```yaml
+spring:
+    servlet:
+        encoding:
+            enabled: true
+            force: true
+            charset: UTF-8
+    ai:
+        openai:
+            api-key: yourApiKey
+            base-url: http://yourIp:yourPort/v1
+            embedding:
+                model: yourEmbeddingModel
+        vectorstore:
+            redis:
+                # 是否初始化必要的schema
+                initialize-schema: true
+                index-name: vector-index
+                prefix: "vector:"
+    data:
+        redis:
+            host: yourIp
+            port: yourPort
+            username: yourUserName
+            password: yourPassword
+```
+
+- 控制器
+
+```java
+@Autowired
+private VectorStore vectorStore;
+
+@GetMapping("/test")
+public String test() {
+    List<Document>
+            documents = List.of(new Document("Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!!",
+                                                Map.of("meta1", "meta1")),
+                                new Document("The World is Big and Salvation Lurks Around the Corner"),
+                                new Document("You walk forward facing the past and you turn back toward the future.",
+                                                Map.of("meta2", "meta2")));
+
+    // 隐式调用了嵌入模型
+    // Add the documents to Redis
+    vectorStore.add(documents);
+
+    // 相似度查找
+    // Retrieve documents similar to a query
+    List<Document> results = this.vectorStore.similaritySearch(SearchRequest.builder().query("Spring").topK(5).build());
+    return "result size: " +  results.size() + " timestamp: " + System.currentTimeMillis();
+}
+```
+
 ## Spring Security
 
 Spring Security提供3大功能：认证、授权和防御常见攻击
@@ -24074,6 +24266,36 @@ zrank k1 v1
 # 获取k1中v1的排名（按score从高到低排序）
 zrevrank k1 v1
 ```
+
+#### ReJSON-RL
+
+```sh
+# 设置json值
+json.set 
+
+# 获取json值
+json.get 
+
+# 删除json值
+json.del 
+
+# 批量获取多个key的json值
+json.mget
+
+# 获取json值的类型
+json.type
+
+# 对json中的数值进行增量操作
+json.numincrby
+
+# 追加字符串
+json.strappend
+
+# 获取json的长度
+json.strlen
+```
+
+#### 其它
 
 - 使用aof持久化
 
