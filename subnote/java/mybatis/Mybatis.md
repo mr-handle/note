@@ -745,7 +745,7 @@ MyBatis 使用 JDK 的动态代理，为需要拦截的接口生成代理对象�
 
 具体就是 InvocationHandler 的 invoke() 方法，当然，只会拦截那些你指定需要拦截的方法。
 
-实现 MyBatis 的 Interceptor 接口并复写 intercept() 方法，然后再给插件编写注解，指定要拦截哪一个接口的哪些方法即可
+实现 MyBatis 的 Interceptor 接口并覆写 intercept() 方法，然后再给插件编写注解，指定要拦截哪一个接口的哪些方法即可
 
 最后在配置文件中配置你编写的插件
 

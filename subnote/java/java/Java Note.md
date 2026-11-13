@@ -4271,6 +4271,14 @@ try {
 
 使用`mvn javafx:run`可以直接运行程序，缺点是无法进行调试，可通过配置idea远程调试来解决
 
+远程调试关键参数：`-Xdebug -Xnoagent -Djava.compilercompiler=NONE -Xrunjdwp:transport=dt_socket,server=yy,suspendsuspend=n,address=9081`
+
+远程调试前提是本机有项⽬的源代码 ，在需要的地⽅打个断点，本机不⽤启动项⽬，可以直接远程调试服务器上的代码
+
+远程调试从技术上讲，就是在本机与远程建⽴scoket通讯，所以端⼝不要冲突，⽽且本机要允许访问远程端⼝
+
+另外这⼀段参数，放要在-jar 或 主类 的前⾯
+
 缺点是每次调试都要执行两个应用（原本的javafx应用和调试应用）
 
 - javafx-maven-plugin插件加上远程调试的选项参数

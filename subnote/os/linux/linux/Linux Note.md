@@ -2568,22 +2568,22 @@ bt default
 
 ### CentOS7启动流程
 
-![CentOS7启动流程](./image/CentOS7启动流程.png)
+![CentOS7启动流程](image/CentOS7启动流程.png)
 
-![CentOS7启动流程2](./image/CentOS7启动流程2.png)
+![CentOS7启动流程2](image/CentOS7启动流程2.png)
 
 ## CentOS 7
 
-[CentOS笔记](/file/subnote/os/linux/CentOS.md "点击链接查看CentOS笔记")
+[CentOS笔记](/subnote/os/linux/CentOS.md "点击链接查看CentOS笔记")
 
 ## Ubuntu
 
-[Ubuntu笔记](/file/subnote/os/linux/Ubuntu.md "点击链接查看Ubuntu笔记")
+[Ubuntu笔记](/subnote/os/linux/Ubuntu.md "点击链接查看Ubuntu笔记")
 
 ## Arch Linux
 
-[Arch Linux笔记](/file/subnote/os/linux/Arch%20Linux.md "点击链接查看Arch Linux笔记")
+[Arch Linux笔记](/subnote/os/linux/archlinux/Arch%20Linux.md "点击链接查看Arch Linux笔记")
 
 ## NixOS
 
-[NixOS笔记](/file/subnote/os/linux/NixOS%20Note.md "点击链接查看NixOS笔记")
+[NixOS笔记](/subnote/os/linux/NixOS%20Note.md "点击链接查看NixOS笔记")
