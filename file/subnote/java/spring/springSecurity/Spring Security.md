@@ -616,7 +616,7 @@ JsonMapper mapper = JsonMapper.builder()
 
 ## Spring Security体系结构
 
-![Spring Security架构](/images/Spring%20Security架构.png)
+![Spring Security架构](image/Spring%20Security架构.png)
 
 - 如果想要让Spring Security忽略某些请求，可以定义一个没有没有Filter的SecurityFilterChain
 
@@ -784,7 +784,7 @@ SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 ### 处理安全异常
 
-![ExceptionTranslationFilter](/images/ExceptionTranslationFilter.png)
+![ExceptionTranslationFilter](image/ExceptionTranslationFilter.png)
 
 #### ExceptionTranslationFilter
 
@@ -882,7 +882,7 @@ logging.level.org.springframework.security=TRACE
 
 ### SecurityContextHolder
 
-![SecurityContextHolder](/images/SecurityContextHolder.png)
+![SecurityContextHolder](image/SecurityContextHolder.png)
 
 SecurityContextHolder是Spring Security存储身份验证详细信息的地方
 
@@ -1066,7 +1066,7 @@ public class SecurityConfig {
 
 ### ProviderManager
 
-![ProviderManager](/images/ProviderManager.png)
+![ProviderManager](image/ProviderManager.png)
 
 ProviderManager是AuthenticationManager最常用的实现
 
@@ -1129,7 +1129,7 @@ AuthenticationEntryPoint实现可能会执行重定向到登录页面（LoginUrl
 
 ### AbstractAuthenticationProcessingFilter
 
-![AbstractAuthenticationProcessingFilter](/images/AbstractAuthenticationProcessingFilter.png)
+![AbstractAuthenticationProcessingFilter](image/AbstractAuthenticationProcessingFilter.png)
 
 authenticationprocessingfilter用作验证用户凭据的基本过滤器。在对凭证进行身份验证之前，Spring Security通常通过使用AuthenticationEntryPoint请求凭证
 

@@ -348,7 +348,7 @@ public ResultVo<String> blackList() {
 
 - 控制台设置授权规则
 
-![授权规则](/images/授权规则.png)
+![授权规则](image/授权规则.png)
 
 - 测试
     - url：<http://localhost:8080/sentinel/blackList?serverName=test>

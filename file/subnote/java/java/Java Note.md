@@ -747,7 +747,7 @@ String hexAddress2 = object.toString().substring(object.toString().indexOf("@") 
 
 - 深拷贝：完全复制整个对象，包括这个对象所包含的内部对象
 
-![拷贝对比](/images/拷贝对比.png)
+![拷贝对比](image/拷贝对比.png)
 
 ### hashCode()
 
@@ -3513,7 +3513,7 @@ try (Arena arena = Arena.ofConfined()) {
 
 ### 异常
 
-![异常类层次结构图概览](/images/异常类层次结构图概览.png)
+![异常类层次结构图概览](image/异常类层次结构图概览.png)
 
 - Exception：程序本身可以处理的异常，可以通过 catch 来进行捕获
     - 分为Checked Exception和Unchecked Exception，其中受检异常，必须处理
@@ -5490,7 +5490,7 @@ Netty是一个异步的事件驱动的网络应用框架
 
 ### JVM
 
-![JVM大致结构模型](/images/JVM大致结构模型.png)
+![JVM大致结构模型](image/JVM大致结构模型.png)
 
 - 类加载器子系统
     - 加载阶段
@@ -5903,7 +5903,7 @@ public interface ClinitService {
 
 此外，所有Java类都有一个静态属性class，它引用这个类的Class实例
 
-![引用关系](/images/引用关系.png)
+![引用关系](image/引用关系.png)
 
 - 类的生命周期
 
@@ -6710,12 +6710,12 @@ java.lang.OutOfMemoryError: Java heap space :假如在创建新的对象时, 堆
 ###### 句柄
 
 Java 堆中将会划分出一块内存来作为句柄池，reference 中存储的就是对象的句柄地址，而句柄中包含了对象实例数据与对象类型数据各自的具体地址信息
-![句柄](/images/句柄.png)
+![句柄](image/句柄.png)
 
 ###### 直接指针
 
 如果使用直接指针访问，reference 中存储的直接就是对象的地址
-![直接指针](/images/直接指针.png)
+![直接指针](image/直接指针.png)
 
 #### 方法区
 
@@ -7016,11 +7016,11 @@ System.out.println("电脑内存大小: " + maxHeapSize * 4 / (1024 * 1024 * 102
         - 由于多核的存在，一般的GC事件中，real是小于sys+user的
         - 如果real大于sys+user，则应用可能存在IO负载非常重或是CPU不够用
 
-![GC日志规律](/images/gclogregular.png)
+![GC日志规律](image/gclogregular.png)
 
-![MinorGC日志](/images/minorgc.png)
+![MinorGC日志](image/minorgc.png)
 
-![FullGC日志](/images/fullgc.png)
+![FullGC日志](image/fullgc.png)
 
 - 日志中的垃圾收集器
     - DefNew：Seriall收集器（Default New Generation）
@@ -7600,7 +7600,7 @@ jinfo -flag 垃圾收集器参数（如：UseG1GC） 进程id
 
 有线连接的都是可以组合来用，虚线表示过时的组合
 
-![垃圾收集器组合](/images/gc.png)
+![垃圾收集器组合](image/gc.png)
 
 #### 性能调优
 
@@ -8158,7 +8158,7 @@ java -Dsun.jnu.encoding=UTF-8 myApp.jar
 
 ### JMM（Java 内存模型）
 
-![jmm](/images/jmm.png)
+![jmm](image/jmm.png)
 
 volatile 关键字可以保证变量的可见性，将变量声明为 volatile ，这就指示 JVM，这个变量是共享且不稳定的，每次使用它都到主存中进行读取
 
@@ -9408,13 +9408,13 @@ public class PayController {
 
 - 10个线程，执行5秒，每次执行2个请求
 
-![jmeter-threadGroup](/images/jmeter-threadGroup.png)
+![jmeter-threadGroup](image/jmeter-threadGroup.png)
 
 ### get请求
 
 - 注意点：如果直接在Path输入框中输入：<http://localhost:8080/jackson/get2>，然后填写请求参数，那么请求参数是不会拼接到请求路径后面的
 
-![jmeter-get](/images/jmeter-get.png)
+![jmeter-get](image/jmeter-get.png)
 
 ## 分布式id
 

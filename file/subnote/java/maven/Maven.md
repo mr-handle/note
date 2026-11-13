@@ -668,7 +668,7 @@ mvn clean package -Dmaven.test.skip=true
 
 - 设置jar包保存路径
   
-    ![Blob Stores](/images/BlobStores.png "Blob Stores")
+    ![Blob Stores](image/BlobStores.png "Blob Stores")
 
 - 设置`maven`配置文档`..\apache-maven-3.6.3\conf\settings.xml` server的id和repository的id要一致
 
@@ -868,15 +868,15 @@ mvn -T 1C [其它选项参数]
 
 - 设置maven默认编码：`-Dfile.encoding=GBK`
   
-    ![设置maven默认编码](/images/设置maven默认编码.png "设置maven默认编码")
+    ![设置maven默认编码](image/设置maven默认编码.png "设置maven默认编码")
 
-# Maven Daemon
+## Maven Daemon
 
 - 官网：<https://github.com/apache/maven-mvnd>
 
 - 可以看作是maven的增强版，内嵌了maven，只需将maven的命令mvn改成mvnd即可
 
-## 安装Maven Daemon
+### 安装Maven Daemon
 
 - 1.下载zip压缩包
 
@@ -900,7 +900,7 @@ maven.settings=/path/to/settings.xml
 
 - 6.测试`mvnd -v`
 
-## Idea配置Maven Daemon
+### Idea配置Maven Daemon
 
 - IntelliJ IDEA 2024.3 (Community Edition)还没支持Maven Daemon，通过Maven Helper插件来使用
 
@@ -910,7 +910,7 @@ maven.settings=/path/to/settings.xml
 
 - 使用：右键->Run Maven选择对应指令执行即可
 
-## mvnd常用命令
+### mvnd常用命令
 
 ```sh
 # 停止mvnd daemon线程

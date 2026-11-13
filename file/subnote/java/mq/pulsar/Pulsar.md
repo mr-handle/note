@@ -90,7 +90,7 @@ functionsWorkerEnabled=true
 
 - 访问：<http://localhost:9527/>
 
-- 新增环境：![pulsar-manager-environment](/images/pulsar-manager-environment.png)
+- 新增环境：![pulsar-manager-environment](image/pulsar-manager-environment.png)
 
 ## java client
 

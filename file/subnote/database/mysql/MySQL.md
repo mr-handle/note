@@ -218,7 +218,7 @@ spring.datasource.password=mysql123
 
 ## 数据类型
 
-![mysql数据类型](/images/mysql数据类型.png)
+![mysql数据类型](image/mysql数据类型.png)
 
 char: 定长，非常适合存储密码的哈希值
 

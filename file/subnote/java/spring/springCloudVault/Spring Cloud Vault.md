@@ -270,7 +270,7 @@ vault集群的配置需要用到cluster.sh脚本，在<https://github.com/hashic
 
 cluster.sh脚本会配置和启动4个vault服务，如结构下图
 
-![vaultCluster](/images/vaultCluster.png)
+![vaultCluster](image/vaultCluster.png)
 
 脚本初始化并解封vault_1 (<http://127.0.0.1:8200>)，它不加入集群，其root token创建一个自动解封其它vault服务的传输key
 

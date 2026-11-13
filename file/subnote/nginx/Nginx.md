@@ -344,7 +344,7 @@ server {
 
 ## 配置Nginx高可用集群
 
-![Nginx高可用](/images/nginx.png)
+![Nginx高可用](./image/nginx.png)
 
 keepalived官网：<https://www.keepalived.org/index.html>
 

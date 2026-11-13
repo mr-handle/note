@@ -448,7 +448,7 @@ curl http://localhost:11434/api/generate -d '{
 
 - 未训练的模型是参数值不确定的公式，训练好的模型是参数值确定的公式
 
-![机器学习算法](./image/机器学习算法.png)
+![机器学习算法](image/机器学习算法.png)
 
 ## PyTorch
 

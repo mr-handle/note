@@ -57,7 +57,7 @@ DNS1=223.5.5.5
 
 - 新建nat network，用宿主机的2222端口映射虚拟机操作系统的22端口
 
-![新建nat network](/images/%E6%96%B0%E5%BB%BAnat%20network.png)
+![新建nat network](./image/%E6%96%B0%E5%BB%BAnat%20network.png)
 
 - 配置虚拟机操作系统的网络，`Promiscuous mode选Allow all`
 

@@ -738,7 +738,7 @@ Serif：有衬线，笔画末端有小装饰线，如宋体
 
 Sans-serif：无衬线，笔画末端没有装饰，线条简洁
 
-![衬线和无衬线对比图](/images/Sans-Serif.png)
+![衬线和无衬线对比图](./image/Sans-Serif.png)
 
 #### 安装思源字体和ttf-hanazono
 
@@ -886,7 +886,7 @@ sudo pacman -S adobe-source-han-sans-cn-fonts
 
 特别是General那里，一定要设置，不然有些中字会显示半宽，特别别扭
 
-![系统字体设置](/images/system-fonts.png)
+![系统字体设置](./image/system-fonts.png)
 
 ### 安装桌面环境（KDE）
 
@@ -1321,7 +1321,7 @@ patch:
 
 都设置为"Noto Sans CJK SC"，字号、是否加粗用默认
 
-![fcitx5字体设置](/images/fcitx5-fonts.png)
+![fcitx5字体设置](./image/fcitx5-fonts.png)
 
 #### 5.创建自定义词库（可选）
 
