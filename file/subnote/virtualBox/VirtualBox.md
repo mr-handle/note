@@ -6,7 +6,7 @@
 
 需要根据电脑当前实际使用的网络进行选择，当前是用网线的就选网线网络对应的网卡；当前是用WIFI的就选WIFI网络对应的网卡
 
-![网卡选择](/images/网卡选择.png)
+![网卡选择](./image/网卡选择.png)
 
 ### nat
 
@@ -14,11 +14,11 @@
 
 - 配置虚拟机系统网络适配器
 
-![选择NAT模式](/images/%E9%80%89%E6%8B%A9NAT%E6%A8%A1%E5%BC%8F.png)
+![选择NAT模式](./image/%E9%80%89%E6%8B%A9NAT%E6%A8%A1%E5%BC%8F.png)
 
 - 配置宿主机和虚拟机的映射（不用重启虚拟机系统）
 
-![配置宿主机和虚拟机的映射](/images/%E9%85%8D%E7%BD%AE%E5%AE%BF%E4%B8%BB%E6%9C%BA%E5%92%8C%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%9A%84%E6%98%A0%E5%B0%84.png)
+![配置宿主机和虚拟机的映射](./image/%E9%85%8D%E7%BD%AE%E5%AE%BF%E4%B8%BB%E6%9C%BA%E5%92%8C%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%9A%84%E6%98%A0%E5%B0%84.png)
 
 - 配置虚拟机系统的网络
 
@@ -61,7 +61,7 @@ DNS1=223.5.5.5
 
 - 配置虚拟机操作系统的网络，`Promiscuous mode选Allow all`
 
-![配置虚拟机操作系统的网络](/images/%E9%85%8D%E7%BD%AE%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%9A%84%E7%BD%91%E7%BB%9C.png)
+![配置虚拟机操作系统的网络](./image/%E9%85%8D%E7%BD%AE%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%9A%84%E7%BD%91%E7%BB%9C.png)
 
 - 配置虚拟机操作系统静态ip
 
@@ -107,8 +107,8 @@ DNS1=114.114.114.114
 
 - 创建虚拟网卡
 
-![创建虚拟网卡](/images/tools-network.png)
+![创建虚拟网卡](./image/tools-network.png)
 
 - 配置静态IP
 
-![配置静态IP](/images/host-only-network.png)
+![配置静态IP](./image/host-only-network.png)

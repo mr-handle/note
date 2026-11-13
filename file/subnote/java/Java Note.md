@@ -8784,7 +8784,6 @@ private static <T> String getApplicationHome(Class<T> clazz) {
 }
 ```
 
-
 ## react
 
 官网：<https://projectreactor.io/>
@@ -9304,7 +9303,8 @@ try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber("/path/to/input.mp4")) 
     int videoBitrate = grabber.getVideoBitrate() / 1000;
     String videoFrameRate = BigDecimal.valueOf(grabber.getVideoFrameRate()).setScale(2, RoundingMode.HALF_UP).toString();
     String videoInformation = String.format("视频编解码器：%s，比特率：%d kb/s，分辨率：%dx%d，帧数：%s fps",
-                                            grabber.getVideoCodecName(), videoBitrate, grabber.getImageWidth(), grabber.getImageHeight(), videoFrameRate);
+                                            grabber.getVideoCodecName(), videoBitrate, grabber.getImageWidth(), 
+                                            grabber.getImageHeight(), videoFrameRate);
     System.out.println(videoInformation);
 
     int audioBitrate = grabber.getAudioBitrate() / 1000;

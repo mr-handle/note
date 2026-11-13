@@ -65,7 +65,7 @@
 
 - [FFMPEG笔记](/file/subnote/FFMPEG.md "点击链接查看FFMPEG笔记")
 
-- [硬件笔记](/file/subnote/Hardware.md "点击链接查看硬件笔记")
+- [硬件笔记](/file/subnote/hardware/Hardware.md "点击链接查看硬件笔记")
 
 - 虚拟机
-    - [VirtualBox笔记](/file/subnote/VirtualBox.md "点击链接查看VirtualBox笔记")
+    - [VirtualBox笔记](/file/subnote/virtualBox/VirtualBox.md "点击链接查看VirtualBox笔记")
