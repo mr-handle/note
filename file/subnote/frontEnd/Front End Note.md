@@ -12281,6 +12281,39 @@ export default defineConfig({
 </template>
 ```
 
+## deno
+
+github：<https://github.com/denoland/deno>
+
+下载后解压放到某个目录并设置到PATH即可
+
+优势：进程内通信
+
+劣势：打包体积会包含谷歌V8引擎，多出来70M
+
+```sh
+deno --version
+```
+
+## tauri
+
+tauri目前展示页面时，标题栏的最小化，最大化和关闭按钮渲染有问题
+
+```sh
+# 笔者目前的电脑显示只用安装wget和xdotool
+sudo pacman -S --needed \
+  webkit2gtk-4.1 \
+  base-devel \
+  curl \
+  wget \
+  file \
+  openssl \
+  appmenu-gtk-module \
+  libappindicator-gtk3 \
+  librsvg \
+  xdotool
+```
+
 ## 应用
 
 ### 不通过img的title属性实现鼠标悬停到图片上提示文字
