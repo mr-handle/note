@@ -360,11 +360,11 @@ systemctl set-default multi-user.target
 
 - 重启系统，在开机界面按“e”进入编辑界面
 
-![开机界面](/images/开机界面.png)
+![开机界面](./image/开机界面.png)
 
 - 在编辑界面光标往下移动，定位到“linux16”开头最在行的末尾，输入`init=/bin/sh`，完成后按“Ctrl + X”进入单用户模式
 
-![编辑界面](/images/编辑界面.png)
+![编辑界面](./image/编辑界面.png)
 
 - 在光标闪烁的位置输入`mount -o remount,rw /`，完成后按`回车`
 
@@ -376,7 +376,7 @@ systemctl set-default multi-user.target
 
 - 在光标闪烁的位置输入`exec /sbin/init`，完成后按`回车`，等待系统自动修改密码，过程可能有点长，完成后系统会自动重启，就可以输入密码登录了
 
-![单用户模式界面](/images/单用户模式界面.png)
+![单用户模式界面](./image/单用户模式界面.png)
 
 ### 文件/目录命令
 
@@ -563,7 +563,7 @@ chgrp [-R] 组名 文件/目录
 
 #### 文件/目录权限
 
-![ll第一列内容示例](/images/ll第一列内容示例.png)
+![ll第一列内容示例](./image/ll第一列内容示例.png)
 
 - `ls -l`显示内容的第一例有10位字符
     - 1.第0位确定文件类型
@@ -1130,7 +1130,7 @@ env
 
 ### NAT网络配置
 
-![NAT网络配置](/images/NAT网络配置.png)
+![NAT网络配置](./image/NAT网络配置.png)
 
 主机上有一个虚拟网卡vmnet8，这个网卡可以跟虚拟机的网卡相互ping通，它们在同一个网段
 
@@ -2054,7 +2054,7 @@ fi
 
 ##### 文件相关运算符
 
-![文件相关运算符](/images/文件相关运算符.png)
+![文件相关运算符](./image/文件相关运算符.png)
 
 |运算符|描述|
 |:-|:-|
@@ -2568,9 +2568,9 @@ bt default
 
 ### CentOS7启动流程
 
-![CentOS7启动流程](/images/CentOS7启动流程.png)
+![CentOS7启动流程](./image/CentOS7启动流程.png)
 
-![CentOS7启动流程2](/images/CentOS7启动流程2.png)
+![CentOS7启动流程2](./image/CentOS7启动流程2.png)
 
 ## CentOS 7
 

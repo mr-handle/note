@@ -50,7 +50,7 @@
 - IDE
     - [IDE笔记](/file/subnote/ide/IDE.md "点击链接查看IDE笔记")
 - 操作系统
-    - [Linux笔记](/file/subnote/os/linux/Linux%20Note.md "点击链接查看Linux笔记")
+    - [Linux笔记](/file/subnote/os/linux/linux/Linux%20Note.md "点击链接查看Linux笔记")
         - [Arch Linux笔记](/file/subnote/os/linux/Arch%20Linux.md "点击链接查看Arch Linux笔记")
         - [Ubuntu笔记](/file/subnote/os/linux/Ubuntu.md "点击链接查看Ubuntu笔记")
         - [CentOS笔记](/file/subnote/os/linux/CentOS.md "点击链接查看CentOS笔记")
