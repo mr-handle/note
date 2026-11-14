@@ -161,18 +161,28 @@ spring-tools-for-eclipse = eclipse-jee + Spring Tools Suite 插件，
 
 |快捷键|功能|
 |:-|:-|
+|Ctrl + /|注释/取消注释|
+|Ctrl + E|最近更改的文件|
+|Ctrl + O|重写⽅法|
+|Ctrl + I|实现⽅法|
+|Ctrl + Z|撤销|
+|Ctrl + Shift + Z|取消撤销|
+|Alt+Insert|生成代码（如getter），跟鼠标右键->Generate功能一样|
 |Tab|向右缩进|
 |Shift + Tab|向左缩进|
-|Ctrl + /|注释/取消注释|
+|Shift+Enter|另起⼀⾏|
 |Shift + F6|重命名，要注意可能跟输入法按键冲突|
 |按两下Shift|类搜索|
 |Ctrl + Shift + F|全局搜索|
 |Ctrl + Shift + R|全局替换|
 |Ctrl + Shift + U|大小写转换|
-|Ctrl + Shift + O|优化导入语句|
-|Ctrl + Shift + L|代码格式化|
+|Ctrl+Shift+J|整合两⾏为⼀⾏|
+|Ctrl + Alt + L|代码格式化|
+|Ctrl + Alt + O|优化导入语句|
+|Ctrl + Alt + N|内联|
 |Ctrl + Alt + M|提取代码为作为方法|
 |Ctrl + Alt + C|修改变量作用域|
+|Ctrl + Alt + left/right|前后导航编辑过的地⽅|
 
 ### idea使用心得
 

@@ -494,7 +494,9 @@ List<AdvancedRedisChatMemoryRepository.MessageWithConversation> results =
 List<Message> results = advancedRedisChatMemoryRepository.findByConversationId(conversationId);
 ```
 
-## 方法作为工具来调用
+## 工具调用（Tool Calling）
+
+LLM本身不能调用工具，它会在响应中表达调用特定工具的意图，然后，应用程序执行这个工具，并将结果返回给模型
 
 工具调用分为两种：信息检索和采取行动
 
@@ -1129,6 +1131,9 @@ spring:
             redis:
                 # 是否初始化必要的schema
                 initialize-schema: true
+                # index-name和prefix要一起改，否则会检索不到，修改例子：
+                # index-name: 自定义名称-index
+                # prefix: "自定义名称:"
                 index-name: vector-index
                 prefix: "vector:"
     data:
@@ -1178,6 +1183,173 @@ RAG是一种从你的数据中（特定知识库）查找相关信息，并在�
 
 RAG分为先后两个阶段：索引和检索
 
-索引：文档->文本分割->分割后得到的分段->文本向量化->向量数据库
+索引：知识库文档->文本分割->分割后得到的分段->文本向量化->向量数据库
 
 检索：用户查询-> 查询内容文本向量化-> 查询向量数据库->用户查询+数据库检索出来的分段->LLM
+
+工具调用和RAG都是增强LLM的手段
+
+- 依赖
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+</parent>
+
+<artifactId>spring-ai-rag-demo</artifactId>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-bom</artifactId>
+            <version>2.0.2</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-rag</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-vector-store-redis</artifactId>
+        <exclusions>
+            <exclusion>
+                <groupId>io.lettuce</groupId>
+                <artifactId>lettuce-core</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-model-openai</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+```
+
+- 配置
+
+```yaml
+spring:
+    servlet:
+        encoding:
+            enabled: true
+            force: true
+            charset: UTF-8
+    ai:
+        openai:
+            api-key: llama.cpp
+            base-url: http://yourIp:yourPort/v1
+            chat:
+                model: Ornith-1.5-9B-Q4_K_M
+                base-url: http://yourIp:yourPort/v1
+            embedding:
+                model: embeddinggemma-2-Q8_0
+                base-url: http://yourIp:yourPort/v1
+        vectorstore:
+            redis:
+                # 是否初始化必要的schema
+                initialize-schema: true
+                # index-name和prefix要一起改，否则会检索不到，修改例子：
+                # index-name: 自定义名称-index
+                # prefix: "自定义名称:"
+                index-name: vector-index
+                prefix: "vector:"
+    data:
+        redis:
+            host: yourIp
+            port: yourPort
+            username: yourUserName
+            password: yourPassword
+```
+
+- resources下的知识库文件StatusCode.txt
+
+```txt
+00000 系统正常返回
+A0001 客户端请求错误
+A0002 客户端跳转错误
+B0001 服务器内部错误
+B0002 服务器响应错误
+```
+
+- 配置类
+
+```java
+@Configuration
+public class InitVectorStoreConfiguration {
+    @Autowired
+    private VectorStore vectorStore;
+
+    @Value("classpath:StatusCode.txt")
+    private Resource statusCodeFile;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
+    @PostConstruct
+    public void init() throws NoSuchAlgorithmException {
+        TextReader textReader = new TextReader(statusCodeFile);
+        textReader.setCharset(StandardCharsets.UTF_8);
+
+        List<Document> documents = textReader.get();
+        List<Document> splitDocuments = TokenTextSplitter.builder()
+                                                         .build()
+                                                         .apply(documents);
+        String metadata = (String) textReader.getCustomMetadata()
+                                             .get("source");
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        messageDigest.update(metadata.getBytes(StandardCharsets.UTF_8));
+        byte[] hash = messageDigest.digest();
+        String redisKey = "statusCode:" + Base64.getUrlEncoder()
+                                                .encodeToString(hash);
+        Boolean isAbsent = stringRedisTemplate.opsForValue()
+                                              .setIfAbsent(redisKey, "1");
+        if (Boolean.TRUE.equals(isAbsent)) {
+            vectorStore.add(splitDocuments);
+        }
+    }
+}
+```
+
+- 控制器
+
+```java
+@Autowired
+private VectorStore vectorStore;
+
+private final ChatClient chatClient;
+
+public MainController(ChatModel chatModel) {
+    this.chatClient = ChatClient.builder(chatModel)
+                                .build();
+}
+
+@GetMapping("/test")
+public Flux<String> test(@RequestParam(value = "message", defaultValue = "00000") String message) {
+    VectorStoreDocumentRetriever retriever = VectorStoreDocumentRetriever.builder()
+                                                                            .vectorStore(vectorStore)
+                                                                            .build();
+    RetrievalAugmentationAdvisor advisor = RetrievalAugmentationAdvisor.builder()
+                                                                        .documentRetriever(retriever)
+                                                                        .build();
+    String systemPrompt = "你是一个运维工程师，按照我给出的状态码给出对应的解释，否则回复找不到信息。";
+    return chatClient.prompt()
+                        .system(systemPrompt)
+                        .user(message)
+                        .advisors(advisor)
+                        .stream()
+                        .content();
+}
+```

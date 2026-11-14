@@ -763,7 +763,8 @@ mvn clean package -Dmaven.test.skip=true
 - maven 安装本地 jar 到 本地 repository
 
 ```cmd
-mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar -DgroupId=com.microsoft.sqlserver -DartifactId=sqljdbc -Dversion=4.1.5605
+mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar \
+    -DgroupId=com.microsoft.sqlserver -DartifactId=sqljdbc -Dversion=4.1.5605
 ```
 
 ## pom.xml 文档设置
