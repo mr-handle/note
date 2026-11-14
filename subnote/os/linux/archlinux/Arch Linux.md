@@ -4,6 +4,14 @@
 
 ## pacman包管理器
 
+```sh
+# 编辑/etc/pacman.conf配置文件
+sudo vim /etc/pacman.conf
+
+# 将下面颜色设置的注释删掉
+#Color
+```
+
 - 经常使用的软件，建议通过包管理器安装
 
 - 不经常使用的软件建议使用免安装版本

@@ -946,6 +946,17 @@ grep -i "error" /var/log/syslog
 
 ### alias定义命令别名
 
+别名优点：不污染$PATH
+
+- 别名缺点
+    - 非交互式Shell、Shell脚本、cron定时任务中默认不加载别名，直接使用会报command not found错误
+    - 别名本质是纯文本替换，没有内置参数接收能力
+        - 如：`alias myalias="cp $1 /backup"`
+        - 当执行`myalias /path/to/file`时
+        - 只是最终拼接成`cp $1 /backup /path/to/file`
+        - 并不会将`$1`替换为`/path/to/file`
+    - 执行`which myalias`不会找到命令的具体位置
+
 ```sh
 # 查看所有别名
 alias

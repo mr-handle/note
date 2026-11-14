@@ -9069,12 +9069,16 @@ export PATH="${NODE_HOME}/bin:$PATH"
 ```sh
 # 例：npm -g install packageName命令会把包安装到/usr/lib/node_modules目录下，会导致权限问题
 # 因此指定npm_config_prefix前缀让它安装到用户级目录下
+# 也可以通过执行如下命令来达到效果
+# npm set prefix="$HOME/.local"
 export npm_config_prefix="$HOME/.local"
 
 # 例：npm install -g @neutralinojs/neu，把包安装到指定目录后
 # 附带的可执行文件，neu命令行工具会被链接到"$HOME/.local/bin"下
 export PATH="$HOME/.local/bin:$PATH"
 ```
+
+- npm的配置文件在`$HOME/.npmrc`
 
 ### Windows安装Node.js
 
@@ -9104,6 +9108,7 @@ node -v
 
 # 设置国内镜像源，官方的是：https://registry.npmjs.org/
 # 如阿里巴巴的
+# 结果会在$HOME/.npmrc中写入registry=https://registry.npmmirror.com/
 npm config set registry https://registry.npmmirror.com/
 
 # 查看镜像源是否设置成功
@@ -9226,6 +9231,13 @@ pnpm config set registry https://registry.npmmirror.com
 
 # 查看pnpm正在使用的镜像源
 pnpm config get registry
+```
+
+- 或者手动在配置文件`~/.config/pnpm/config.yaml`中添加，推荐
+
+```yaml
+# 全局默认用阿里云的镜像源
+registry: "https://registry.npmmirror.com"
 ```
 
 ## vue
