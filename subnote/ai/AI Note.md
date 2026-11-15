@@ -6,14 +6,21 @@
 
 神经网络训练的本质是反向传播算法，这需要计算损失函数对模型参数的偏导数（即梯度）
 
+## Hugging Face
+
 Hugging Face：官网<https://huggingface.co/>， 托管了海量的模型、数据集和演示应用，是全球通用的开源 AI 社区，是AI界的“github”
 
 HF-Mirror：官网 <https://hf-mirror.com>，Hugging Face的镜像
 
-ModelScope：官网<https://www.modelscope.cn>，是国内版的Hugging Face
-
 ```sh
-# 先设置Hugging Face镜像源在$HOME/.bashrc中追加
+# 通用安装
+curl -LsSf https://hf.co/cli/install.sh | bash
+
+# Arch Linux上安装
+sudo pacman -S python-huggingface-hub
+
+# 先设置Hugging Face镜像源
+# 在$HOME/.bashrc中追加
 export HF_ENDPOINT="https://hf-mirror.com"
 
 # Hugging Face 下载模型指定文件到指定的本地目录下
@@ -23,6 +30,15 @@ export HF_ENDPOINT="https://hf-mirror.com"
 hf download kandinskylab/Kandinsky-5.0-T2V-Lite-sft-5s \
     model/kandinsky5lite_t2v_sft_5s.safetensors \
     --local-dir /path/to/dir
+```
+
+## ModelScope
+
+ModelScope：官网<https://www.modelscope.cn>，是国内版的Hugging Face
+
+```sh
+# 安装modelscope
+pip install modelscope
 
 # --local_dir 文件保存的目录
 modelscope download --model Comfy-Org/HunyuanVideo_1.5_repackaged \
