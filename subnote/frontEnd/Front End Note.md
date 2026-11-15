@@ -7686,6 +7686,8 @@ tsc --watch file.ts
 
 ### 直接运行ts
 
+在vscode中可以安装deno扩展，然后点击调试按钮->`Run and Debug`->选择deno，就可以进行调试了
+
 ```sh
 # node对ts的支持没有deno完整，直接运行ts文件更推荐用deno
 node file.ts
@@ -12298,6 +12300,8 @@ export default defineConfig({
 github：<https://github.com/denoland/deno>
 
 下载后解压放到某个目录并设置到PATH即可
+
+非常适合学习TS
 
 优势：进程内通信
 

@@ -23,12 +23,12 @@ uv venv [--python 3.11] [--system-site-packages]
 uv lock    
 
 # 更新项目环境：根据 uv.lock 将依赖安装到虚拟环境中
-# --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"：指定国内源
-uv sync [--default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"]
+# --default-index "https://pypi.tuna.tsinghua.edu.cn/simple"：指定国内源
+uv sync [--default-index "https://pypi.tuna.tsinghua.edu.cn/simple"]
 
 # 安装依赖包
 # 也可以在安装依赖包的时候指定源，--index-url也可以简写为-i
-uv pip install matplotlib --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+uv pip install matplotlib --index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 激活环境：打开终端，进入项目根目录，执行如下命令
 # 一些ide如vscode在你打开终端的时候会自动执行这个命令

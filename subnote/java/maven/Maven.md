@@ -254,6 +254,79 @@ mvn spring-boot:repackage
 </dependency>
 ```
 
+### maven-surefire-plugin
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>3.6.1</version>
+    <configuration>
+        <!-- 跳过测试执行 -->
+        <skipTests>true</skipTests>
+    </configuration>
+</plugin>
+```
+
+### maven-antrun-plugin
+
+可以自定义一些任务
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-antrun-plugin</artifactId>
+    <executions>
+        <execution>
+            <!-- 任务id -->
+            <id>generate-aot-file</id>
+            <!-- 绑定阶段 -->
+            <phase>package</phase>
+            <goals>
+                <!-- maven-antrun-plugin的run⽬标 -->
+                <goal>run</goal>
+            </goals>
+            <configuration>
+                <target>
+                    <!-- 解压fat jar，必须先解压fat jar，否则解压到已存在的不为空的目录会解压失败 -->
+                    <exec executable="java">
+                        <!--line按空格识别参数，注意参数值不能有空格-->
+                        <arg line="-Djarmode=tools"/>
+                        <arg line="-jar ${project.build.directory}/${package.name}.jar"/>
+                        <arg line="extract --destination ${package.directory}"/>
+                    </exec>
+                    <!-- 复制静态文件 -->
+                    <exec executable="cp">
+                        <!--line按空格识别参数，注意参数值不能有空格-->
+                        <arg line="-r ${project.build.outputDirectory}/static ${package.directory}/static"/>
+                    </exec>
+                    <!-- 生成aot文件，会运行程序，因此要先把静态文件复制过去-->
+                    <exec executable="java">
+                        <!--line按空格识别参数，注意参数值不能有空格-->
+                        <arg line="-XX:AOTCacheOutput=${package.directory}/${package.name}.aot -Dspring.context.exit=onRefresh"/>
+                        <arg line="-jar ${package.directory}/${package.name}.jar"/>
+                    </exec>
+                    <!-- 创建运行脚本文件，这种写法换行了导致命令也跟着换行，编辑器wrap也会导致命令换行！需要贴着编辑器左边写最好，不支持特殊字符 -->
+                    <!--<echo file="${package.directory}/start.sh" append="false">-->
+                    <!--    #!/usr/bin/env bash${line.separator}java -XX:AOTCache=${package.name}.aot &#45;&#45;enable-native-access=ALL-UNNAMED -jar-->
+                    <!--    ${package.name}.jar-->
+                    <!--</echo>-->
+                    <!--这种写法支持特殊字符，换行了导致命令也跟着换行，但是不会触发编辑器wrap，命令分多行的话也建议贴着编辑器最左边-->
+                    <echo file="${package.directory}/start.sh" append="false">
+                        <![CDATA[
+#!/usr/bin/env bash
+java -XX:AOTCache=${package.name}.aot -Dprism.order=sw -jar ${package.name}.jar
+                        ]]>
+                    </echo>
+                    <!-- 赋予运行脚本文件执行权限-->
+                    <chmod file="${package.directory}/start.sh" perm="755"/>
+                </target>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
 ### 不打包，只生成包含所有的目录
 
 ```xml
@@ -619,25 +692,50 @@ java -XX:AOTCache=${package.name}.aot -Dprism.order=sw -jar ${package.name}.jar
 - 1.命令方式
 
 ```sh
+# 写法1
 mvn clean package -Dmaven.test.skip=true
+
+# 写法2
+mvn clean package -DskipTests=true
 ```
 
 - 2.插件方式
 
 ```xml
-<build>
-    <plugins>
-        <!-- maven 打包时跳过测试 -->
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${maven.surefire.plugin.version}</version>
-            <configuration>
-                <skipTests>true</skipTests>
-            </configuration>
-        </plugin>
-    </plugins>
-</build>
+<dependency>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.16.0</version>
+    <configuration>
+        <!-- 跳过测试编译 -->
+        <skip>true</skip>
+    </configuration>
+</dependency>
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>${maven.surefire.plugin.version}</version>
+    <configuration>
+        <!-- 跳过测试执行 -->
+        <skipTests>true</skipTests>
+    </configuration>
+</plugin>
+```
+
+## 排除依赖
+
+```xml
+<dependency>
+    <groupId>xxx</groupId>
+    <artifactId>xxx</artifactId>
+    <version>xxx</version>
+    <exclusions>
+        <exclusion>
+            <groupId>xxx</groupId>
+            <artifactId>xxx</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
 ```
 
 ## 安装远程仓库（私服）
@@ -760,14 +858,36 @@ mvn clean package -Dmaven.test.skip=true
 
 - 卸载 `nexus /uninstall`
 
-- maven 安装本地 jar 到 本地 repository
+## maven 安装本地 jar 到 本地 repository
 
-```cmd
-mvn install:install -file -Dfile=d:\sqljdbc-4.1.5605.jar -Dpackaging=jar \
-    -DgroupId=com.microsoft.sqlserver -DartifactId=sqljdbc -Dversion=4.1.5605
+```sh
+mvn install:install \
+    -file -Dfile=d:\sqljdbc-4.1.5605.jar \
+    -Dpackaging=jar \
+    -DgroupId=com.microsoft.sqlserver \
+    -DartifactId=sqljdbc \
+    -Dversion=4.1.5605
+```
+
+## pom中直接引入本地 jar
+
+假设 jar 放置在 resouces/lib 下
+
+可以通过设置 dependency 的 scope 为 system 来引⼊本地 jar
+
+```xml
+<dependency>
+    <groupId>xxx</groupId>
+    <artifactId>xxx</artifactId>
+    <version>1.0.0</version>
+    <scope>system</scope>
+    <systemPath>${project.basedir}/src/main/resources/lib/xxx-6.0.0.jar</systemPath>
+</dependency>
 ```
 
 ## pom.xml 文档设置
+
+pom: project object model，项目对象模型
 
 - 设置基本信息
   

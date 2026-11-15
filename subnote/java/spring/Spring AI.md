@@ -496,6 +496,8 @@ List<Message> results = advancedRedisChatMemoryRepository.findByConversationId(c
 
 ## 工具调用（Tool Calling）
 
+前提是大模型支持 function call
+
 LLM本身不能调用工具，它会在响应中表达调用特定工具的意图，然后，应用程序执行这个工具，并将结果返回给模型
 
 工具调用分为两种：信息检索和采取行动
@@ -966,6 +968,16 @@ ToolExecutionExceptionProcessor toolExecutionExceptionProcessor() {
 ```
 
 如果定义了自己的ToolCallback实现，取保错误发生时抛出ToolExecutionException
+
+## 模型上下文协议（Model Context Protocol）
+
+MCP 是一种开放协议，它标准化了应用程序如何向LLM提供上下文
+
+MCP 提供了一种统一的方式将AI模型连接到不同的数据源和工具
+
+安装了MCP客户端的主机，通过MCP协议，调用MCP服务器
+
+
 
 ## 文本向量化
 

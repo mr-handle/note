@@ -153,6 +153,8 @@ spring-tools-for-eclipse = eclipse-jee + Spring Tools Suite 插件，
                 - Java
                     - 勾选`Add unambiguous imports on the fly`
                     - 不要勾选`Optimize imports on the fly`，否则执行会触发导入语句优化的撤销操作时会抽风跟你二人转，设置保存时优化导入就行了
+        - File Encodings
+            - 勾选 `Transparent native-to-ascii conversion`，解决properties文件中文变unicode编码的问题
     - Tools
         - `Actions on Save`
             - Action
