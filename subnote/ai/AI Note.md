@@ -158,7 +158,11 @@ uv run tts --text "你好，我是爱坤,人称鸡哥，喂我花生！" --model
 uv run tts --text "hello,world! I'm kunJack!" --model_name "tts_models/en/ljspeech/glow-tts" --out_path ~/Downloads/output.wav
 
 # tts_models/multilingual/multi-dataset/your_tts可以将自己的声音作为输入，例子暂时不列出来，目前没有那个需求，不支持中文转语音
-uv run tts --text "hello,world! I'm aikun!" --model_name "tts_models/multilingual/multi-dataset/your_tts" --out_path ~/Downloads/output.wav --speaker_idx "female-en-5" --language_idx "en" 
+uv run tts --text "hello,world! I'm aikun!" \
+    --model_name "tts_models/multilingual/multi-dataset/your_tts" \
+    --out_path ~/Downloads/output.wav \
+    --speaker_idx "female-en-5" \
+    --language_idx "en" 
 
 # 列出多人语音模型的可选语音列表
 uv run tts --model_name "tts_models/multilingual/multi-dataset/your_tts" --list_speaker_idxs
@@ -181,6 +185,10 @@ rm -rf ~/.local/share/tts/问题模型
 否则在文生图时，第一次运行可以正常生成，什么都没改第二次运行就开始生成纯黑图片或者其它乱七八糟的图片了
 
 记得图片的宽高设置为8的倍数，不要太大，512x512或者640x360就可以了，640x360方便成比例放大
+
+- 建议安装的扩展
+    - 图像超分：vosr 2.0
+    - 支持中文提示词：ComfyUI-Chinese-CLIP
 
 ## llama.cpp
 

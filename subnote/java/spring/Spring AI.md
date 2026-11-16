@@ -977,7 +977,186 @@ MCP 提供了一种统一的方式将AI模型连接到不同的数据源和工�
 
 安装了MCP客户端的主机，通过MCP协议，调用MCP服务器
 
+### MCP服务器例子
 
+- 依赖
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+</parent>
+
+<artifactId>spring-ai-mcp-server-demo</artifactId>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-bom</artifactId>
+            <version>2.0.2</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-mcp-server-webflux</artifactId>
+    </dependency>
+</dependencies>
+```
+
+- 配置
+
+```yaml
+server:
+    port: 8088
+spring:
+    application:
+        name: mcp-server
+    ai:
+        mcp:
+            server:
+                name: mcp-server
+                type: async
+                # streamable功能更加强大，已取代sse
+                protocol: streamable
+                version: 1.0.0
+```
+
+- 工具
+
+```java
+@Service
+public class WeatherService {
+    @Tool(description = "根据城市名称获取天气预报")
+    public String getWeatherByCity(String city) {
+        Map<String, String> map = Map.of("北京", "阴天，10度", "上海", "晴天，12度", "广州", "小雨，18度");
+        return map.getOrDefault(city, "抱歉：未查询到对应城市的天气！");
+    }
+}
+```
+
+- 配置类
+
+```java
+@Configuration
+public class McpServerConfiguration {
+    /**
+     * 将工具方法暴露给外部mcp客户端调用
+     *
+     * @param weatherService
+     * @return
+     */
+    @Bean
+    public ToolCallbackProvider weatherTool(WeatherService weatherService) {
+        return MethodToolCallbackProvider.builder()
+                                         .toolObjects(weatherService)
+                                         .build();
+    }
+}
+```
+
+### MCP客户端例子
+
+- 依赖
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+</parent>
+
+<artifactId>spring-ai-mcp-client-demo</artifactId>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-bom</artifactId>
+            <version>2.0.2</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-mcp-client</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-starter-model-openai</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+```
+
+- 配置
+
+```yaml
+server:
+    port: 8080
+spring:
+    application:
+        name: mcp-client
+    servlet:
+        encoding:
+            enabled: true
+            force: true
+            charset: UTF-8
+    ai:
+        mcp:
+            client:
+                type: async
+                name: spring-ai-mcp-client
+                request-timeout: 30s
+                toolcallback:
+                    enabled: true
+                # 和mcp服务器使用的协议一致
+                streamable-http:
+                    connections:
+                        # 名称随便
+                        server1:
+                            url: http://yourIp:yourPort
+        openai:
+            api-key: llama.cpp
+            base-url: http://yourIp:yourPort/v1
+            chat:
+                model: Ornith-1.5-9B-Q4_K_M
+```
+
+- 控制器
+
+```java
+@RestController
+public class MainController {
+    private final ChatClient chatClient;
+
+    public MainController(ChatModel chatModel, ToolCallbackProvider provider) {
+        this.chatClient = ChatClient.builder(chatModel)
+                                    .defaultTools(provider.getToolCallbacks())
+                                    .build();
+    }
+
+    @GetMapping("/test")
+    public Flux<String> test(@RequestParam(name = "message", defaultValue = "北京") String message) {
+        return chatClient.prompt(message)
+                         .stream()
+                         .content();
+    }
+}
+```
 
 ## 文本向量化
 
