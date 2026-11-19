@@ -26,6 +26,60 @@ Spring Security提供3大功能：认证、授权和防御常见攻击
 
 ⽽这时⽤⼾的所有权限就是⽤⼾个⼈拥有的权限与该⽤⼾所在组所拥有的权限之和
 
+- 依赖
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+</parent>
+<artifactId>spring-security-demo</artifactId>
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+```
+
+- 控制器
+
+```java
+@GetMapping("/test")
+public String test() {
+    return String.valueOf(System.currentTimeMillis());
+}
+```
+
+- 启动后看到如下日志，表示spring security已经运行啦！
+
+```sh
+2026-11-19T12:11:03.169+08:00  WARN 11327 --- [app] [           main] .s.a.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 具体密码
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+```
+
+然后访问`http://localhost:8080/test`，将会跳到一个登录页面
+
+输入用户名：user，密码：上面日志打印的密码，就可以访问该接口了
+
+- 修改默认的用户名和密码
+
+```yaml
+spring:
+    security:
+        user:
+            name: user
+            password: 123456
+```
+
 ## 身份验证方案
 
 Session-Cookie + OAuth2

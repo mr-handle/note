@@ -9286,6 +9286,27 @@ Flux.just(1, 2, 3)
     .subscribe(System.out::println);
 ```
 
+### R2DBC
+
+R2DBC: Reactive Relational Database Connectivity，用来对关系数据库的CRUD操作进行响应式编程
+
+官网：<https://r2dbc.io/>
+
+类似jdbc有驱动接口和实现
+
+R2DBC也一样有接口：r2dbc-spi，数据库驱动具体实现，如：r2dbc-mysql、r2dbc-postgresql
+
+连接池：r2dbc-pool
+
+```xml
+<dependency>
+    <groupId>io.asyncer</groupId>
+    <artifactId>r2dbc-mysql</artifactId>
+    <version>1.4.3</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
 ## javacv
 
 javacv是一个opencv、ffmpeg的java api
