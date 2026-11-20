@@ -28,6 +28,7 @@
             - [Zookeeper笔记](/subnote/java/zookeeper/Zookeeper.md "点击链接查看Zookeeper笔记")
             - [PowerJob笔记](/subnote/java/PowerJob.md "点击链接查看PowerJob笔记")
             - [面试题](/subnote/java/Interview.md "点击链接查面试题")
+        - [YAML笔记](/subnote/YAML.md "点击链接查看YAML笔记")
         - [Python笔记](/subnote/Python%20Note.md "点击链接查看Python笔记")
         - [安卓笔记](/subnote/Android%20Note.md "点击链接查看安卓笔记")
         - [Kotlin笔记](/subnote/Kotlin%20Note.md "点击链接查看Kotlin笔记")
@@ -61,18 +62,13 @@
         - [NixOS笔记](/subnote/os/linux/NixOS%20Note.md "点击链接查看NixOS笔记")
     - [Windows笔记](/subnote/os/Windows%20Note.md "点击链接查看Windows笔记")
 
-- [AI笔记](/subnote/ai/AI%20Note.md "点击链接查看AI笔记")
-
-- [YAML笔记](/subnote/YAML.md "点击链接查看YAML笔记")
-
-- [Markdown笔记](/subnote/Markdown.md "点击链接查看Markdown笔记")
-
-- [FFMPEG笔记](/subnote/FFMPEG.md "点击链接查看FFMPEG笔记")
-
-- [硬件笔记](/subnote/hardware/Hardware.md "点击链接查看硬件笔记")
-
-- 虚拟机
-    - [VirtualBox笔记](/subnote/virtualBox/VirtualBox.md "点击链接查看VirtualBox笔记")
+- 其它
+    - [AI笔记](/subnote/ai/AI%20Note.md "点击链接查看AI笔记")
+    - [Markdown笔记](/subnote/Markdown.md "点击链接查看Markdown笔记")
+    - [FFMPEG笔记](/subnote/FFMPEG.md "点击链接查看FFMPEG笔记")
+    - [硬件笔记](/subnote/hardware/Hardware.md "点击链接查看硬件笔记")
+    - 虚拟机
+        - [VirtualBox笔记](/subnote/virtualBox/VirtualBox.md "点击链接查看VirtualBox笔记")
 
 ## 参考文献
 
