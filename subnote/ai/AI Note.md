@@ -74,109 +74,7 @@ deepseek信息落后
     - 文件小，启动速度快，但是不能输入中文，看以后怎么样了
 
 - CherryStudio：<https://github.com/CherryHQ/cherry-studio>
-    - 文件比Jan大，启动还慢，但是可以输入中文，模型供应商比较多且不能隐藏，2.0版本开始不能删除聊天，先用着吧
-
-## index-tts本地部署
-
-官网：<https://github.com/index-tts/index-tts>
-
-```sh
-# 先安装git、git-lfs和uv
-sudo pacman -S git git-lfs uv
-
-# 启用lfs
-git lfs install
-
-# 下载源码
-git clone https://github.com/index-tts/index-tts.git && cd index-tts
-
-# 下载大文件
-git lfs pull
-
-# 对于不能用显卡加速的情况，修改pyproject.toml
-# 将url = "https://download.pytorch.org/whl/cu128"替换为
-url = "https://download.pytorch.org/whl/cpu"
-
-# 安装依赖，这里指定了国内镜像（可选）
-# --all-extras：安装全部可选功能。可去除自定义。
-# --extra webui：安装WebUI支持（推荐）。
-# --extra deepspeed：安装DeepSpeed加速。
-uv sync --all-extras --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
-
-# 先设置镜像源，以防HuggingFace下载很慢export HF_ENDPOINT="https://hf-mirror.com"
-
-
-# 通过uv安装 HuggingFace CLI
-# uv tool install "huggingface-hub[cli,hf_xet]"
-
-# 用huggingface下载模型
-# hf download IndexTeam/IndexTTS-2 --local-dir=checkpoints
-
-# 通过uv安装modelscope
-uv tool install "modelscope"
-
-# 用modelscope下载模型（推荐）
-modelscope download --model IndexTeam/IndexTTS-2 --local_dir checkpoints
-
-# PyTorch GPU 加速检测（可选），如果没有GPU加速就会用CPU
-uv run tools/gpu_check.py
-
-# 启动
-uv run webui.py
-
-# 启动完成访问http://127.0.0.1:7860
-# 然后上传某个人的声音，然后指定文本，就可以生成语音了
-```
-
-```sh
-# ImportError: TorchCodec is required for save_with_torchcodec. Please install torchcodec to use this function.
-uv pip install torchcodec --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-```
-
-## coqui-TTS本地部署
-
-```sh
-git clone https://github.com/coqui-ai/TTS.git
-
-cd TTS
-
-uv venv
-
-uv pip install -e .[all] --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-
-# 注意tacotron2-DDC-GST不能生成英文，生成英文要用英文的模型
-# tts_models/zh-CN/baker/tacotron2-DDC-GST会报错
-# 如：In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`....
-# 这时候设置环境变量，执行export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1，后面就可以正常生成了
-# 或者根据报错信息：TTS/utils/io.py", line 54, in load_fsspec return torch.load(f, map_location=map_location, **kwargs)
-# 直接改这一行为return torch.load(f, map_location=map_location, weights_only=False, **kwargs)
-# 推荐后面这一种写法，目前只有这个模型是可商用的中文模型
-uv run tts --text "你好，我是爱坤,人称鸡哥，喂我花生！" --model_name "tts_models/zh-CN/baker/tacotron2-DDC-GST" --out_path ~/Downloads/output.wav
-
-# tts_models/en/multi-dataset/tortoise-v2：这个模型很大并且生成语音文件要好久，不推荐使用
-# tts_models/en/ljspeech/glow-tts：生成速度块并且不会漏字，推荐
-uv run tts --text "hello,world! I'm kunJack!" --model_name "tts_models/en/ljspeech/glow-tts" --out_path ~/Downloads/output.wav
-
-# tts_models/multilingual/multi-dataset/your_tts可以将自己的声音作为输入，例子暂时不列出来，目前没有那个需求，不支持中文转语音
-uv run tts --text "hello,world! I'm aikun!" \
-    --model_name "tts_models/multilingual/multi-dataset/your_tts" \
-    --out_path ~/Downloads/output.wav \
-    --speaker_idx "female-en-5" \
-    --language_idx "en" 
-
-# 列出多人语音模型的可选语音列表
-uv run tts --model_name "tts_models/multilingual/multi-dataset/your_tts" --list_speaker_idxs
-
-# 列出多人语音模型的可选语言列表
-# 'female-en-5': 0, 'female-en-5\n': 1, 'female-pt-4\n': 2, 'male-en-2': 3, 'male-en-2\n': 4, 'male-pt-3\n': 5
-uv run tts --model_name "tts_models/multilingual/multi-dataset/your_tts" --list_language_idxs
-
-# 当使用某个模型报错时比如说：from transformers import LogitsWarper失败，就看依赖文件选个没有大改变的稳定版本安装
-uv pip install transformers==4.36.2 --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-
-# 当某个模型用uv run tts --list_models 显示已下载但是又报错说找不到就将该模型文件夹删了
-rm -rf ~/.local/share/tts/问题模型
-```
+    - 文件比Jan大，启动还慢，但是可以输入中文，模型供应商比较多，2.0版本开始不能删除聊天，先用着吧
 
 ## comfyui
 
@@ -487,6 +385,25 @@ curl http://localhost:11434/api/generate -d '{
 - 未训练的模型是参数值不确定的公式，训练好的模型是参数值确定的公式
 
 ![机器学习算法](image/机器学习算法.png)
+
+## Deep Java Library
+
+- 模型训练流程
+    - 准备数据集
+    - 构建神经网络
+    - 构建模型（让这个模型应用上一步的神经网络）
+    - 训练配置（如何训练，训练数据集、验证数据集、测试数据集）
+    - 训练模型
+    - 保存模型
+- 模型使用流程
+    - 加载模型（上面保存的模型）
+    - 预测（给模型一个新输入，让其判断）
+
+- 未训练的模型是参数值不确定的公式，训练好的模型是参数值确定的公式
+
+![机器学习算法](/images/机器学习算法.png)
+
+目前Deep Java Library没有办法使用amdgpu进行加速，看了底层代码都没有amd显卡的判断逻辑，因此打算直接用python训练玩玩了
 
 ## PyTorch
 
@@ -1555,4 +1472,106 @@ with torch.no_grad():
     predicted, actual = classes[pred[0].argmax(0)], classes[y]
     result = predicted==actual
     print(f'datasetIndex: {datasetIndex}, Predicted: "{predicted}", Actual: "{actual}", Predicted Result: {result}')
+```
+
+## index-tts本地部署
+
+官网：<https://github.com/index-tts/index-tts>
+
+```sh
+# 先安装git、git-lfs和uv
+sudo pacman -S git git-lfs uv
+
+# 启用lfs
+git lfs install
+
+# 下载源码
+git clone https://github.com/index-tts/index-tts.git && cd index-tts
+
+# 下载大文件
+git lfs pull
+
+# 对于不能用显卡加速的情况，修改pyproject.toml
+# 将url = "https://download.pytorch.org/whl/cu128"替换为
+url = "https://download.pytorch.org/whl/cpu"
+
+# 安装依赖，这里指定了国内镜像（可选）
+# --all-extras：安装全部可选功能。可去除自定义。
+# --extra webui：安装WebUI支持（推荐）。
+# --extra deepspeed：安装DeepSpeed加速。
+uv sync --all-extras --default-index "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
+
+# 先设置镜像源，以防HuggingFace下载很慢export HF_ENDPOINT="https://hf-mirror.com"
+
+
+# 通过uv安装 HuggingFace CLI
+# uv tool install "huggingface-hub[cli,hf_xet]"
+
+# 用huggingface下载模型
+# hf download IndexTeam/IndexTTS-2 --local-dir=checkpoints
+
+# 通过uv安装modelscope
+uv tool install "modelscope"
+
+# 用modelscope下载模型（推荐）
+modelscope download --model IndexTeam/IndexTTS-2 --local_dir checkpoints
+
+# PyTorch GPU 加速检测（可选），如果没有GPU加速就会用CPU
+uv run tools/gpu_check.py
+
+# 启动
+uv run webui.py
+
+# 启动完成访问http://127.0.0.1:7860
+# 然后上传某个人的声音，然后指定文本，就可以生成语音了
+```
+
+```sh
+# ImportError: TorchCodec is required for save_with_torchcodec. Please install torchcodec to use this function.
+uv pip install torchcodec --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+```
+
+## coqui-TTS本地部署
+
+```sh
+git clone https://github.com/coqui-ai/TTS.git
+
+cd TTS
+
+uv venv
+
+uv pip install -e .[all] --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+# 注意tacotron2-DDC-GST不能生成英文，生成英文要用英文的模型
+# tts_models/zh-CN/baker/tacotron2-DDC-GST会报错
+# 如：In PyTorch 2.6, we changed the default value of the `weights_only` argument in `torch.load` from `False` to `True`....
+# 这时候设置环境变量，执行export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1，后面就可以正常生成了
+# 或者根据报错信息：TTS/utils/io.py", line 54, in load_fsspec return torch.load(f, map_location=map_location, **kwargs)
+# 直接改这一行为return torch.load(f, map_location=map_location, weights_only=False, **kwargs)
+# 推荐后面这一种写法，目前只有这个模型是可商用的中文模型
+uv run tts --text "你好，我是爱坤,人称鸡哥，喂我花生！" --model_name "tts_models/zh-CN/baker/tacotron2-DDC-GST" --out_path ~/Downloads/output.wav
+
+# tts_models/en/multi-dataset/tortoise-v2：这个模型很大并且生成语音文件要好久，不推荐使用
+# tts_models/en/ljspeech/glow-tts：生成速度块并且不会漏字，推荐
+uv run tts --text "hello,world! I'm kunJack!" --model_name "tts_models/en/ljspeech/glow-tts" --out_path ~/Downloads/output.wav
+
+# tts_models/multilingual/multi-dataset/your_tts可以将自己的声音作为输入，例子暂时不列出来，目前没有那个需求，不支持中文转语音
+uv run tts --text "hello,world! I'm aikun!" \
+    --model_name "tts_models/multilingual/multi-dataset/your_tts" \
+    --out_path ~/Downloads/output.wav \
+    --speaker_idx "female-en-5" \
+    --language_idx "en" 
+
+# 列出多人语音模型的可选语音列表
+uv run tts --model_name "tts_models/multilingual/multi-dataset/your_tts" --list_speaker_idxs
+
+# 列出多人语音模型的可选语言列表
+# 'female-en-5': 0, 'female-en-5\n': 1, 'female-pt-4\n': 2, 'male-en-2': 3, 'male-en-2\n': 4, 'male-pt-3\n': 5
+uv run tts --model_name "tts_models/multilingual/multi-dataset/your_tts" --list_language_idxs
+
+# 当使用某个模型报错时比如说：from transformers import LogitsWarper失败，就看依赖文件选个没有大改变的稳定版本安装
+uv pip install transformers==4.36.2 --index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+# 当某个模型用uv run tts --list_models 显示已下载但是又报错说找不到就将该模型文件夹删了
+rm -rf ~/.local/share/tts/问题模型
 ```

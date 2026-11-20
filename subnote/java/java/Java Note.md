@@ -9663,6 +9663,10 @@ public class PayController {
 
 ## 分布式id
 
+- snowflake算法
+- 百度开源的分布式唯一id生成器UidGenerator
+- Leaf--美团点评分布式id生成系统
+
 ### tinyid
 
 - 官网：<https://github.com/didi/tinyid>
@@ -9842,32 +9846,7 @@ public static void main(String[] args) {
 }
 ```
 
-## Deep Java Library
-
-- 模型训练流程
-    - 准备数据集
-    - 构建神经网络
-    - 构建模型（让这个模型应用上一步的神经网络）
-    - 训练配置（如何训练，训练数据集、验证数据集、测试数据集）
-    - 训练模型
-    - 保存模型
-- 模型使用流程
-    - 加载模型（上面保存的模型）
-    - 预测（给模型一个新输入，让其判断）
-
-- 未训练的模型是参数值不确定的公式，训练好的模型是参数值确定的公式
-
-![机器学习算法](/images/机器学习算法.png)
-
-目前Deep Java Library没有办法使用amdgpu进行加速，看了底层代码都没有amd显卡的判断逻辑，因此打算直接用python训练玩玩了
-
 ## 算法篇
-
-### 全局唯一id生成器
-
-- snowflake算法
-- 百度开源的分布式唯一id生成器UidGenerator
-- Leaf--美团点评分布式id生成系统
 
 ## 踩坑记录
 
