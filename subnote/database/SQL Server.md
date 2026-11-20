@@ -1,5 +1,14 @@
 # SQL Server
 
+- 连接串
+
+```properties
+jdbc.sqlserver.driver = com.microsoft.sqlserver.jdbc.SQLServerDriver
+jdbc.sqlserver.url = jdbc:sqlserver://yourIP:yourPort;DatabaseName=yourDataBaseName
+jdbc.sqlserver.username = yourUserName
+jdbc.sqlserver.password = yourPassword
+```
+
 ```sql
 -- 指定数据库
 use HR;

@@ -327,6 +327,63 @@ java -XX:AOTCache=${package.name}.aot -Dprism.order=sw -jar ${package.name}.jar
 </plugin>
 ```
 
+### maven-dependency-plugin
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-dependency-plugin</artifactId>
+    <executions>
+        <execution>
+            <id>copy-dependencies</id>
+            <!-- <phase>package</phase> -->
+            <phase>prepare-package</phase>
+            <goals>
+                <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+                <!--依赖包都复制到跟可执行jar同目录的lib子目录下 -->
+                <outputDirectory>${package.directory}/lib</outputDirectory>
+                <!-- 指定包含的scope -->
+                <includeScope>runtime</includeScope>
+                <!-- 以下属性了解一下，默认就行 -->
+                <overWriteReleases>false</overWriteReleases>
+                <overWriteSnapshots>false</overWriteSnapshots>
+                <overWriteIfNewer>true</overWriteIfNewer>
+                <!-- 排除传递依赖excluding transitive dependencies -->
+                <excludeTransitive>false</excludeTransitive>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+### maven-jar-plugin
+
+打包但不包含依赖jar
+
+```xml
+<!-- ：打包并且设置 MANIFEST.MF，但不包含依赖 -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-jar-plugin</artifactId>
+    <version>${maven.jar.plugin.version}</version>
+    <configuration>
+        <archive>
+            <!-- 设置添加到 MANIFEST.MF 的属性 -->
+            <manifest>
+                <!-- add the classpath of project to the manifest -->
+                <addClasspath>true</addClasspath>
+                <!-- 所有的依赖项放到lib目录下  -->
+                <classpathPrefix>lib/</classpathPrefix>
+                <!-- 程序入口类 -->
+                <mainClass>${main.class}</mainClass>
+            </manifest>
+        </archive>
+    </configuration>
+</plugin>
+```
+
 ### 不打包，只生成包含所有的目录
 
 ```xml
@@ -891,15 +948,19 @@ pom: project object model，项目对象模型
 
 - 设置基本信息
   
-  ```xml
-  <properties>
-      <maven.compiler.source>21</maven.compiler.source>
-      <maven.compiler.target>21</maven.compiler.target>
-      <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-  </properties>
-  ```
+```xml
+<properties>
+    <!-- 这几个属性是maven自带的，不是spring-boot-starter-parent继承而来的 -->
+    <!-- Java 9+ 项目 -->
+    <maven.compiler.release>27</maven.compiler.release>
+    <!-- Java 9 以前项目 -->
+    <!-- <maven.compiler.source>27</maven.compiler.source> -->
+    <!-- <maven.compiler.target>27</maven.compiler.target> -->
+    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+</properties>
+```
 
 - 设置打包时生成source.jar
   

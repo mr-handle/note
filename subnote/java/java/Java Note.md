@@ -1716,6 +1716,222 @@ public record Pet(
 }
 ```
 
+### 注解
+
+#### 元注解
+
+元注解：修饰其他注解的注解
+
+- `@Target` 用来定义注解的使用范围，可用在类、字段、构造方法、其它方法、方法参数上
+
+```java
+// 写法一
+@Target(ElementType.TYPE)
+public @interface MyNannotationName {}
+
+// 写法二
+@Target({ ElementType.METHOD, ElementType.FIELD })
+public @interface MyNannotationName {}
+```
+
+- `@Retention` 用来定义注解的生命周期
+    - `RetentionPolicy.SOURCE` 仅编译期
+    - `RetentionPolicy.CLASS` 仅class文件，默认
+    - `RetentionPolicy.RUNTIME` 运行期
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+public @interface MyNannotationName {}
+```
+
+- `@Repeatable` 用来定义注解是否可重复
+
+- `@Inherited` 用来定义子类是否可继承父类定义的注解
+    - 仅对@Target(ElementType.TYPE)的注解有效
+    - 仅对类的继承有效，对接口的继承无效
+
+##### 自定义注解并使用注解
+
+- 自定义注解
+
+```java
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Check {
+    int min() default 1;
+    int max() default 255;
+    int value() default 18;  
+}
+```
+
+- 使用注解
+
+```java
+@Getter
+@Setter
+@ToString
+public class User {
+
+    private String name;
+
+    // 如果参数名称是value，且只有一个参数，那么可以省略参数名称
+    // 即@Check(value=30) 与 @Check(30) 一样，如果写值则取check的default值
+    @Check
+    private Integer age;
+
+    public User(String name, Integer age) {
+        this.name = name;
+        this.age = age;
+        init();
+    }
+
+    /**
+     * 处理注解,在调用构造方法后自动被调用
+     */
+    // @PostConstruct
+    public void init() {
+        // 获取字段
+        // 获取所有字段包括公有私有，但不包括父类的字段
+        Field[] fields = this.getClass()
+                             .getDeclaredFields();
+
+        // 遍历所有Field:
+        for (Field field : fields) {
+            // 获取Field定义的@Check:
+            Check check = field.getAnnotation(Check.class);
+            // 如果@Check存在:
+            if (check != null) {
+                // 获取Field的值:
+                Object value = null;
+                try {
+                    value = field.get(this);
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                // 如果值是String:
+                if (value instanceof Integer) {
+                    Integer age = (Integer) value;
+                    // 判断值是否满足@Check的min/max:
+                    if (age < check.min() || age > check.max()) {
+                        throw new IllegalArgumentException(
+                                "The value " + age + " of " + field.getName() + " is invalid!");
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+- 测试注解
+
+```java
+public class CheckTest {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
+
+    /**
+     * 读取注解 判断某个注解是否存在于Class、Field、Method或Constructor：
+     * Class.getAnnotation(annotationClass) Field.getAnnotation(annotationClass)
+     * Method.getAnnotation(annotationClass)
+     * Constructor.getAnnotation(annotationClass)
+     */
+    @Test
+    public void test1() {
+        User user = new User("handle", 32);
+
+        Class<?> userClass = user.getClass();
+
+        // 获取字段
+        Field field = null;
+        try {
+            field = userClass.getDeclaredField("age");
+        } catch (NoSuchFieldException | SecurityException e) {
+            LOGGER.info("Can't get field age from {}: {}", userClass.getName(), e.getLocalizedMessage());
+        }
+
+        // 别管这个字段是不是public，设置允许访问
+        field.setAccessible(true);
+
+        // 判断字段上是否有 Check 注解
+        if (field.isAnnotationPresent(Check.class)) {
+            // 读取注解
+            Check check = field.getAnnotation(Check.class);
+
+            // 读取注解的值
+            int min = check.min();
+            int max = check.max();
+            int value = check.value();
+
+            // 获取字段值
+            int age = 0;
+            try {
+                age = (int) field.get(user);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                LOGGER.info("Can't get field {}'s value from {}: {}", field.getName(), userClass.getName(),
+                            e.getLocalizedMessage());
+            }
+
+            // 如果字段值不符合注解范围，修改字段值
+            if (age < min || age > max) {
+                try {
+                    field.set(user, value);
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    LOGGER.info("Can't set field {}'s value from {}: {}", field.getName(), userClass.getName(),
+                                e.getLocalizedMessage());
+                }
+            }
+
+            String fieldName = field.getName();
+            LOGGER.info("{}: min: {}, max: {}, value: {}, age: {}", fieldName, min, max, value, user.getAge());
+        }
+    }
+
+    /**
+     * 读取方法参数的注解就比较麻烦一点， 因为方法参数本身可以看成一个数组，而每个参数又可以定义多个注解，
+     * 所以，一次获取方法参数的所有注解就必须用一个二维数组来表示
+     */
+    @Test
+    public void test3() {
+        User user = new User("Handle", 36);
+
+        Class<?> userClass = user.getClass();
+        // 获取Method实例:
+        Method method = null;
+        try {
+            method = userClass.getDeclaredMethod("setAge", Integer.class);
+        } catch (NoSuchMethodException | SecurityException e) {
+            LOGGER.info("Can't get method setAge from {}: {}", userClass.getName(), e.getLocalizedMessage());
+        }
+        // 获取setAge方法所有参数的Annotation:
+        Annotation[][] annos = method.getParameterAnnotations();
+        // 第一个参数（索引为0）的所有Annotation:
+        Annotation[] annosOfName = annos[0];
+        for (Annotation anno : annosOfName) {
+            // @Check注解
+            if (anno instanceof Check) {
+                Check check = (Check) anno;
+                // 获取注解的值
+                int min = check.min();
+                int max = check.max();
+                int value = check.value();
+
+                LOGGER.info("{}: min: {}, max: {}, value: {}", method.getName(), min, max, value);
+            }
+        }
+    }
+
+    /**
+     * 使用注解
+     */
+    @Test
+    public void test2() {
+        User user = new User("Handle", 1800);// 结果年龄超出0-200范围，抛出异常
+        System.out.println(user);
+    }
+}
+```
+
 ### try-with-resource的新写法
 
 java9开始，在 try-with-resources 语句中可以使用 effectively-final 变量（在初始化后从未更改的变量）

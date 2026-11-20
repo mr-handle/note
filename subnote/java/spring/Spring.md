@@ -166,7 +166,7 @@ public class ApplicationTest {
 
 ### 配置包扫描的注解
 
-- @ComponentScan
+- @ComponentScan 自动扫描所有 Spring 组件，包括 @Configuration 注解的类
 
 - 指定spring创建容器时要扫描的包，相当于在bean.xml配置了：
 

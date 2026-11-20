@@ -1,5 +1,14 @@
 # Oracle
 
+- 连接串
+
+```properties
+jdbc.oracle.driver = oracle.jdbc.driver.OracleDriver
+jdbc.oracle.url = jdbc:oracle:thin:@yourIP:yourPort/yourServiceName
+jdbc.oracle.username = yourUserName
+jdbc.oracle.password = yourPassword
+```
+
 ```sql
 -- 修改字段名
 alter table student rename column password to pwd;

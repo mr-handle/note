@@ -24,19 +24,48 @@
 </parent>
 ```
 
-## 启动类
+## 一个简单的Spring Boot应用
+
+- 依赖
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+</parent>
+
+<groupId>com.handle</groupId>
+<artifactId>spring-boot-demo-1</artifactId>
+<version>1.0-SNAPSHOT</version>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+</dependencies>
+```
+
+- 主类
 
 ```java
+@RestController
 @SpringBootApplication
-public class Application {
+public class Main {
+    @GetMapping("test")
+    public String test() {
+        return String.valueOf(System.currentTimeMillis());
+    }
+
     public static void main(String[] args) {
         // 加载配置，创建IOC容器，启动内置web服务器
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(Main.class, args);
     }
 }
 ```
 
-## 根据需要修改主启动类主函数
+### 根据需要修改主类main方法
 
 ```java
 /**
@@ -53,6 +82,10 @@ public static void main(String[] args) {
     app.run(args);
 }
 ```
+
+## starter
+
+- spring-boot-starter, Core starter, including auto-configuration support, logging and YAML
 
 ## 常用注解
 
@@ -381,10 +414,25 @@ mybatis.configuration.auto-mapping-behavior=full
 mybatis.configuration.log-impl=org.apache.ibatis.logging.slf4j.Slf4jImpl
 ```
 
+## 日志
+
+```yaml
+spring:
+    main:
+        # turned off startup information logging
+        log-startup-info: false
+logging:
+    level:
+        # 默认兜底的日志基本，优先级比下面列出的具体包要低
+        root: INFO
+        # 其它想要自定义日志级别的具体包
+        com.example.service: DEBUG
+```
+
 ## 打包
 
 - spring boot原文：
-    - The spring-boot-starter-parent POM includes <executions> configuration to bind the repackage goal.
+    - The spring-boot-starter-parent POM includes `<executions>` configuration to bind the repackage goal.
     - If you do not use the parent POM, you need to declare this configuration yourself.
 
 - 依赖

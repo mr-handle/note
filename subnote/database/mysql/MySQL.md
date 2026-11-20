@@ -211,9 +211,9 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 # 一般设置characterEncoding就可以了，新版MySQL驱动会自动处理好整个通信链路的字符集
 # 它会向 MySQL 服务器发送一条关键的命令："SET NAMES utf8mb4;"
 # 这条命令的效果等同于同时设置了以下三个会话变量，确保数据从客户端到服务端再返回客户端的全链路字符集一致：character_set_client、character_set_connection和character_set_results
-spring.datasource.url=jdbc:mysql://localhost:3306/handle?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&serverTimezone=GMT%2B8
-spring.datasource.username=root
-spring.datasource.password=mysql123
+spring.datasource.url=jdbc:mysql://yourIP:yourPort/yourDataBaseName?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&serverTimezone=GMT%2B8
+spring.datasource.username=yourUserName
+spring.datasource.password=yourPassword
 ```
 
 ## 数据类型

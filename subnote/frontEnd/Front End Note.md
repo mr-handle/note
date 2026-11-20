@@ -266,6 +266,7 @@ p标签里面不能嵌套h1-h6标签
 ```html
 <form action="" method="">
     <!-- 表单项 -->
+    <!-- input一定要是name才能提交，id可以没有，不然请求体为空提交不了 -->
     用户名：<input type="text" name="username" />
     <br />
     密码：<input type="password" name="password" />
