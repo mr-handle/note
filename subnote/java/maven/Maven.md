@@ -841,7 +841,35 @@ java -XX:AOTCache=${package.name}.aot -Dprism.order=sw -jar ${package.name}.jar
     </executions>
 </plugin>
 ```
-  
+
+### lombok-maven-plugin
+
+```xml
+<plugin>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok-maven-plugin</artifactId>
+    <version>1.18.18.0</version>
+    <executions>
+        <execution>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>delombok</goal>
+            </goals>
+            <configuration>
+                <encoding>UTF-8</encoding>
+                <addOutputDirectory>false</addOutputDirectory>
+                <sourceDirectory>src/main/java</sourceDirectory>
+                <!-- 创建lombok生成的源代码存放目录，maven打包的时候有可能不会扫描这个目录 -->
+                <outputDirectory>${project.build.directory}/generated-sources/java</outputDirectory>
+                <formatPreferences>
+                    <pretty />
+                </formatPreferences>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
 ### 不打包，只生成包含所有的目录
 
 ```xml

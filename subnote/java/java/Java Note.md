@@ -5041,7 +5041,229 @@ XML是一个技术体系，除了我们经常用到的XML文档本身外，XML�
 - XPath：一种XML节点查询语言；
 - ...
 
-实际上，XML的这些相关技术实现起来非常复杂，在实际应用中很少用到，通常了解一下就可以了。
+实际上，XML的这些相关技术实现起来非常复杂，在实际应用中很少用到，通常了解一下就可以了
+
+#### XML解析
+
+因为XML是一种树形结构的文档，它有两种标准的解析API：
+
+- 1.DOM(Document Object Model)：一次性读取XML，并在内存中表示为树形结构
+    - DOM模型就是把XML结构作为一个树形结构处理， 从根节点开始，每个节点都可以包含任意个子节点
+    - 使用DOM解析XML的优点是用起来省事，但它的主要缺点是内存占用太大
+- 2.SAX(Simple API for XML)：以流的形式读取XML，使用事件回调
+    - 它是一种基于流的解析方式，边读取XML边解析，并以事件回调的方式让调用者获取数据
+    - 因为是一边读一边解析， 所以无论XML有多大，占用的内存都很小
+
+- 依赖
+
+```xml
+<!-- xml to javabean -->
+<dependency>
+    <groupId>com.fasterxml.jackson.dataformat</groupId>
+    <artifactId>jackson-dataformat-xml</artifactId>
+    <version>2.11.3</version>
+</dependency>
+<dependency>
+    <groupId>org.codehaus.woodstox</groupId>
+    <artifactId>woodstox-core-asl</artifactId>
+    <version>4.4.1</version>
+</dependency>
+<dependency>
+    <groupId>ch.qos.logback</groupId>
+    <artifactId>logback-classic</artifactId>
+    <version>1.2.3</version>
+</dependency>
+```
+
+- book.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<book id="1">
+    <name>Java核心技术</name>
+    <author>Cay S. Horstmann</author>
+    <isbn lang="CN">1234567</isbn>
+    <tags>
+        <tag>Java</tag>
+        <tag>Network</tag>
+    </tags>
+    <pubDate/>
+</book>
+```
+
+- Book.java
+
+```java
+@Getter
+@Setter
+@ToString
+public class Book {
+    private long id;
+
+    private String name;
+
+    private String author;
+
+    private String isbn;
+
+    private List<String> tags;
+
+    private String pubDate;
+}
+```
+
+- MyHandler.java
+
+```java
+// sax analysis handler
+public class MyHandler extends DefaultHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MyHandler.class);
+
+    @Override
+    public void characters(char[] ch, int start, int length) throws SAXException {
+        print("characters: {}", new String(ch, start, length));
+    }
+
+    @Override
+    public void endDocument() throws SAXException {
+        print("end document!");
+    }
+
+    @Override
+    public void endElement(String uri, String localName, String qName) throws SAXException {
+        print("end element: {} {}", localName, qName);
+    }
+
+    @Override
+    public void startDocument() throws SAXException {
+        print("start document!");
+    }
+
+    @Override
+    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        print("start element: {} {}", localName, qName);
+    }
+
+    @Override
+    public void error(SAXParseException e) throws SAXException {
+        print("error: {}", e.getLocalizedMessage());
+    }
+
+    private void print(Object...objects) {
+        for (Object object : objects) {
+            LOGGER.info("{} ", object);
+        }
+    }
+    
+}
+```
+
+- XMLAnalysisf.java
+
+```java
+public class XMLAnalysis {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(XMLAnalysis.class);
+
+    
+    public static void main(String[] args) {
+        saxAnalysis();
+        domAnalysis();
+        getBook();
+    }
+
+    // xml 转 javabean
+    public static void getBook() {
+        try (InputStream inputStream = XMLAnalysis.class.getClassLoader().getResourceAsStream("others/book.xml")) {
+            JacksonXmlModule module = new JacksonXmlModule();
+            XmlMapper mapper = new XmlMapper(module);
+            Book book = mapper.readValue(inputStream, Book.class);
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(book.toString());
+            }
+        } catch (IOException e) {
+            LOGGER.error(e.getLocalizedMessage());
+        }
+    }
+
+
+    // DOM 解析
+    public static void domAnalysis() {
+        try (InputStream inputStream = XMLAnalysis.class.getClassLoader().getResourceAsStream("others/book.xml")) {
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            documentBuilderFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            // 解析xml
+            Document document = documentBuilder.parse(inputStream);
+
+            getNode(document.getFirstChild(), 1);
+
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            LOGGER.error(e.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * SAX解析会触发一系列事件 startDocument：开始读取XML文档； startElement：读取到了一个元素，例如<book>；
+     * characters：读取到了字符； endElement：读取到了一个结束的元素，例如</book>； endDocument：读取XML文档结束。
+     * 如果要读取<name>节点的文本，我们就必须在解析过程中根据startElement()和
+     * endElement()定位当前正在读取的节点，可以使用栈结构保存，
+     * 每遇到一个startElement()入栈，每遇到一个endElement()出栈，这样，
+     * 读到characters()时我们才知道当前读取的文本是哪个节点的。可见，
+     * 使用SAX API仍然比较麻烦。
+     */
+    public static void saxAnalysis() {
+        try (InputStream inputStream = XMLAnalysis.class.getClassLoader().getResourceAsStream("others/book.xml")) {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser parser = factory.newSAXParser();
+            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            parser.parse(inputStream, new MyHandler());
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            LOGGER.error(e.getLocalizedMessage());
+        } 
+    }
+
+    /**
+     * java提供了DOM API来解析XML，它使用下面的对象来表示XML的内容：
+     * Document：代表整个XML文档；
+     * Element：代表一个XML元素；
+     * Attribute：代表一个元素的某个属性
+     */
+    public static void getNode(Node node, int indent) {
+        for (int i = 0; i < indent; i++) {
+            LOGGER.info("");
+        }
+        switch (node.getNodeType()) {
+            // document 节点
+            case Node.DOCUMENT_NODE:
+                LOGGER.info("Document: {}", node.getNodeName());
+                break;
+            // 元素节点
+            case Node.ELEMENT_NODE:
+                LOGGER.info("Element: {}", node.getNodeName());
+                break;
+            // 文本
+            case Node.TEXT_NODE:
+                LOGGER.info("Text: {}={}", node.getNodeName(), node.getNodeValue());
+                break;
+
+            // 属性
+            case Node.ATTRIBUTE_NODE:
+                LOGGER.info("Attribute: {}={}", node.getNodeName(), node.getNodeValue());
+                break;
+            // 其它
+            default:
+                LOGGER.info("NodeType: {}, NodeName: {}", node.getNodeType(), node.getNodeName());
+                break;
+        }
+        for (Node child = node.getFirstChild(); null != child; child = child.getNextSibling()) {
+            getNode(child, indent + 1);
+        }
+    }
+}
+```
 
 ### JSON
 
@@ -8943,6 +9165,63 @@ annotationProcessor 'org.projectlombok:lombok'
 - 常用注解
 
 ```java
+/**
+ * @Data 作用于类上，是以下注解的集合：
+ * @Getter
+ * @Setter
+ * @ToString
+ * @EqualsAndHashCode
+ * @RequiredArgsConstructor
+ * 
+ * @Getter 作用于类或成员变量，生成成员变量的 getter 方法
+ *         属性：
+ *         value：指定 getter 方法的访问权限
+ * 
+ * @Setter 作用于类或成员变量，生成成员变量的 setter 方法
+ *         属性：
+ *         value：指定 setter 方法的访问权限
+ * 
+ * @ToString 作用于类，覆盖默认的toString()方法
+ *           属性：
+ *           of：指定打印某些字段
+ *           exclude：排除打印某些字段
+ * 
+ * @EqualsAndHashCode 作用于类，覆盖默认的 equals 和 hashCode 方法
+ * 
+ * @NoArgsConstructor 生成无参构造器
+ *                    属性：
+ *                    staticName：用静态方法的方式生成实例
+ *                    access：指定构造器的访问权限
+ * @RequiredArgsConstructor 生成包含final 和 @NonNull 注解的成员变量的构造器；
+ *                          属性：
+ *                          staticName：用静态方法的方式生成实例
+ *                          access：指定构造器的访问权限
+ * @AllArgsConstructor 生成全参构造器
+ *                     属性：
+ *                     staticName：用静态方法的方式生成实例
+ *                     access：指定构造器的访问权限
+ * 
+ * @Builder 作用于类，将类转变为建造者模式
+ * 
+ * @NonNull 主要作用于成员变量和方法参数中，标识不能为空，否则抛出空指针异常
+ *          细节：
+ *          1）作用于方法参数时，lombok 会在方法体开始插入空值检测语句，异常时
+ *          抛出 NullPointerException 信息
+ *          2）作用于成员变量时，任何修改此成员变量的操作都会插入空值检测语句，异常时
+ *          抛出 NullPointerException 信息
+ * 
+ * @Log 作用于类，生成日志变量log。针对不同的日志实现产品，有不同的注解
+ *      属性：
+ *      topic：构建日志的策略，相当于日志内容前缀。默认为当前全限定类名，一般不用自己定义
+ *      细节：相当于lombok帮声明了log字段：
+ *      private static final Logger log = LoggerFactory.getLogger(类名.class);
+ * 
+ * @Cleanup 作用于局部变量，自动关闭资源，针对实现了 java.io.Closeable 接口的对象有效
+ * 
+ * @SneakyThrows 作用于方法，对受检异常进行捕捉并抛出
+ *               属性：
+ *               value：数组，指定抛出的异常字节码
+ */
 @Getter
 @Setter
 @ToString

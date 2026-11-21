@@ -95,9 +95,19 @@ public static void main(String[] args) {
 
 - @SpringBootConfiguration = @Configuration
 
-- @EnableAutoConfiguration 自动加载其它的配置类
+- @EnableAutoConfiguration 启用 Spring Boot 的自动配置机制
 
-- @ComponentScan，默认扫描当前类所在包及其子包
+- @ComponentScan 启用组件扫描，默认扫描当前类所在包及其子包
+
+```java
+// 禁用指定的自动配置类
+// 如果该自动配置类不在类路径下，用excludeName并指定全限定类名
+// 也可以通过配置spring.autoconfigure.exclude来指定，或者这两种方式同时指定
+// 此外用@EnableAutoConfiguration也可以实现
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
+```
+
+- 除了 @EnableAutoConfiguration和@SpringBootApplication外，@AutoConfigurationPackage可以定义额外的自动配置包
 
 ### `@ConfigurationProperties`
 
