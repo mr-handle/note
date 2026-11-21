@@ -51,7 +51,7 @@
 </profiles>
 ```
 
-## idea配置Maven
+### idea配置Maven
 
 - File->Settings->Build,Execution,Deployment->Build Tools->Maven
     - 勾选 Print exception stack traces
@@ -60,6 +60,401 @@
     - Use settings from .mvn/maven.config，取消勾选
     - 点击Runner子选项，勾上Skip Tests
     - Importing->Automatically download，都不要勾选，如果需要看源码可以逐个手动下载
+
+## POM
+
+POM: Project Object Model，项目对象模型
+
+### Super POM
+
+所有 Maven 项目除了自己的pom.xml外和显式继承的父pom.xml外，还隐式继承 Super POM
+
+下面是官方给出的 Maven 3 的 Super POM 内容
+
+- 可以看到一些常见的标签和默认值就是从 Super POM 继承而来的，如：finalName
+
+```xml
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Fixed date for reproducible build -->
+        <project.build.outputTimestamp>1980-02-01T00:00:00Z</project.build.outputTimestamp>
+    </properties>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>${maven.repo.central}</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>${maven.repo.central}</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+    <build>
+        <directory>${project.basedir}/target</directory>
+        <outputDirectory>${project.build.directory}/classes</outputDirectory>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+        <testOutputDirectory>${project.build.directory}/test-classes</testOutputDirectory>
+        <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+        <scriptSourceDirectory>${project.basedir}/src/main/scripts</scriptSourceDirectory>
+        <testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+        </testResources>
+    </build>
+    <reporting>
+        <outputDirectory>${project.build.directory}/site</outputDirectory>
+    </reporting>
+</project>
+```
+
+### Minimal POM
+
+以下是一个最小的pom文件，没有显示指定的属性值，都会使用默认值
+
+比如，如果不显式指定packaging标签的值，就用默认值jar
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mycompany.app</groupId>
+    <artifactId>my-app</artifactId>
+    <version>1</version>
+</project>
+```
+
+### 项目继承
+
+- Profile继承和项目继承（即POM）使用的继承策略是一样的，以下元素会被合并
+    - dependencies
+    - developers and contributors
+    - plugin lists (including reports)
+    - plugin executions with matching ids
+    - plugin configuration
+    - resources
+
+- 父项目
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mycompany.app</groupId>
+    <artifactId>my-app</artifactId>
+    <version>1</version>
+</project>
+```
+
+- 子项目
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.mycompany.app</groupId>
+        <artifactId>my-app</artifactId>
+        <version>1</version>
+    </parent>
+
+    <!-- groupId 或 version 如果想跟父项目一样可以不写 -->
+    <artifactId>my-module</artifactId>
+</project>
+```
+
+- 如果父项目没有安装到本地仓库或者不在特定的项目路径中，子项目就需要显式指定父pom相对子pom的位置
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.mycompany.app</groupId>
+        <artifactId>my-app</artifactId>
+        <version>1</version>
+        <!-- 指定父pom相对子pom的位置 -->
+        <relativePath>../parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>my-module</artifactId>
+</project>
+```
+
+### 项目聚合
+
+项目聚合跟项目继承有点相似
+
+不同的是，项目继承是通过在子pom指定parent标签
+
+而项目聚合是通过在父pom指定子模块，当在父项目执行maven命令时，也会在子模块执行
+
+- 项目聚合必须做的两件事
+    - 将父pom的packaging标签设置为pom
+    - 在父pom指定子模块路径
+
+- 父项目
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mycompany.app</groupId>
+    <artifactId>my-app</artifactId>
+    <version>1</version>
+
+    <packaging>pom</packaging>
+
+    <modules>
+        <!-- 子pom相对父pom所在目录 -->
+        <module>my-module</module>
+    </modules>
+</project>
+```
+
+- 子项目
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mycompany.app</groupId>
+    <artifactId>my-module</artifactId>
+    <version>1</version>
+</project>
+```
+
+### 项目继承又项目聚合
+
+如果有几个配置类似的maven项目，就可以用项目继承提取出相同配置作为父项目
+
+如果有一组要一起构建或者处理流程一样的maven项目，就可以用项目聚合，如此一来只用构建父项目，子项目也会一起构建
+
+- 当然，项目继承和项目聚合可以一起使用，只要做这三件事
+    - 在子项目中指定父pom
+    - 将父pom的packaging标签设置为pom
+    - 在父pom指定子模块(pom)路径
+
+- 父项目
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.mycompany.app</groupId>
+    <artifactId>my-app</artifactId>
+    <version>1</version>
+
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>../my-module</module>
+    </modules>
+</project>
+```
+
+- 子项目
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.mycompany.app</groupId>
+        <artifactId>my-app</artifactId>
+        <version>1</version>
+        <relativePath>../parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>my-module</artifactId>
+</project>
+```
+
+#### 创建Maven继承/聚合工程
+
+继承：在父工程中统一声明版本信息，是一种依赖管理的版本简化
+
+聚合：通过父工程统一构建子工程，它会优化构建顺序，是一种构建管理的简化
+
+- 创建一个maven项目作为父工程，只留下pom文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 1.填写父工程坐标 -->
+    <groupId>com.handle</groupId>
+    <artifactId>application</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <!-- 2.定义打包方式为pom -->
+    <packaging>pom</packaging>
+
+    <!-- 3.填写子工程名称（可选，如果子工程不想聚合给父工程统一管理则可以不写） -->
+    <modules>
+        <module>子工程名称1</module>
+        <module>子工程名称n</module>
+    </modules>
+
+    <!-- 4.依赖声明，可以被子工程继承 -->
+    <!-- dependencyManagement只能做版本管理，像scope作用域配置必须在子模块中声明 -->
+    <dependencyManagement>
+        <dependencies>
+            ...
+        </dependencies>
+    </dependencyManagement>
+
+     <!-- 5.插件声明，可以被子工程继承 -->
+    <pluginManagement>
+        <plugins>
+            ...
+        </plugins>
+    </pluginManagement>
+</project>
+```
+
+- 创建一个maven项目作为子工程，修改pom文件，继承父工程
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 1.填写父工程坐标以继承父工程 -->
+    <parent>
+        <groupId>com.handle</groupId>
+        <artifactId>application</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <!-- 2.填写子工程名称 -->
+    <artifactId>子工程名称</artifactId>
+
+    <!-- 3.填写依赖，继承自父工程的依赖不用写version和scope -->
+    <dependencies>
+        <dependency>
+            <groupId>...</groupId>
+            <artifactId>...</artifactId>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+### BOM（Bill of Materials，物料清单）
+
+- 有一个项目P，它只有一个`pom.xml`文件，并且里面声明了`<packaging>pom</packaging>`
+    - 其他项目不是通过 `<parent>`继承它，而是通过依赖声明引入它，那么这个项目P就扮演了BOM的角色
+        - 它的核心作用是统一版本管理，但是不能管理插件版本和配置
+        - 必须在 `<dependencyManagement>`标签内声明，并且必须指定`<type>pom</type>` 和 `<scope>import</scope>`
+        - 在`<pluginManagement>`里面的插件声明是无效的
+        - 这种方式告诉 Maven 将该 POM 中的依赖管理规则导入到当前项目中
+    - 其它项目通过`<parent>`继承它，那么这个项目P就扮演了普通父POM的角色
+        - 它的核心作用除了版本管理，还可以用于传递插件配置、项目属性、全局变量等，是一种强绑定关系的继承
+        - 通过`<parent>`引入父POM，一个Maven项目中只能有一个直接父POM
+            - 可以定义一个父POM，继承spring-boot-start-parent
+            - 然后让其它项目继承这个父POM
+        - 在`<pluginManagement>`里面的插件声明是有效的，并且主要就是使用父POM这种机制进行插件版本和配置的管理
+
+### 项目插值和变量
+
+为了避免重复定义属性值，maven允许在pom中使用自定义和预定义变量
+
+例如，访问`project.version`变量，可以这样引用
+
+```xml
+<version>${project.version}</version>
+```
+
+如果父项目使用一个变量，变量值在父项目和子项目中都有定义，最终生效的是子项目中的变量值
+
+#### 项目模型变量
+
+模型（POM 对象）中单值元素的任何字段都可以作为变量引用，前缀为“project.”
+
+- 例如：
+    - `project.groupId`
+    - `project.version`
+    - `project.build.sourceDirectory`
+    - `project.build.directory` target目录
+    - `project.build.outputDirectory` target/classes目录
+
+非单值元素：properties、dependencies、plugins等
+
+可以参阅POM参考书：<https://maven.apache.org/pom.html> 来获得完整的属性列表
+
+#### 特殊变量
+
+- `project.basedir` 项目根目录，但在 Super POM 中没有具体的标签
+- `project.baseUri` 用URI表示的项目根目录，从 Maven 2.1.0 开始
+- `maven.build.timestamp` 表示构建开始的时间戳（UTC），从 Maven 2.1.0-M1 开始
+
+表示构建开始的时间戳的格式可以用`maven.build.timestamp.format`自定义，遵循 java 语言的 SimpleDateFormat 对象的格式就行
+
+```xml
+<properties>
+    <!-- 默认格式 -->
+    <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
+</properties>
+```
+
+#### 项目pom文件的变量
+
+还可以引用项目pom文件中定义的任何属性作为变量
+
+```xml
+<properties>
+    <mavenVersion>3.0</mavenVersion>
+</properties>
+
+<dependencies>
+    <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-core</artifactId>
+        <version>${mavenVersion}</version>
+    </dependency>
+</dependencies>
+```
+
+- 常用的项目pom文件中的属性
+  
+```xml
+<properties>
+    <!-- 这几个属性是maven自带的，不是spring-boot-starter-parent继承而来的 -->
+    <!-- Java 9+ 项目 -->
+    <maven.compiler.release>27</maven.compiler.release>
+    <!-- Java 9 以前项目 -->
+    <!-- <maven.compiler.source>27</maven.compiler.source> -->
+    <!-- <maven.compiler.target>27</maven.compiler.target> -->
+    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+</properties>
+```
 
 ## scope
 
@@ -187,12 +582,6 @@ site 生命周期的目的是建立和发布项目站点，共包含 4 个阶段
 - site，生成项目文档和站点信息
 - post-site，执行一些需要在生成站点文档之后完成的工作，并且为部署做准备
 - site-deploy，将生成的站点文档部署到特定的服务器上
-
-## 常用的maven变量
-
-- project.basedir，项目根目录
-- project.build.directory，target目录
-- project.build.outputDirectory，target/classes目录
 
 ## maven插件
 
@@ -384,6 +773,75 @@ java -XX:AOTCache=${package.name}.aot -Dprism.order=sw -jar ${package.name}.jar
 </plugin>
 ```
 
+### maven-source-plugin
+
+打包时生成source.jar
+  
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-source-plugin</artifactId>
+    <version>3.2.1</version>
+    <!-- 指定插件的 goal -->
+    <executions>
+        <execution>
+            <id>attach-sources</id>
+            <goals>
+                <goal>jar</goal>
+            </goals>
+            <!-- 将 goal 和 maven 生命周期的 package 阶段绑定 -->
+            <phase>package</phase>
+        </execution>
+    </executions>
+</plugin>
+```
+
+### maven-javadoc-plugin
+
+打包时生成javadoc.jar
+  
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-javadoc-plugin</artifactId>
+    <version>3.3.0</version>
+    <!-- 指定插件的 goal -->
+    <executions>
+        <execution>
+            <id>attach-javadocs</id>
+            <goals>
+                <goal>jar</goal>
+            </goals>
+            <!-- 将 goal 和 maven 生命周期的 package 阶段绑定 -->
+            <phase>package</phase>
+            <!-- configuration 标签用来设置插件的参数 -->
+            <configuration>
+                <!-- Specifies the encoding name of the source files. -->
+                <!-- If not specificed, the encoding value will be the value of the file.encoding system property. -->
+                <encoding>UTF-8</encoding>
+
+                <!-- Specifies the encoding of the generated HTML files-->
+                <!--  If not specificed, the docencoding value will be UTF-8. -->
+                <docencoding>UTF-8</docencoding>
+                <!-- Specifies the HTML character set for this document. -->
+                <!-- If not specificed, the charset value will be the value of the docencoding parameter. -->
+                <charset>UTF-8</charset>
+
+                <tags>
+                    <!-- define @date tag -->
+                    <tag>
+                        <name>date</name>
+                        <!-- define @date tag for all places -->
+                        <placement>a</placement>
+                        <head>created time:</head>
+                    </tag>
+                </tags>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+  
 ### 不打包，只生成包含所有的目录
 
 ```xml
@@ -654,96 +1112,6 @@ java -XX:AOTCache=${package.name}.aot -Dprism.order=sw -jar ${package.name}.jar
 </plugin>
 ```
 
-## 创建Maven继承/聚合工程
-
-继承：在父工程中统一声明版本信息，是一种依赖管理的版本简化
-
-聚合：通过父工程统一构建子工程，它会优化构建顺序，是一种构建管理的简化
-
-- 创建一个maven项目作为父工程，只留下pom文件
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <!-- 1.填写父工程坐标 -->
-    <groupId>com.handle</groupId>
-    <artifactId>application</artifactId>
-    <version>1.0-SNAPSHOT</version>
-
-    <!-- 2.定义打包方式为pom -->
-    <packaging>pom</packaging>
-
-    <!-- 3.填写子工程名称（可选，如果子工程不想聚合给父工程统一管理则可以不写） -->
-    <modules>
-        <module>子工程名称1</module>
-        <module>子工程名称n</module>
-    </modules>
-
-    <!-- 4.依赖声明，可以被子工程继承 -->
-    <!-- dependencyManagement只能做版本管理，像scope作用域配置必须在子模块中声明 -->
-    <dependencyManagement>
-        <dependencies>
-            ...
-        </dependencies>
-    </dependencyManagement>
-
-     <!-- 5.插件声明，可以被子工程继承 -->
-    <pluginManagement>
-        <plugins>
-            ...
-        </plugins>
-    </pluginManagement>
-</project>
-```
-
-- 创建一个maven项目作为子工程，修改pom文件，继承父工程
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <!-- 1.填写父工程坐标以继承父工程 -->
-    <parent>
-        <groupId>com.handle</groupId>
-        <artifactId>application</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </parent>
-
-    <!-- 2.填写子工程名称 -->
-    <artifactId>子工程名称</artifactId>
-
-    <!-- 3.填写依赖，继承自父工程的依赖不用写version和scope -->
-    <dependencies>
-        <dependency>
-            <groupId>...</groupId>
-            <artifactId>...</artifactId>
-        </dependency>
-    </dependencies>
-</project>
-```
-
-### BOM（Bill of Materials，物料清单）
-
-- 有一个项目P，它只有一个`pom.xml`文件，并且里面声明了`<packaging>pom</packaging>`
-    - 其他项目不是通过 `<parent>`继承它，而是通过依赖声明引入它，那么这个项目P就扮演了BOM的角色
-        - 它的核心作用是统一版本管理，但是不能管理插件版本和配置
-        - 必须在 `<dependencyManagement>`标签内声明，并且必须指定`<type>pom</type>` 和 `<scope>import</scope>`
-        - 在`<pluginManagement>`里面的插件声明是无效的
-        - 这种方式告诉 Maven 将该 POM 中的依赖管理规则导入到当前项目中
-    - 其它项目通过`<parent>`继承它，那么这个项目P就扮演了普通父POM的角色
-        - 它的核心作用除了版本管理，还可以用于传递插件配置、项目属性、全局变量等，是一种强绑定关系的继承
-        - 通过`<parent>`引入父POM，一个Maven项目中只能有一个直接父POM
-            - 可以定义一个父POM，继承spring-boot-start-parent
-            - 然后让其它项目继承这个父POM
-        - 在`<pluginManagement>`里面的插件声明是有效的，并且主要就是使用父POM这种机制进行插件版本和配置的管理
-
 ## 打包时跳过测试
 
 - 1.命令方式
@@ -941,91 +1309,6 @@ mvn install:install \
     <systemPath>${project.basedir}/src/main/resources/lib/xxx-6.0.0.jar</systemPath>
 </dependency>
 ```
-
-## pom.xml 文档设置
-
-pom: project object model，项目对象模型
-
-- 设置基本信息
-  
-```xml
-<properties>
-    <!-- 这几个属性是maven自带的，不是spring-boot-starter-parent继承而来的 -->
-    <!-- Java 9+ 项目 -->
-    <maven.compiler.release>27</maven.compiler.release>
-    <!-- Java 9 以前项目 -->
-    <!-- <maven.compiler.source>27</maven.compiler.source> -->
-    <!-- <maven.compiler.target>27</maven.compiler.target> -->
-    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-</properties>
-```
-
-- 设置打包时生成source.jar
-  
-  ```xml
-  <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-source-plugin</artifactId>
-      <version>3.2.1</version>
-      <!-- 指定插件的 goal -->
-      <executions>
-          <execution>
-              <id>attach-sources</id>
-              <goals>
-                  <goal>jar</goal>
-              </goals>
-              <!-- 将 goal 和 maven 生命周期的 package 阶段绑定 -->
-              <phase>package</phase>
-          </execution>
-      </executions>
-  </plugin>
-  ```
-
-- 设置打包时生成javadoc.jar
-  
-  ```xml
-  <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-javadoc-plugin</artifactId>
-      <version>3.3.0</version>
-      <!-- 指定插件的 goal -->
-      <executions>
-          <execution>
-              <id>attach-javadocs</id>
-              <goals>
-                  <goal>jar</goal>
-              </goals>
-              <!-- 将 goal 和 maven 生命周期的 package 阶段绑定 -->
-              <phase>package</phase>
-              <!-- configuration 标签用来设置插件的参数 -->
-              <configuration>
-                  <!-- Specifies the encoding name of the source files. -->
-                  <!-- If not specificed, the encoding value will be the value of the file.encoding system property. -->
-                  <encoding>UTF-8</encoding>
-  
-                  <!-- Specifies the encoding of the generated HTML files-->
-                  <!--  If not specificed, the docencoding value will be UTF-8. -->
-                  <docencoding>UTF-8</docencoding>
-                  <!-- Specifies the HTML character set for this document. -->
-                  <!-- If not specificed, the charset value will be the value of the docencoding parameter. -->
-                  <charset>UTF-8</charset>
-  
-                  <tags>
-                      <!-- define @date tag -->
-                      <tag>
-                          <name>date</name>
-                          <!-- define @date tag for all places -->
-                          <placement>a</placement>
-                          <head>created time:</head>
-                      </tag>
-                  </tags>
-              </configuration>
-          </execution>
-      </executions>
-  </plugin>
-  ```
 
 ## 依赖冲突解决
 
