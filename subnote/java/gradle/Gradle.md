@@ -84,6 +84,43 @@ allprojects {
 }
 ```
 
+- gradle-9.9.2 用kotlin这样写
+
+```kotlin
+// $GRADLE_HOME/init.d/init.gradle.kts
+// 全局插件仓库
+pluginManagement {
+    repositories {
+        maven {
+            setUrl("https://maven.aliyun.com/repository/gradle-plugin")
+        }
+        maven {
+            setUrl("https://maven.aliyun.com/repository/public")
+        }
+        // Gradle插件仓库
+        gradlePluginPortal()
+
+        // Google插件仓库
+        google()
+    }
+}
+
+// 全局依赖仓库
+allprojects {
+    repositories {
+        maven {
+            setUrl("https://maven.aliyun.com/repository/public")
+        }
+        mavenCentral()
+
+        maven {
+            setUrl("https://maven.aliyun.com/repository/google")
+        }
+        google()
+    }
+}
+```
+
 ### 配置环境变量
 
 - `GRADLE_HOME`
@@ -215,7 +252,7 @@ pluginManagement {
         // Gradle插件仓库
         gradlePluginPortal()
         // Google插件仓库
-        google()
+        // google()
     }
 }
 
@@ -297,9 +334,9 @@ java {
 }
 ```
 
-### 配置项目插件仓库和依赖仓库
+#### 配置项目插件仓库和依赖仓库
 
-#### Java 项目
+##### Java 项目
 
 ```kotlin
 repositories {
@@ -333,7 +370,7 @@ buildscript {
 }
 ```
 
-#### Android 项目
+##### Android 项目
 
 ```kotlin
 repositories {
@@ -383,6 +420,19 @@ dependencies {
     // 始终使用最新版本，不推荐
     implementation("org.springframework.boot:spring-boot-starter-web:+")
     implementation("org.springframework.boot", "spring-boot-starter-web", "+")
+
+    // 导入项目根目录下lib目录中的jar依赖
+    implementation(files("lib/file.jar", "lib/file2.jar"))
+
+    // 导入项目根目录下lib目录中所有的jar依赖
+    implementation(fileTree("lib"))
+
+    implementation("org.springframework.boot:spring-boot-starter-data-redis") {
+        // 排除指定组名的所有依赖
+        // exclude("io.lettuce")
+        // 排除指定组名和模块名的依赖
+        exclude("io.lettuce", "lettuce-core")
+    }
     
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -519,6 +569,20 @@ dependencies {
 
 - 强制使用某个版本，官方推荐
 
+```kotlin
+dependencies {
+    // 加两个英文感叹号
+    implementation("org.slf4j:slf4j-api:1.4.0!!")
+
+    // 或者这种写法
+    implementation("org.slf4j:slf4j-api:1.4.0") {
+        version {
+            strictly("1.4.0")
+        }
+    }
+}
+```
+
 ```groovy
 dependencies {
     // 加两个英文感叹号
@@ -614,6 +678,144 @@ class MyPlugin implements Plugin<Project> {
 }
 // 应用插件
 apply plugin: MyPlugin
+```
+
+## 自定义任务
+
+可以用register或create方法来注册任务
+
+register方法以懒加载方式注册任务
+
+### 通过lambda来自定义任务
+
+```kotlin
+// 参数1 任务名
+// 参数2 lambda编写的任务具体操作
+tasks.register("myTask") {
+    // 默认在other组
+    // 如果是用idea，刷新项目后会在右边的gradle面板的other列表看到自定义的任务
+    // 可以自定义任务在那个组下
+    group = "build"
+
+    // 命令行执行 gradle tasks时
+    // 可以看到 myTask - 我是任务描述
+    description = "我是任务描述"
+
+    // 前置任务
+    // 执行该任务时会自动先执行前置任务
+    // 写法一 传任务名
+    dependsOn("classes")
+    // 写法二 传任务对象
+    dependsOn(tasks.classes)
+    
+    // 每个任务包含一个完整的操作（Action）列表
+    // 每个操作都可以做一些自定义的具体内容
+    // 传入对应的操作（Action）到队列中，就可以依次执行了
+    // 用doFirst向任务队列头部插入新的操作
+    doFirst {
+        // 这种获取命令行参数的方式废弃了，但是还能用，先凑合
+        println("我是myTask，自定义任务开始，命令行参数：${project.properties["myParam"]}")
+    }
+    // 用doLast向任务队列尾部插入操作
+    doLast {
+        println("我是myTask，自定义任务结束")
+    }
+}
+```
+
+### 通过自定义任务类来自定义任务
+
+```kotlin
+open class MyTask : DefaultTask() {
+    private var name: String = ""
+
+    // @TaskAction 声明此方法为任务的 Action
+    // 执行任务的时候会自动执行这些 Action，顺序：myFun2->myFun1
+    @TaskAction
+    fun myFun1() {
+        println("我是myFun1")
+    }
+
+    @TaskAction
+    fun myFun2() {
+        println("我是myFun2")
+    }
+
+    // 无 @TaskAction 就是普通方法
+    fun setName(name: String) {
+        this.name = name
+        println(this.name)
+    }
+}
+
+// 指明自定义任务类
+tasks.register<MyTask>("myTask") {
+    // 调用普通方法
+    setName("handle")
+
+    dependsOn(tasks.classes)
+}
+```
+
+### 执行自定义任务
+
+```sh
+gradle myTask
+
+# 传入参数
+gradle myTask -PmyParam=hello
+```
+
+### 默认任务
+
+```kotlin
+// 默认任务，可以指定多个
+// 当执行 gradle 命令时，会自动执行默认任务
+defaultTasks("myTask")
+```
+
+### 前置任务
+
+#### 给自定义任务设置前置任务
+
+```kotlin
+tasks.register("myTask") {
+    // 前置任务
+    // 执行该任务时会自动先执行前置任务
+    // 写法一 传任务名
+    dependsOn("classes")
+
+    // 写法二 传任务对象
+    dependsOn(tasks.classes)
+}
+```
+
+#### 给插件的任务设置前置任务
+
+```kotlin
+// 写法一 通过任务对象
+tasks.classes {
+    dependsOn("myTask")
+}
+
+// 写法二 通过任务名
+tasks.named("classes") {
+    dependsOn("myTask")
+}
+```
+
+### Gradle内置的任务
+
+除了插件提供的任务和自定义任务外
+
+Gradle也提供了一些内置的任务类型，如：Copy、Delete等
+
+```kotlin
+tasks.register<Copy>("myCopy") {
+    from("build/classes")
+    into("build/app")
+    dependsOn(tasks.classes)
+}
 ```
 
 ## Gradle常用指令
