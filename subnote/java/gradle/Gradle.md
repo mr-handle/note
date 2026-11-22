@@ -3,7 +3,7 @@
 - 官网：<https://gradle.org/>
 
 - 选择Groovy还是Kotlin作为Gradle的DSL？
-    - 推荐Kotlin，Kotlin语法更接近java，学习成本更低，并且可以作为以后打算开发Android铺垫
+    - `推荐Kotlin`，Kotlin语法更接近java，学习成本更低，并且可以作为以后打算开发Android铺垫
     - 而Groovy，语法更加灵活，也就意味着各种写法都可以，学习成本更高，并且就只用在了Gradle上，不值得
 
 ## 安装Gradle
@@ -16,8 +16,9 @@
 
 - 下载完整版（包含了文档和源码）
 
-- 修改maven下载源
-    - 在`GRADLE_HOME/init.d`目录下创建init.gradle文件，内容如下
+### 修改maven下载源
+
+在`GRADLE_HOME/init.d`目录下创建init.gradle文件，内容如下
 
 - gradle-8.x版本这样写
 
@@ -83,19 +84,20 @@ allprojects {
 }
 ```
 
-- 配置环境变量
-    - `GRADLE_HOME`
-    - `GRADLE_USER_HOME`
-        - gradle的本地仓库路径和gradle wrapper的缓存路径、缓存的路径
-        - 下载的依赖会存放在`GRADLE_USER_HOME/caches/modules-2/files-2.1`目录下
-        - 除了依赖目录还有别的目录，建议不要指定为maven的repository路径，避免目录混乱
-    - `M2_HOME`，maven家目录，gradle默认会查找`~/.m2/repository`作为maven本地仓库路径，修改了maven本地仓库路径的话才需要定义
+### 配置环境变量
+
+- `GRADLE_HOME`
+- `GRADLE_USER_HOME`
+    - gradle的本地仓库路径和gradle wrapper的缓存路径、缓存的路径
+    - 下载的依赖会存放在`GRADLE_USER_HOME/caches/modules-2/files-2.1`目录下
+    - 除了依赖目录还有别的目录，建议不要指定为maven的repository路径，避免目录混乱
+- `M2_HOME`，maven家目录，gradle默认会查找`~/.m2/repository`作为maven本地仓库路径，修改了maven本地仓库路径的话才需要定义
 
 - 配置Path：`GRADLE_HOME\bin`
 
 - 测试：`gradle -v`
 
-## IDEA配置Gradle
+### IDEA配置Gradle
 
 - Settings->Build,Execution,Deployment->Gradle
     - Gradle user home，指定一个路径作为gradle的本地仓，gradle和maven的结构不一样，不要设置为maven本地仓库的路径
@@ -103,6 +105,27 @@ allprojects {
     - Run test using，设置为IntelliJ IDEA，不然用默认Gradle的话初始化测试都要等好几秒了，浪费时间
     - Distribution，设置为Local installation，并选择本地安装的gradle家目录
     - Gradle JVM，设置为本地安装的JDK即可
+
+## 创建一个java项目
+
+```sh
+# 创建一个目录
+mkdir my-project
+
+# 进入目录
+cd my-project
+
+# 根据交互进行操作
+gradle init
+```
+
+因为gradle的版本兼容性很差，项目默认是用wrapper的，还会根据wrapper的设置从网络再下载一个gradle，并且下载速度很慢
+
+因此个人建议直接把之前下载的gradle放到`GRADLE_USER_HOME//wrapper/dists`下
+
+然后用idea打开该项目
+
+`gradle init` 生成的是多项目结构，用idea创建gradle项目生成的结构更加接近maven
 
 ## Gradle项目目录结构
 
@@ -133,6 +156,271 @@ allprojects {
     - gradlew.bat，包装器在Windows系统的启动脚本
     - build.gradle，构建脚本，类似maven的pom.xml
     - settings.gradle，配置文件，定义项目和子项目名称信息，一个项目只能有一个此文件（子项目是没有这个文件的）
+
+## gradle常用命令
+
+```sh
+# 查看可用的命令
+gradle task
+
+# 启动项目
+gradle run
+
+# 删除构建目录
+gradle clean
+```
+
+## settings.gradle.kts
+
+`settings.gradle.kts` 是构建的入口点，Gradle会实例化一个`settings`对象
+
+`rootProject.name`实际上就是`settings.rootProject.name`的简写
+
+```kotlin
+// 当前项目
+rootProject.name = "gradle-demo"
+```
+
+### 配置子项目
+
+```kotlin
+// 如果有子项目，通过指定子项目目录来包含它们
+// 将其添加到构建列表中
+include("app1")
+include("app2")
+```
+
+### 配置全局插件
+
+主要用于全局插件，单项目很少使用
+
+```kotlin
+plugins { 
+    id("org.springframework.boot") version "4.2.0"
+    id("io.spring.dependency-management") version "1.1.7"
+}
+```
+
+### 配置插件仓库和依赖仓库
+
+插件仓库和依赖仓库虽然可以写在里面，不过更推荐在`build.gradle.kts`中进行配置
+
+```kotlin
+// 全局插件仓库
+pluginManagement {
+    repositories {
+        maven {
+            setUrl("https://maven.aliyun.com/repository/public")
+        }
+        // Gradle插件仓库
+        gradlePluginPortal()
+        // Google插件仓库
+        google()
+    }
+}
+
+// 全局依赖仓库
+dependencyResolutionManagement {
+    // 这种写法目前还在孵化阶段，没孵化出来可能未来会移除
+    repositories {
+        maven {
+            setUrl("https://maven.aliyun.com/repository/public")
+        }
+    }
+}
+```
+
+## build.gradle.kts
+
+Gradle会实例化一个`project`对象
+
+`group`实际上就是`project.group`的简写
+
+- project对象包含以下常见属性
+    - plugins 项目使用的插件列表
+    - group 项目组
+    - version 项目版本
+    - repositories 依赖仓库
+    - dependencies 依赖列表
+    - name 项目（目录）名称
+    - path 项目的完全限定名称
+    - description 项目描述
+    - layout 通过此对象的属性可以访问项目中的各种关键位置
+
+### 配置插件
+
+插件分为官方插件和第三方插件
+
+每个插件都包含了一个或多个任务，添加了插件后，就可以执行其提供的任务
+
+官方插件不用指定版本，非官方插件要指定版本
+
+id和version相当于插件的坐标
+
+```kotlin
+// kotlin的lambda写法
+// plugins是一个方法
+plugins {
+    // 指定使用的插件
+    // java插件包含编译、测试等各种任务
+    id("java")
+    // 包含java插件的全部功能并且支持生成可执行应用程序
+    id("application")
+    
+    id("org.springframework.boot") version "4.2.0"
+    id("io.spring.dependency-management") version "1.1.7"
+}
+```
+
+#### 配置java
+
+当添加了java插件后，可以对java插件进行配置
+
+```kotlin
+plugins {
+    id("java")
+}
+
+java {
+    // 写法一
+    // 相当于 javac -source 27 -target 27
+    // 依赖当前运行 Gradle 的 JDK
+    sourceCompatibility = JavaVersion.VERSION_27
+    targetCompatibility = JavaVersion.VERSION_27
+
+    // 写法二
+    // 自动查找或下载指定版本的 JDK
+    // 新项目首选这种写法
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(27)
+    }
+}
+```
+
+### 配置项目插件仓库和依赖仓库
+
+#### Java 项目
+
+```kotlin
+repositories {
+    // 使用maven本地仓，不建议设置
+    // mavenLocal()
+    // 阿里云仓库
+    maven {
+        name = "aliyun"
+        url = uri("https://maven.aliyun.com/repository/public")
+        // 或者
+        // setUrl("https://maven.aliyun.com/repository/public")
+    }
+    // Maven Central 用来兜底
+    mavenCentral()
+}
+
+buildscript {
+    repositories {
+        // 使用maven本地仓，不建议设置
+        // mavenLocal()
+        // 阿里云仓库
+        maven {
+            name = "aliyun"
+            url = uri("https://maven.aliyun.com/repository/public")
+            // 或者
+            // setUrl("https://maven.aliyun.com/repository/public")
+        }
+        // Maven Central 用来兜底
+        mavenCentral()
+    }
+}
+```
+
+#### Android 项目
+
+```kotlin
+repositories {
+    // 使用maven本地仓，不建议设置
+    // mavenLocal()
+    // 阿里云的 Google 专属镜像
+    maven {
+        setUrl("https://maven.aliyun.com/repository/google")
+    }
+    // 阿里云的常规库镜像
+    maven {
+        setUrl("https://maven.aliyun.com/repository/public")
+    }
+    // Maven Central 用来兜底常规库
+    mavenCentral()
+    // Google 官方仓库用来兜底 Android 库
+    google()
+}
+
+buildscript {
+    repositories {
+        // 使用maven本地仓，不建议设置
+        // mavenLocal()
+        // 阿里云的 Google 专属镜像
+        maven {
+            setUrl("https://maven.aliyun.com/repository/google")
+        }
+        // 阿里云的常规库镜像
+        maven {
+            setUrl("https://maven.aliyun.com/repository/public")
+        }
+        // Maven Central 用来兜底常规库
+        mavenCentral()
+        // Google 官方仓库用来兜底 Android 库
+        google()
+    }
+}
+```
+
+### 配置依赖
+
+```kotlin
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web:4.2.0")
+    // 分开这样写
+    implementation("org.springframework.boot", "spring-boot-starter-web", "4.2.0")
+    // 始终使用最新版本，不推荐
+    implementation("org.springframework.boot:spring-boot-starter-web:+")
+    implementation("org.springframework.boot", "spring-boot-starter-web", "+")
+    
+    testImplementation(platform("org.junit:junit-bom:6.0.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+```
+
+```kotlin
+// kotlin的lambda写法
+// plugins是一个方法
+plugins {
+    // 指定使用的插件
+    // java插件包含编译、测试等各种任务
+    // 官方插件不用指定版本，非官方插件要指定版本
+    id("java")
+}
+
+// 项目的group和version
+group = "com.handle"
+version = "1.0-SNAPSHOT"
+
+// 配置仓库
+repositories {
+    mavenCentral()
+}
+
+// 配置依赖
+dependencies {
+    testImplementation(platform("org.junit:junit-bom:6.0.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+// 测试任务配置
+tasks.test {
+    useJUnitPlatform()
+}
+```
 
 ## Gradle依赖
 
