@@ -36,7 +36,7 @@
 </parent>
 
 <groupId>com.handle</groupId>
-<artifactId>spring-boot-demo-1</artifactId>
+<artifactId>spring-boot-demo</artifactId>
 <version>1.0-SNAPSHOT</version>
 
 <dependencies>

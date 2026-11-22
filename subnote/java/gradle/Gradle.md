@@ -20,33 +20,6 @@
 
 在`GRADLE_HOME/init.d`目录下创建init.gradle文件，内容如下
 
-- gradle-8.x版本这样写
-
-```groovy
-allprojects {
-    // 项目依赖的下载地址
-    repositories {
-        mavenLocal()
-        maven {
-            name "aliyun";
-            url "https://maven.aliyun.com/repository/public"
-        }
-        mavenCentral()
-    }
-    // build.gradle构建脚本使用的依赖的下载地址，一般是各种插件的下载地址
-    buildscript {
-        repositories {
-            mavenLocal()
-            maven {
-                name "aliyun";
-                url "https://maven.aliyun.com/repository/public"
-            }
-            mavenCentral()
-        }
-    }
-}
-```
-
 - gradle-9.x版本这样写
 
 ```groovy
@@ -89,19 +62,19 @@ allprojects {
 ```kotlin
 // $GRADLE_HOME/init.d/init.gradle.kts
 // 全局插件仓库
-pluginManagement {
-    repositories {
-        maven {
-            setUrl("https://maven.aliyun.com/repository/gradle-plugin")
+gradle.settingsEvaluated {
+    pluginManagement {
+        repositories {
+            maven {
+                setUrl("https://maven.aliyun.com/repository/gradle-plugin")
+            }
+            maven {
+                setUrl("https://maven.aliyun.com/repository/public")
+            }
+            google()
+            mavenCentral()
+            gradlePluginPortal()
         }
-        maven {
-            setUrl("https://maven.aliyun.com/repository/public")
-        }
-        // Gradle插件仓库
-        gradlePluginPortal()
-
-        // Google插件仓库
-        google()
     }
 }
 
@@ -111,11 +84,10 @@ allprojects {
         maven {
             setUrl("https://maven.aliyun.com/repository/public")
         }
-        mavenCentral()
-
         maven {
             setUrl("https://maven.aliyun.com/repository/google")
         }
+        mavenCentral()
         google()
     }
 }
