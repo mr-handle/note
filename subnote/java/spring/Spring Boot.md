@@ -47,6 +47,29 @@
 </dependencies>
 ```
 
+- gradle
+
+```kotlin
+plugins {
+    id("java")
+    id("org.springframework.boot") version ("4.2.0")
+    id("io.spring.dependency-management") version ("1.1.7")
+}
+
+group = "com.handle"
+version = "1.0-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(27)
+    }
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web")
+}
+```
+
 - 主类
 
 ```java
@@ -73,24 +96,6 @@ mvn spring-boot:run
 
 # 前提是添加了java和org.springframework.boot这两个插件
 gradle bootRun
-```
-
-### 根据需要修改主类main方法
-
-```java
-/**
- * 启动项目后会生成存放 pid 的 application.pid 文档
- * pid存放到指定目录：在application.properties(yaml)配置文档中添加spring.pid.file=/var/log/app.pid
- */
-public static void main(String[] args) {
-    SpringApplication app = new SpringApplication(Application.class);
-    // 生成进程pid文档
-    app.addListeners(new ApplicationPidFileWriter());
-
-    // 关闭banner
-    app.setBannerMode(Banner.Mode.OFF);
-    app.run(args);
-}
 ```
 
 ## starter
@@ -434,12 +439,62 @@ mybatis.configuration.auto-mapping-behavior=full
 mybatis.configuration.log-impl=org.apache.ibatis.logging.slf4j.Slf4jImpl
 ```
 
+## SpringApplication
+
+### 懒加载
+
+当使用到某个组件时才去加载它
+
+优点：启动速度快
+
+缺点：延迟问题发现，在使用懒加载前，需要调整好JVM的堆大小
+
+```yaml
+spring:
+    main:
+        # 启用懒加载，默认禁用
+        lazy-initialization: true
+```
+
+- 对指定组件启用/禁用懒加载
+
+```java
+@Bean
+@Lazy(false)
+public MyBeanName myBeanName() {
+    return new MyBeanName();
+}
+```
+
+### 自定义SpringApplication
+
+```java
+/**
+ * 启动项目后会生成存放 pid 的 application.pid 文档
+ * pid存放到指定目录：在application.properties(yaml)配置文档中添加spring.pid.file=/var/log/app.pid
+ */
+public static void main(String[] args) {
+    SpringApplication app = new SpringApplication(Application.class);
+
+
+    // 生成进程pid文档
+    app.addListeners(new ApplicationPidFileWriter());
+
+    // 关闭banner
+    app.setBannerMode(Banner.Mode.OFF);
+
+
+    app.run(args);
+}
+```
+
 ## 日志
 
 ```yaml
 spring:
     main:
         # turned off startup information logging
+        # 此外还可以继承SpringApplication并重写logStartupInfo(boolean) 来添加额外的日志
         log-startup-info: false
     mvc:
         # 记录请求明细日志
@@ -450,6 +505,11 @@ logging:
         root: INFO
         # 其它想要自定义日志级别的具体包
         com.example.service: DEBUG
+```
+
+```sh
+# --debug 启用调试，打印调试日志
+java -jar app.jar --debug
 ```
 
 ## 打包

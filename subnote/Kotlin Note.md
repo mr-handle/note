@@ -1,4 +1,47 @@
-# Kotlin Note
+# Kotlin
+
+github: <https://github.com/JetBrains/kotlin>
+
+## 安装
+
+IntelliJ IDEA 和 Android Studio 内置了 Kotlin 语言支持，完全不需要也不建议手动安装
+
+但下面还是介绍下手动安装
+
+访问上面提到的github地址，下载编译器并解压：`kotlin-compiler-2.4.21.zip`，这是操作系统平台通用的
+
+```sh
+# 将kotlin编译器目录添加到PATH
+export KOTLIN_HOME=/path/to/kotlinc
+export PATH=$PATH:${KOTLIN_HOME}/bin
+
+# 测试
+kotlin -version
+```
+
+## 第一个 Kotlin 程序
+
+- 新建文件Main.kt，内容如下
+
+```kotlin
+fun main() {
+    println("Hello, world!!!")
+}
+```
+
+- 编译
+
+```sh
+kotlinc Main.kt -include-runtime -d Main.jar
+```
+
+- 运行
+
+```sh
+java -jar Main.jar
+```
+
+## 语法
 
 - 主方法
 
