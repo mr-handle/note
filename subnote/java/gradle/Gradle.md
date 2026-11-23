@@ -197,6 +197,9 @@ rootProject.name = "gradle-demo"
 // 将其添加到构建列表中
 include("app1")
 include("app2")
+
+// 也可以写在一起
+include("app1", "app2")
 ```
 
 ### 配置全局插件
@@ -444,6 +447,17 @@ tasks.test {
 }
 ```
 
+### Lombok配置
+
+```kotlin
+configurations {
+    compileOnly {
+        // 用于Lombok的注解处理相关配置
+        extendsFrom(configurations.annotationProcessor.get())
+    }
+}
+```
+
 ## Gradle依赖
 
 ### Gradle依赖类型
@@ -482,6 +496,11 @@ dependencies {
 
 - 项目依赖
 
+```kotlin
+// 这个项目要在setting.gradle中声明才可以
+implementation(project(":subProjectName"))
+```
+
 ```groovy
 dependencies {
     // 这个项目要在setting.gradle中声明才可以
@@ -507,6 +526,22 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
 
     implementation 'org.springframework.boot:spring-boot:3.3.5'
+}
+```
+
+- 传递依赖
+
+```kotlin
+plugins {
+    // 首先引入插件
+    id("java-library")
+}
+
+dependencies {
+    // 假设子项目a依赖b，b依赖c
+    // 由于implementation不支持依赖传递，因此子项目a是不能使用c的
+    // 而用api，在子项目a中这样写就可以使用c了
+    api(project(":b"))
 }
 ```
 
@@ -790,6 +825,235 @@ tasks.register<Copy>("myCopy") {
 }
 ```
 
+## buildSrc模块
+
+在Gradle中有一个特殊机制
+
+可以创建一个名为buildSrc的模块
+
+它支持自定义能够在kts脚本中使用的内容
+
+buildSrc模块不能在settings.gradle中include，它是自动加载的
+
+### 自定义仓库
+
+- 创建buildSrc模块
+- 删掉include该模块的语句
+
+- 在buildSrc模块的build.gradle.kts中
+
+```kotlin
+plugins {
+    // 这种写法没研究过，先跟着做
+    `kotlin-dsl`
+}
+```
+
+- 创建目录src/main/kotlin，在该目录下创建文件MyFile.kt
+
+```kotlin
+import org.gradle.api.artifacts.dsl.RepositoryHandler
+
+// 自定义一个仓库
+fun RepositoryHandler.alibaba() = maven {
+    setUrl("https://maven.aliyun.com/repository/public")
+}
+```
+
+- 然后在父项目可以这样引用这个自定义仓库
+
+```kotlin
+subprojects {
+    repositories {
+        alibaba()
+    }
+}
+```
+
+### 自定义版本管理
+
+- 在src/main/kotlin目录下创建对象Version.kt
+
+```kotlin
+import org.gradle.api.JavaVersion
+
+object Version {
+    val sourceVersion = JavaVersion.VERSION_27
+    val targetVersion = JavaVersion.VERSION_27
+    val springBootVersion = "4.2.0"
+}
+```
+
+- 在父项目可以这样引用
+
+```kotlin
+subprojects {
+    apply(plugin = "java")
+    configure<JavaPluginExtension> {
+        sourceCompatibility = MyVersion.sourceVersion
+        targetCompatibility = MyVersion.targetVersion
+    }
+}
+```
+
+- 在别的子项目中这样引用
+
+```kotlin
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web:${MyVersion.springBootVersion}")
+}
+```
+
+### 自定义插件
+
+```kotlin
+package com.handle.plugin
+
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+class MyPlugin : Plugin<Project> {
+    // 插件应用时会直接调用apply方法
+    override fun apply(target: Project) {
+        println("MyPlugin 被加载了")
+
+        // 可以在这里注册任务
+        target.tasks.register("myTask") {
+            doFirst {
+                println("myTask 执行了")
+            }
+        }
+    }
+}
+```
+
+- 在buildSrc模块的build.gradle.kts中
+
+```kotlin
+// 声明自定义插件
+gradlePlugin {
+    plugins {
+        create("myPlugin") {
+            // 插件ID
+            id = "my-plugin"
+            // 插件实现类
+            implementationClass = "com.handle.plugin.MyPlugin"
+        }
+    }
+}
+```
+
+- 在别的子项目中使用
+
+```kotlin
+plugins {
+    id("my-plugin")
+}
+```
+
+## 生命周期钩子
+
+Gradle项目构建流程
+    - 开始构建
+    - 初始化 执行settings.gradle
+    - 配置项目 执行build.gradle
+    - Task准备完成
+    - 执行阶段 执行Task中的行为
+    - 结束构建
+
+如果希望在Gradle的整个生命周期中的不同时段执行一些操作
+
+可以使用官方提供的生命周期钩子函数
+
+- 构建初始阶段
+    - `gradle.settingsEvaluated`
+        - 完成项目的配置阶段之后调用
+        - 只能定义在setting.gradle或init.gradle脚本中
+    - `gradle.projectsLoaded`
+        - 所有项目加载之后调用
+        - 只能定义在setting.gradle或init.gradle脚本中
+
+- 配置阶段
+    - `gradle.beforeProject`
+        - 每个项目完成配置之前调用
+        - 只能定义在setting.gradle或init.gradle脚本中
+    - `gradle.afterProject` 每个项目完成配置之后调用
+    - `gradle.projectsEvaluated` 所有项目全部完成配置之后调用
+    - `gradle.taskGraph.whenReady` 全部任务图已经构建完成可以就绪后调用
+
+- 执行阶段
+    - 视频里面列举的几个函数已经废弃了，后面有空看文档补充吧
+
+```kotlin
+gradle.settingsEvaluated {
+    println("开始构建")
+}
+
+// 已经废弃，不建议使用
+gradle.buildFinished {
+    println("构建结束")
+}
+
+// 下面只是演示生命周期钩子的使用
+// beforeTask和afterTask已经废弃，不推荐使用了
+var time: Long = 0
+gradle.taskGraph.beforeTask {
+    time = System.currentTimeMillis()
+}
+gradle.taskGraph.afterTask {
+    val useTime = System.currentTimeMillis() - time
+    println("任务： $name 执行耗时：${useTime}ms")
+}
+```
+
+## 项目发布
+
+可以将Gradle项目发布到Maven仓库中
+
+- 插件
+
+```kotlin
+plugins {
+    id("java")
+    // 发布插件
+    id("maven-publish")
+}
+```
+
+- 发布配置
+
+```kotlin
+publishing {
+    publications {
+        create<MavenPublication>("myMavenPublication") {
+            groupId = "com.handle"
+            artifactId = "demo"
+            version = "1.0.0"
+            // 发布为jar包
+            from(components["java"])
+
+            // 版本映射
+            versionMapping {
+                // 对于 API 用途，从 runtimeClasspath 的解析结果中获取版本
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                // 对于运行时用途，从解析结果中获取版本
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+    repositories {
+        // 发布到Maven本地仓库
+        mavenLocal()
+    }
+}
+```
+
+如果使用的是idea，就可以在右边gradle面板的publishing里面看到publishing任务，执行就可以了
+
 ## Gradle常用指令
 
 - gradle指令要在含有build.gradle的目录执行
@@ -847,6 +1111,26 @@ dependencies {
 ```
 
 ## Gradle聚合项目
+
+### 子项目之间的依赖写法
+
+```kotlin
+implementation(project(":subProjectName"))
+```
+
+### 子项目公共部分写在一处
+
+```kotlin
+// 对所有子项目生效
+subprojects {
+    apply(plugin = "java")
+    
+    group = "com.handle"
+    version = "1.0-SNAPSHOT"
+}
+```
+
+### groovy写法
 
 - 新建gradle项目，删掉src目录
 

@@ -4523,6 +4523,13 @@ try {
 
 - 然后运行刚刚的远程调试配置，当程序运行到断点处即可看到效果
 
+- 启动应用时开启远程调试支持
+
+```sh
+java -agentlib:jdwp=server=y,transport=dt_socket,address=8000,suspend=n \
+    -jar app.jar
+```
+
 ##### 解决方案二
 
 用 idea 原生 Application 执行器启动，通过添加VM选项参数指定javafx库位置来启动程序，正常进行调试

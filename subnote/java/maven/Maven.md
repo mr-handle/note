@@ -460,11 +460,11 @@ POM: Project Object Model，项目对象模型
 
 |依赖范围|编译有效|测试有效|运行有效|打包有效|例子|
 |:-|:-|:-|:-|:-|:-|
-|compile|true|true|true|true|spring-core|
-|test|false|true|false|false|junit|
-|provided|true|true|false|false|lombok|
-|runtime|false|true|true|true|数据库驱动|
-|system|true|true|false|false|本地maven仓库之外的类库，基本用不到|
+|compile|`true`|`true`|`true`|`true`|spring-core|
+|test|false|`true`|false|false|junit|
+|provided|`true`|`true`|false|false|lombok|
+|runtime|false|`true`|`true`|`true`|数据库驱动|
+|system|`true`|`true`|false|false|本地maven仓库之外的类库，基本用不到|
 
 ## 依赖的传递性
 

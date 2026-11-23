@@ -65,6 +65,16 @@ public class Main {
 }
 ```
 
+### 启动项目
+
+```sh
+mvn spring-boot:run
+
+
+# 前提是添加了java和org.springframework.boot这两个插件
+gradle bootRun
+```
+
 ### 根据需要修改主类main方法
 
 ```java
@@ -431,6 +441,9 @@ spring:
     main:
         # turned off startup information logging
         log-startup-info: false
+    mvc:
+        # 记录请求明细日志
+        log-request-details: true
 logging:
     level:
         # 默认兜底的日志基本，优先级比下面列出的具体包要低
@@ -503,4 +516,26 @@ server:
         key-store-type: PKCS12
         # keystore文件只包含一个证书的时候可以不用写别名
         key-alias: yourKeystoreAlias
+```
+
+## Developer Tools
+
+一个用来快速启动的开发工具
+
+使用两个类加载器来快速重启项目
+    - 基础类加载器，加载依赖jar
+    - 重启类加载器，加载开发的源码
+
+开发工具会监听类路径的所有目录的文件变更，只要类路径下的文件更新就会触发重启
+
+当重启出问题后，如果是此开发工具的问题，手动重新启动项目就可以了
+
+- 依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <optional>true</optional>
+</dependency>
 ```
