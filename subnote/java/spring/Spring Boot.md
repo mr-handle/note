@@ -488,6 +488,231 @@ public static void main(String[] args) {
 }
 ```
 
+### 应用可用性状态
+
+#### 准备就绪状态
+
+期望在启动期间运行的任务应该由 CommandLineRunner and ApplicationRunner 组件完成
+
+而不是使用 Spring 组件生命周期回调，比如 @PostConstruct
+
+#### 管理应用可用性状态
+
+应用组件在任何时候都可以注入 ApplicationAvailability 然后调用其方法来获得当前的可用性状态
+
+而通常是监听应用状态更新或者更新应用状态
+
+##### 监听应用状态更新
+
+```java
+@Component
+public class MyReadinessStateExporter {
+    @EventListener
+    public void onStateChange(AvailabilityChangeEvent<ReadinessState> event) {
+        switch (event.getState()) {
+            case ACCEPTING_TRAFFIC -> {
+                // create file /tmp/healthy
+            }
+            case REFUSING_TRAFFIC -> {
+                // remove file /tmp/healthy
+            }
+        }
+    }
+}
+```
+
+##### 更新应用状态
+
+```java
+@Component
+public class MyLocalCacheVerifier {
+
+    private final ApplicationEventPublisher eventPublisher;
+
+    public MyLocalCacheVerifier(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+
+    public void checkLocalCache() {
+        try {
+            // ...
+        }
+        catch (CacheCompletelyBrokenException ex) {
+            AvailabilityChangeEvent.publish(this.eventPublisher, ex, LivenessState.BROKEN);
+        }
+    }
+}
+```
+
+### 应用事件和监听器
+
+除了 Spring 框架的事件外（如 ContextRefreshedEvent）
+
+SpringApplication 发送一些附加的应用事件
+
+一些事件在 ApplicationContext 创建之前被触发，无法使用 @Bean 注册监听它们
+
+但可以用 SpringApplication.addListeners(…​) 或 SpringApplicationBuilder.listeners(…​) 方法来注册监听它们
+
+- 当应用启动时，应用事件发送顺序如下
+    - ApplicationStartingEvent 在应用启动时发送，但在任何处理之前发送（除了监听器和初始化器的注册）
+    - ApplicationEnvironmentPreparedEvent 当要在上下文中使用的环境已知时，但在创建上下文之前发送
+    - ApplicationContextInitializedEvent 当  ApplicationContext 准备好且 ApplicationContextInitializers 被调用，但在加载任何 bean definitions 前发送
+    - ApplicationPreparedEvent 在刷新开始之前、加载 bean definitions 之后发送
+    - ApplicationStartedEvent 在上下文刷新之后、调用任何 application 和 command-line runners 之前发送
+    - AvailabilityChangeEvent 紧接着上一步以 LivenessState.CORRECT 状态发送，表示应用程序上线了（live）
+    - ApplicationReadyEvent 调用任何 application 和 command-line runners 后发送
+    - AvailabilityChangeEvent 紧接着上一步以  ReadinessState.ACCEPTING_TRAFFIC 状态发送，表示应用程序准备好接收服务请求了
+    - ApplicationFailedEvent 如果在启动时出现异常，则发送
+
+上面的列表仅包含与 SpringApplication 绑定的 SpringApplicationEvent
+
+- 此外，下面的事件在 ApplicationPreparedEvent 之后， ApplicationStartedEvent 前
+    - WebServerInitializedEvent WebServer准备好后发送
+        - ServletWebServerInitializedEvent 和 ReactiveWebServerInitializedEvent 分别对应 servlet 和 reactive 变体
+    - ContextRefreshedEvent 当刷新 ApplicationContext 时发送
+
+应用程序事件通过使用 Spring 框架的事件发布机制发送
+
+该机制的部分功能是确保将发布到子上下文中的监听器的事件也发布到任何祖先上下文中的监听器
+
+因此，如果应用程序使用 SpringApplication 实例的层次结构
+
+则监听器可能会接收到相同类型的应用程序事件的多个实例
+
+为了使监听器能够区分其上下文的事件和后代上下文的事件
+
+它应该请求注入其应用程序上下文，然后将注入的上下文与事件的上下文进行比较
+
+可以通过实现ApplicationContextAware注入上下文，如果监听器是bean，可以使用@Autowired
+
+### 网络环境
+
+SpringApplication 尝试创建正确的 ApplicationContext 类型，推断 WebApplicationType 机制如下
+
+如果 Spring MVC 存在，则使用 AnnotationConfigServletWebServerApplicationContext
+
+如果 Spring MVC 不存在且 Spring WebFlux 存在，则使用 AnnotationConfigReactiveWebServerApplicationContext
+
+否则使用 AnnotationConfigApplicationContext
+
+```java
+SpringApplication application = new SpringApplication(Main.class);
+// 还可以手动设置类型
+// 如在 JUnit 测试可以这样设置
+application.setWebApplicationType(WebApplicationType.NONE);
+```
+
+### 访问应用参数
+
+只要注入 ApplicationArguments 组件，就可以访问传给 SpringApplication.run(…​) 方法的参数
+
+ApplicationArguments 接口提供对原始 String[] 参数以及解析后的选项和非选项参数的访问
+
+```java
+@Component
+public class MyBean {
+    public MyBean(ApplicationArguments args) {
+        // 选项参数
+        boolean debug = args.containsOption("debug");
+        // 非选项参数
+        List<String> files = args.getNonOptionArgs();
+        if (debug) {
+            System.out.println(files);
+        }
+        // if run with "--debug logfile.txt" prints ["logfile.txt"]
+    }
+}
+```
+
+Spring Boot 也注册了一个 CommandLinePropertySource 组件
+
+你甚至可以用 @Value 来获取单个参数值
+
+```java
+@RestController
+public class MainController {
+    @Value("${debug:false}")
+    private String esDebugEnabled;
+
+    @GetMapping("/")
+    public String test() {
+        return String.valueOf(System.currentTimeMillis() + esDebugEnabled);
+    }
+}
+```
+
+启动参数加上`--debug=true`就可以获取到
+
+### 使用 ApplicationRunner 或 CommandLineRunner
+
+如果想要在 SpringApplication 启动的时候执行一些特定的代码
+
+可以实现 ApplicationRunner 或 CommandLineRunner 接口
+
+两者都以相同的方式工作，提供了一个 run 方法，这个方法会在 SpringApplication.run(…​) 完成之前被调用
+
+它们很适合执行 SpringApplication 启动后开始处理请求前的任务
+
+CommandLineRunner 提供对应用参数以字符串数组形象访问的支持
+
+ApplicationRunner 则使用前面提到的 ApplicationArguments
+
+```java
+@Component
+public class MyCommandLineRunner implements CommandLineRunner {
+
+    @Override
+    public void run(String... args) {
+        // Do something...
+    }
+
+}
+```
+
+如果定义了好几个  CommandLineRunner 或 ApplicationRunner 组件并且必须以特定顺序调用
+
+则可以实现Ordered接口或使用@Order注解来实现
+
+### 应用退出
+
+每个 SpringApplication 都注册了一个 shutdown 钩子来确保在JVM退出时 ApplicationContext 正确关闭
+
+所有标准 Spring 生命周期回调如 DisposableBean 接口 或 @PreDestroy 都可以使用
+
+此外，如果想要在 SpringApplication.exit() 被调用时返回特定的退出码
+
+可以实现  ExitCodeGenerator 接口
+
+此退出码可以传给 System.exit() 如下面的例子
+
+```java
+@SpringBootApplication
+public class MyApplication {
+
+    @Bean
+    public ExitCodeGenerator exitCodeGenerator() {
+        return () -> 42;
+    }
+
+    public static void main(String[] args) {
+        // 启动后就关闭了...
+        // 可以看到 Process finished with exit code 42
+        System.exit(SpringApplication.exit(SpringApplication.run(MyApplication.class, args)));
+    }
+}
+```
+
+异常类也可以实现 ExitCodeGenerator 接口
+
+通过实现 getExitCode() 方法
+
+当该异常发生时，Spring Boot 返回  getExitCode() 方法提供的退出码
+
+如果有多个 ExitCodeGenerator ，生成的第一个非0退出码会被使用
+
+为了控制最终调用哪个，可以实现Ordered接口或使用@Order注解
+
 ## 日志
 
 ```yaml

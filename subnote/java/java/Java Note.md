@@ -2480,16 +2480,19 @@ public void test() {
 
 ###### Spring Boot配置虚拟线程
 
+Spring Boot 推荐使用 java 24+ 版本
+
 - 配置文件
 
 ```yaml
 spring:
     threads:
         virtual:
+            # 启用虚拟线程
             # 对@Async、@Scheduled注解的方法使用虚拟线程，自定义的ThreadPoolTaskExecutor是不会生效的
             enabled: true
     main:
-        # This ensures that the JVM is kept alive, even if all threads are virtual threads
+        # 确保JVM保持运行，就算所有线程是虚拟线程（即守护线程）
         keep-alive: true
 ```
 
