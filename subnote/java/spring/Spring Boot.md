@@ -201,6 +201,249 @@ public class UserDO {
 public class MainConfiguration {}
 ```
 
+#### ConfigurationProperties用法5
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class ThirdPartyConfiguration {
+    @Bean
+    @ConfigurationProperties("another")
+    public AnotherComponent anotherComponent() {
+        return new AnotherComponent();
+    }
+}
+```
+
+#### 使用@ConfigurationProperties类
+
+可以像注入spring组件那样注入@ConfigurationProperties类，从而使用它
+
+```java
+@Service
+public class MyService {
+
+    private final MyProperties properties;
+
+    public MyService(MyProperties properties) {
+        this.properties = properties;
+    }
+
+    public void openConnection() {
+        Server server = new Server(this.properties.getRemoteAddress());
+        server.start();
+        // ...
+    }
+
+    // ...
+}
+```
+
+#### 保留自定义的字段名
+
+当属性名和字段名不一样时，可以通过@Name来设置
+
+```java
+@Component
+@ConfigurationProperties(prefix = "user01")
+@Setter
+public class UserDO {
+    @Name("name")
+    private String username;
+}
+```
+
+#### 构造方法绑定
+
+```java
+@ConfigurationProperties(prefix = "user01")
+public class UserDO {
+    private String username;
+
+    // 形参名称跟属性名设置成一样
+    public UserDO(String name) {
+        this.username = name;
+    }
+}
+
+@ConfigurationProperties(prefix = "user01")
+public class UserDO {
+    private String username;
+
+    // 保留自定义的形参名称，用@Name指定属性名
+    public UserDO(@Name("name") String username) {
+        this.username = username;
+    }
+}
+
+@ConfigurationProperties(prefix = "user01")
+public class UserDO {
+    private String username;
+
+    public UserDO() {
+    }
+
+    // 如果有多个构造方法，在使用构造器绑定的方法上添加此注解
+    @ConstructorBinding
+    public UserDO(String name) {
+        this.username = name;
+    }
+}
+
+@Configuration
+// 构造方法绑定必须通过添加此注解来完成
+@EnableConfigurationProperties(UserDO.class)
+public class MainConfiguration {}
+```
+
+### `@DefaultValue`
+
+```yaml
+user01:
+    name: handle
+```
+
+```java
+@ConfigurationProperties(prefix = "user01")
+@ToString
+public class UserDO {
+    private String username;
+
+    private Pet pet;
+
+    // 场景1
+    // 由于没有写pet属性，直接没有实例化pet
+    // UserDO(username=handle, pet=null)
+    public UserDO(String name, Pet pet) {
+        this.username = name;
+        this.pet = pet;
+    }
+
+    @ToString
+    public static class Pet {
+        private String name;
+
+        public Pet(String name) {
+            this.name = name;
+        }
+    }
+}
+
+@ConfigurationProperties(prefix = "user01")
+@ToString
+public class UserDO {
+    private String username;
+
+    private Pet pet;
+
+    public UserDO(String name, @DefaultValue Pet pet) {
+        this.username = name;
+        this.pet = pet;
+    }
+
+    @ToString
+    public static class Pet {
+        private String name;
+
+        // 场景二
+        // 由于没有写pet属性，直接没有实例化pet，因此此处@DefaultValue也不会生效
+        public Pet(@DefaultValue("cat") String name) {
+            this.name = name;
+        }
+    }
+}
+
+@ConfigurationProperties(prefix = "user01")
+@ToString
+public class UserDO {
+    private String username;
+
+    private Pet pet;
+
+    // 场景三
+    // 虽然没有写pet属性，但添加了@DefaultValue注解，最终会实例化一个pet，字段为默认值
+    public UserDO(String name, @DefaultValue Pet pet) {
+        this.username = name;
+        this.pet = pet;
+    }
+
+    @ToString
+    public static class Pet {
+        private String name;
+
+        public Pet(String name) {
+            this.name = name;
+        }
+    }
+}
+```
+
+```yaml
+user01:
+    name: handle
+    # 场景4
+    # 由于制订了pet属性，最终会实例化一个pet，字段为默认值
+    # 最终效果和场景3一样
+    pet: {}
+```
+
+```java
+@ConfigurationProperties(prefix = "user01")
+@ToString
+public class UserDO {
+    private String username;
+
+    private Pet pet;
+
+    public UserDO(String name, Pet pet) {
+        this.username = name;
+        this.pet = pet;
+    }
+
+    @ToString
+    public static class Pet {
+        private String name;
+
+        public Pet(String name) {
+            this.name = name;
+        }
+    }
+}
+```
+
+### `@EnableConfigurationProperties`
+
+在开发自定义自动装配或想让它们根据条件装配的时候
+
+@ConfigurationProperties注解的类不适合配置扫描
+
+这时候可以使用@EnableConfigurationProperties指定要绑定和注册为bean的@ConfigurationProperties类
+
+@EnableConfigurationProperties可以在任何@Configuration类上注解
+
+```java
+@Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(SomeProperties.class)
+public class MyConfiguration {}
+
+@ConfigurationProperties("some.properties")
+public class SomeProperties {}
+```
+
+### `@ConfigurationPropertiesScan`
+
+通常加在@SpringBootApplication所在的主类上
+
+也可以加在@Configuration类上
+
+```java
+@SpringBootApplication
+// 如果不指定扫描哪些包，默认从当前类所在包开始扫描
+@ConfigurationPropertiesScan({ "com.example.app", "com.example.another" })
+public class MyApplication {}
+```
+
+官方建议@ConfigurationProperties类只处理环境值，不要注入其它bean
+
 ### `@ImportResource`
 
 - 导入spring的xml配置文件，让其生效
@@ -726,6 +969,137 @@ public class MyApplication {
 ```java
 SpringApplication application = new SpringApplication(Main.class);
 application.setAddCommandLineProperties(false);
+application.run(args);
+```
+
+### 特定Profile文件
+
+除了application.properties(yaml)配置文件
+
+Spring Boot 也尝试加载命名为application-{profile}格式的特定Profile文件
+
+如果激活了application-{profile}文件，则application和application-{profile}都会生效
+
+它们在相同的目录下被加载，并且application-{profile}会覆盖该目录下非profile文件的配置
+
+如果多个application-{profile}文件被激活
+
+```yaml
+spring:
+    profiles:
+        # live会覆盖prod的配置
+        active: prod,live
+```
+
+Environment有一组默认配置文件，如果没有激活任何profile，默认会使用application-default的配置
+
+### 属性占位符
+
+```yaml
+# 属性占位符属性名写法：应该坚持用减号连接单词小写的写法
+# ${property-name}能关联：property-name、propertyName和PROPERTYNAME
+# 而${propertyName}只能关联：propertyName和PROPERTYNAME
+# 这样写可以引用JVM系统属性和操作系统环境变量的值
+${property-name}
+
+# 指定默认值
+${property-name:defaultValut}
+```
+
+### 多文档文件
+
+将一个文档分成多个profile
+
+这个文档不能用 @PropertySource 或 @TestPropertySource加载
+
+一般用于条件激活profile的场景
+
+- yaml用三个减号表示上一文档内容结束下一文档开始
+
+```yaml
+spring:
+    application:
+        name: "MyApp"
+---
+spring:
+    application:
+        name: "MyCloudApp"
+    config:
+        activate:
+            on-cloud-platform: "kubernetes"
+```
+
+- properties用 #--- 或 !--- 表示上一文档内容结束下一文档开始
+
+```properties
+spring.application.name=MyApp
+#---
+spring.application.name=MyCloudApp
+spring.config.activate.on-cloud-platform=kubernetes
+```
+
+### 激活属性
+
+```yaml
+myprop:
+"always-set"
+---
+spring:
+    config:
+        # 当运行在kubernetes中，且prod或staging profile激活了，才激活此profile
+        activate:
+            # 当运行在kubernetes中才生效
+            on-cloud-platform: "kubernetes"
+            # prod或staging profile激活了才生效
+            on-profile: "prod | staging"
+myotherprop: "sometimes-set"
+```
+
+### 加密属性
+
+Spring Boot没有内置加密属性值的功能
+
+可以使用EnvironmentPostProcessor接口，在应用启动之前对Environment进行操作
+
+此外官方推荐用Spring Cloud Vault
+
+### YAML
+
+YAML是JSON的超集
+
+只要类路径上有SnakeYAML库，SpringApplication类就会自动支持YAML作为属性的替代
+
+只要使用了spring-boot-starter，就有了SnakeYAML库
+
+YAML文件不能用 @PropertySource 或 @TestPropertySource加载
+
+如果想要用@PropertySource 或 @TestPropertySource加载，可以用properties文件
+
+- Spring框架提供了两个类来加载YAML文件
+    - YamlPropertiesFactoryBean 将YAML文件加载为Properties
+    - YamlMapFactoryBean 将YAML文件加载为Map
+    - YamlPropertySourceLoader 需要手动将YAML文件加载为PropertySource
+
+### 配置随机属性值
+
+```yaml
+my:
+    # 字符串
+    secret: "${random.value}"
+    number: "${random.int}"
+    bignumber: "${random.long}"
+    uuid: "${random.uuid}"
+    number-less-than-ten: "${random.int(10)}"
+    number-in-range: "${random.int[1024,65536]}"
+```
+
+### 配置系统环境属性
+
+```java
+SpringApplication application = new SpringApplication(Main.class);
+// 设置系统环境属性名前缀
+// 这样属性remote.timeout的值就从系统环境INPUT_REMOTE_TIMEOUT中得到
+application.setEnvironmentPrefix("input");
 application.run(args);
 ```
 

@@ -450,11 +450,11 @@ tasks.test {
 ### Lombok配置
 
 ```kotlin
-configurations {
-    compileOnly {
-        // 用于Lombok的注解处理相关配置
-        extendsFrom(configurations.annotationProcessor.get())
-    }
+dependencies {
+    compileOnly("org.projectlombok:lombok:1.18.48")
+    annotationProcessor("org.projectlombok:lombok:1.18.48")
+    testCompileOnly("org.projectlombok:lombok:1.18.48")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.48")
 }
 ```
 
