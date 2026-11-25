@@ -713,6 +713,22 @@ public class MyApplication {
 
 为了控制最终调用哪个，可以实现Ordered接口或使用@Order注解
 
+## 外部配置
+
+### 访问命令行属性
+
+默认情况下，SpringApplication转换任何命令行选项参数（以--开头的命令行参数，如--server.port=9000）
+
+并将他们添加到 Spring Environment
+
+如果不想让命令行属性添加到 Spring Environment
+
+```java
+SpringApplication application = new SpringApplication(Main.class);
+application.setAddCommandLineProperties(false);
+application.run(args);
+```
+
 ## 日志
 
 ```yaml
