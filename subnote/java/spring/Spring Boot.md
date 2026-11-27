@@ -1310,6 +1310,142 @@ logging:
         tomcat: "trace"
 ```
 
+### 定义日志配置
+
+日志初始化是在创建ApplicationContext前发生的，因此不能通过@Configuration配置文件的@PropertySources来定义日志配置
+
+改变日志系统或禁用它只能通过系统属性
+
+对于logback，配置文件logback-spring.xml和logback.xml都可以，spring boot推荐前者
+
+因为后缀不能让spring完全控制log初始化
+
+Spring Boot 存在一种‌“自动映射机制”‌
+
+它将部分常用的 Spring Environment 属性（来自 application.yml/properties 或环境变量）
+
+自动转换为 Java ‌System Properties‌
+
+由于 Logback 原生支持读取 System Properties
+
+因此对于这些特定的属性，‌不需要‌在 logback-spring.xml 中手动编写 `<springProperty>` 标签即可直接使用
+
+如可以根据官方支持自动映射配置，配置了Spring Environment 就可以在logback配置文件里面使用该系统属性了
+
+```yaml
+logging:
+    structured:
+        format:
+            # 可以是ecs、gelf、logstash
+            # 控制台日志格式
+            console: ecs
+            # 文件日志格式
+            file: ecs
+```
+
+```xml
+<!-- replace your encoder with StructuredLogEncoder -->
+<encoder class="org.springframework.boot.logging.logback.StructuredLogEncoder">
+    <format>${CONSOLE_LOG_STRUCTURED_FORMAT}</format>
+    <charset>${CONSOLE_LOG_CHARSET}</charset>
+</encoder>
+```
+
+### 结构化日志
+
+使用ecs日志格式时，可以自定义如下属性
+
+```yaml
+logging:
+    structured:
+        ecs:
+            service:
+                # 如果不指定，默认是spring.application.name
+                name: MyService
+                # 如果不指定，默认是spring.application.version
+                version: 1.0
+                environment: Production
+                node-name: Primary
+```
+
+#### 自定义JSON结构化日志
+
+```yaml
+logging:
+    structured:
+        json:
+            # 排除日志级别信息
+            exclude: log.level
+            # 重命名process.id为procid
+            rename:
+                process.id: procid
+            add:
+                # 添加固定字段corpname
+                corpname: mycorp
+```
+
+#### 自定义结构化日志追踪
+
+```yaml
+logging:
+    structured:
+        json:
+            stacktrace:
+                root: first
+                max-length: 1024
+                include-common-frames: true
+                include-hashes: true
+```
+
+#### 自定义结构化日志打印内容
+
+实现StructuredLogFormatter 接口，logback要用ILoggingEvent泛型
+
+```java
+class MyCustomFormat implements StructuredLogFormatter<ILoggingEvent> {
+    @Override
+    public String format(ILoggingEvent event) {
+        return "time=" + event.getInstant() + " level=" + event.getLevel() + " message=" + event.getMessage() + "\n";
+    }
+}
+```
+
+然后设置logging.structured.format.console或logging.structured.format.file的值为该实现类的全类名
+
+### Logback扩展
+
+前提是使用logback-spring.xml或定义logging.config属性
+
+#### 特定profile配置
+
+```xml
+<configuration>
+    <springProfile name="staging">
+        <!-- configuration to be enabled when the "staging" profile is active -->
+    </springProfile>
+
+    <springProfile name="dev | staging">
+        <!-- configuration to be enabled when the "dev" or "staging" profiles are active -->
+    </springProfile>
+
+    <springProfile name="!production">
+        <!-- configuration to be enabled when the "production" profile is not active -->
+    </springProfile>
+</configuration>
+```
+
+#### 环境属性
+
+```xml
+<!-- source 命名规则是用减号连接符连接起来的，例如my.property-name  -->
+<springProperty scope="context" name="fluentHost" source="myapp.fluentd.host"
+        defaultValue="localhost"/>
+<appender name="FLUENT" class="ch.qos.logback.more.appenders.DataFluentAppender">
+    <remoteHost>${fluentHost}</remoteHost>
+    ...
+</appender>
+```
+
 ## 打包
 
 - spring boot原文：

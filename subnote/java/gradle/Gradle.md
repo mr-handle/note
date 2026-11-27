@@ -186,18 +186,29 @@ plugins {
 
 最终构建构建任务图，然后执行classes对应的任务
 
-## gradle常用命令
+## Gradle常用命令
+
+gradle命令要在含有build.gradle(.kts)的目录执行
 
 ```sh
-# 查看可用的命令
-gradle task
-
 # 启动项目
 gradle run
 
-# 删除构建目录
+# 删除构建目录（build目录）
 gradle clean
+
+# 查看可用的命令
+gradle task
 ```
+
+- 其它命令
+
+|命令|说明|
+|:-|:-|
+|classes|编译业务代码和配置文件|
+|test|编译测试代码，生成测试报告|
+|build|构建项目，默认会执行classes、test，以及打包|
+|build -x test|跳过测试构建项目|
 
 ## settings.gradle.kts
 
@@ -228,6 +239,9 @@ include("app1", "app2")
 
 ```kotlin
 plugins { 
+    // id("org.springframework.boot") 返回的是 PluginDependenciesSpec 对象
+    // version 是 PluginDependenciesSpec 中的中缀函数
+    // 实际上是 id("org.springframework.boot").version("4.2.0") 的中缀函数简写
     id("org.springframework.boot") version "4.2.0"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -1076,18 +1090,6 @@ publishing {
 ```
 
 如果使用的是idea，就可以在右边gradle面板的publishing里面看到publishing任务，执行就可以了
-
-## Gradle常用指令
-
-- gradle指令要在含有build.gradle的目录执行
-
-|指令|说明|
-|:-|:-|
-|gradle clean|删除build目录|
-|gradle classes|编译业务代码和配置文件|
-|gradle test|编译测试代码，生成测试报告|
-|gradle build|构建项目，默认会执行gradle classes、gradle test，以及打包|
-|gradle build -x test|跳过测试构建项目|
 
 ## Gradle单项目
 
