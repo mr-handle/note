@@ -62,4 +62,31 @@ myArrays:
       age: 18
     - name: Jack
       age: 20
+
+# 数组的元素是数组的写法
+matrix:
+    -
+        - 1
+        - 2
+    -
+        - 3
+        - 4
+```
+
+## 多文档
+
+`---`  文档开始标记‌，前后并不强制要求空行
+
+用于在一个物理文件中分隔多个独立的 YAML 文档
+
+```yaml
+# 文档 1
+app:
+    name: Service-A
+
+---
+
+# 文档 2
+app:
+    name: Service-B
 ```

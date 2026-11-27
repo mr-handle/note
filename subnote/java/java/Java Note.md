@@ -4476,6 +4476,28 @@ try {
 </build>
 ```
 
+- gradle
+
+```kotlin
+plugins {
+    id("application")
+    id("org.openjfx.javafxplugin") version ("0.1.0")
+}
+
+javafx {
+    version = "27.0.1"
+    modules = listOf("javafx.fxml")
+}
+
+// 假设com.handle:java-one-parent:1.0.0设置了javafx的版本控制
+// 把上面的javafx{}部分注释掉用下面的写法也能运行
+dependencies {
+    implementation(platform("com.handle:java-one-parent:1.0.0"))
+
+    implementation("org.openjfx:javafx-fxml")
+}
+```
+
 #### 运行程序
 
 当直接运行继承了javafx.application.Application的类的main方法时，IDE（idea和eclipse）会无法正确加载 JavaFX 的模块路径（Module Path），导致报错

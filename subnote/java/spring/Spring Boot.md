@@ -1103,7 +1103,81 @@ application.setEnvironmentPrefix("input");
 application.run(args);
 ```
 
+### 绑定Map
+
+```yaml
+my:
+    map:
+        # 有中括号没双引号，中括号会保留，键：[/key0]
+        [/key0]: "value0"
+        # 有中括号有双引号，正确解析
+        "[/key1]": "value1"
+        "[/key2]": "value2"
+        # 无中括号有双引号，特殊字符会被删除，键：key3
+        "/key3": "value3"
+```
+
+当键包含非字母、数字、`-`或 `.`时，想要保留原来的键的值，需要用中括号包裹，然后再用双引号包裹
+
+上面的例子中的属性将会绑定为：[/key0], /key1, /key2 和 key3
+
+### 合并复杂类型
+
+对于复杂类型的属性，如list、map，合并规则是覆盖
+
+```java
+@ConfigurationProperties("my")
+@Getter
+public class MyProperties {
+    private final List<MyPojo> list = new ArrayList<>();
+}
+```
+
+```yaml
+my:
+    list:
+    -   name: "my name"
+        description: "my description"
+---
+spring:
+    config:
+        activate:
+            on-profile: "dev"
+my:
+    list:
+    -   name: "my another name"
+```
+
+如果dev profile没有启用，则 MyProperties.list包含一个MyPojo（name: "my name"，description: "my description"）
+
+如果dev profile启用了，则则 MyProperties.list包含一个MyPojo（name: "my another name"，description: null）
+
+## Profile
+
+```yaml
+spring:
+    profiles:
+        # include profile在任何spring.profiles.active前被加载
+        include:
+            - "common"
+            - "local"
+```
+
 ## 日志
+
+### 日志格式
+
+- 日期时间
+- 日志级别：ERROR, WARN, INFO, DEBUG, TRACE
+    - logback没有FATAL级别，它映射到ERROR
+- 进程号
+- `---` 分隔符，区分实际日志消息的开始
+- [应用名] 前提是设置了spring.application.name
+- [应用组] 前提是设置了spring.application.group
+- 线程名
+- 关联ID 如果启用了跟踪
+- 日志记录器名称 通常是全类名（缩写形式）
+- 具体日志消息
 
 ```yaml
 spring:
@@ -1115,6 +1189,13 @@ spring:
         # 记录请求明细日志
         log-request-details: true
 logging:
+    # 不记录应用名，前提是设置了spring.application.name
+    include-application-name: false
+    # 不记录应用组，前提是设置了spring.application.group
+    include-application-group: false
+    console:
+        # 禁用控制台日志打印
+        enabled: false
     level:
         # 默认兜底的日志基本，优先级比下面列出的具体包要低
         root: INFO
@@ -1122,9 +1203,111 @@ logging:
         com.example.service: DEBUG
 ```
 
+### 控制台输出
+
+#### 启用调试模式的两种方法
+
+- 方法二，在配置文件中设置
+
+```yaml
+# 启用调试模式
+debug: true
+
+# 打印更多消息
+trace: true
+```
+
+- 方法二，在启动应用的命令行设置
+
 ```sh
-# --debug 启用调试，打印调试日志
+# --debug 启用调试模式，打印调试日志
 java -jar app.jar --debug
+
+# 打印更多消息
+java -jar app.jar --trace
+```
+
+#### 配置日志输出颜色
+
+如果终端支持ANSI，配置日志输出颜色的可读性更好
+
+```yaml
+spring:
+    output:
+        ansi:
+            # detect,always,never
+            enabled: detect
+```
+
+### 文件输出
+
+- logging.file.name 指定日志文件，可以是绝对或相对路径
+
+- logging.file.path 指定日志文件目录，可以是绝对或相对路径
+
+当两者都指定时，logging.file.name生效
+
+日志文件在达到10MB时进行滚动
+
+### 文件滚动
+
+如果使用logback或log4j2，可以通过应用配置设置文件滚动
+
+- logback设置
+
+```yaml
+logging:
+    logback:
+        rollingpolicy:
+            # 文件名格式
+            file-name-pattern: ${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz
+            # 是否在启动时清理日志文件
+            clean-history-on-start: false
+            # 归档前文件的最大容量
+            max-file-size: 10MB
+            # 归档文件在被删除之前所能容纳的最大总容量
+            total-size-cap: 512MB
+            # 保留的归档文件最大数量
+            max-history: 7
+```
+
+### 日志级别
+
+日志级别有：TRACE, DEBUG, INFO, WARN, ERROR, FATAL, 或 OFF
+
+可以通过：`logging.level.<logger-name>=<level>`来设置日志级别
+
+注意这里的logger-name是包名
+
+```yaml
+logging:
+    level:
+        root: "warn"
+        org.springframework.web: "debug"
+```
+
+### 日志组
+
+- Spring Boot 有两个预定义的日志组
+    - web 记录器有：
+        - org.springframework.core.codec
+        - org.springframework.http
+        - org.springframework.web
+        - org.springframework.boot.actuate.endpoint.web
+        - org.springframework.boot.web.servlet.ServletContextInitializerBeans
+    - sql 记录器有：
+        - org.springframework.jdbc.core
+        - org.hibernate.SQL
+        - LoggerListener
+
+```yaml
+logging:
+    group:
+        # 定义日志组
+        tomcat: "org.apache.catalina,org.apache.coyote,org.apache.tomcat"
+    level:
+        # 设置日志组的日志级别
+        tomcat: "trace"
 ```
 
 ## 打包

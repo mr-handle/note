@@ -69,6 +69,23 @@ val count = 2
 println("count: $count")
 ```
 
+## 集合
+
+### List
+
+```kotlin
+// 可变list
+val mutableList: MutableList<Int> = mutableListOf(1, 2, 3)
+println(mutableList)
+
+mutableList.addLast(4)
+println(mutableList)
+
+// 不可变list
+val list: List<Int> = listOf(1, 2, 3)
+println(list)
+```
+
 ## 定义函数/方法
 
 函数/方法只是叫法不一样，写在类中的函数叫做方法
@@ -236,6 +253,44 @@ fun main() {
 由于函数可以作为变量且函数可以接收函数作为参数
 
 可以无限套娃了
+
+### 中缀函数
+
+用 `infix` 关键字标记的函数被称为中缀函数
+
+- 中缀函数必须满足以下要求
+    - 必须是成员函数
+    - 只能有一个参数
+    - 参数不能有默认值
+
+在调用中缀函数时，可以省略点号和括号
+
+```kotlin
+fun main() {
+    val myClass = MyClass()
+    // 普通写法
+    myClass.test(666)
+    // 省略点号和括号
+    myClass test 666
+}
+
+class MyClass {
+    infix fun test(x: Int) {
+        println("parameter: $x")
+    }
+
+    fun myFun() {
+        // 普通写法
+        test(666)
+        // 在类中使用中缀函数时，不能省略调用方(this)
+        this test 666
+    }
+}
+```
+
+中缀函数调用的优先级低于算术运算符、类型转换和rangeTo运算符
+
+中缀函数调用的优先级高于布尔运算符 `&&` 和 `||`
 
 ### lambda表达式
 

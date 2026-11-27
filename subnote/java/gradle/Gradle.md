@@ -166,6 +166,26 @@ gradle init
     - build.gradle，构建脚本，类似maven的pom.xml
     - settings.gradle，配置文件，定义项目和子项目名称信息，一个项目只能有一个此文件（子项目是没有这个文件的）
 
+注意，build.gradle(.kts)和settings.gradle(.kts) 不要把它当成一个单纯的kotlin脚本文件，它是一个配置文件！
+
+比如下面的配置
+
+```kotlin
+plugins {
+    id("java")
+}
+```
+
+如果把它当成一个单纯的kotlin脚本文件，用 `kotlin build.gradle.kts` 执行它
+
+那么该文件从上往下执行，遇到plugins函数，执行具体的函数体id("java")，它返回PluginDependenciesSpec对象，然后就执行完了，没然后了
+
+实际上是这样的，比如你执行`gradle classes` 命令
+
+会创建一个Gradle守护进程，它根据配置文件名（后缀），用对应的语言语法规则解析这个配置文件的内容
+
+最终构建构建任务图，然后执行classes对应的任务
+
 ## gradle常用命令
 
 ```sh
@@ -279,6 +299,9 @@ plugins {
     // 包含java插件的全部功能并且支持生成可执行应用程序
     id("application")
     
+    // id("org.springframework.boot") 返回的是 PluginDependenciesSpec 对象
+    // version 是 PluginDependenciesSpec 中的中缀函数
+    // 实际上是 id("org.springframework.boot").version("4.2.0") 的中缀函数简写
     id("org.springframework.boot") version "4.2.0"
     id("io.spring.dependency-management") version "1.1.7"
 }
